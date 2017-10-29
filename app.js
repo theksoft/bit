@@ -36,7 +36,7 @@ var bhimc = (function() {
       TRACKER       : 'tracker',
       RECTANGLE     : 'rectangle',
       SQUARE        : 'square',
-      RHOMBUS       : 'rhombus'
+      RHOMBUS       : 'rhombus',
       ISOSCELES     : 'isosceles',
       EQUILATERAL   : 'equilateral',
       RIGHTANGLE    : 'right-angle',
