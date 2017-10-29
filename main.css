@@ -1,0 +1,465 @@
+/**
+ * Boardgame image tool (BIT)
+ * Copyright 2017 Herve Retaureau
+ */
+
+@charset "UTF-8";
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font-style: inherit;
+  font-size: 100%;
+  font-family: inherit;
+  vertical-align: baseline;
+  background: transparent;
+}
+
+ul, ol {
+  list-style-type: none;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  min-height: 100%;
+  font-family: Arial, Tahoma, sans-serif;
+  color: #000;
+  height: 100%;
+  min-height: 100%;
+  background-color: #ddd;
+  line-height: 1;
+}
+
+img {
+  border: 0;
+}
+
+hr {
+	background-color: #333;
+	height: 2px;
+	border: 0;
+	margin: 1em;
+}
+
+#main-wrap {
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-flow: column;
+}
+#wks-wrap {
+	display: flex;
+  flex-flow: row;
+  order: 1;
+  align-self: stretch;
+  margin-bottom: auto;
+}
+section {
+  margin: auto;
+}
+aside {
+  order: 1;
+  align-self: stretch;
+}
+footer {
+  display: inline-flex;
+  flex-flow: row;
+  order: 2;
+  align-self: flex-start;
+  align-items: center;
+}
+#load-indicator {
+	order : 1;
+  align-self: center;
+}
+#coordinates {
+  order : 2;
+  margin-left: auto;
+}
+
+header {
+  background-color: black;
+  padding: 15px 0px 17px;
+  width: 100%;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  margin-bottom: 5px;
+}
+
+a:link, a:visited {
+  outline: none;
+  text-decoration: none;
+  color: #ccc;
+}
+
+nav, nav ul, nav label, nav button, nav li, nav a, nav div {
+  display: inline;
+}
+nav ul {
+  padding: 0px;
+  margin: 0px;
+}
+nav label, nav button, nav li {
+  font-size: 12px;
+  color: #ccc;
+  vertical-align: middle;
+}
+nav label, nav button, nav a:link, nav a:visited, nav a:hover, nav a:active {
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+  margin-left: 5px;
+}
+nav label, nav button, nav a:link, nav a:visited {
+  background-color: #004;
+}
+nav label:hover, nav button:hover, nav a:hover {
+  background-color: #226;
+}
+nav label:active, nav button:active, nav a:active {
+  background-color: #337;
+}
+
+#drop-file-zone {
+  border: 2px dashed #999;
+  border-radius: 5px;
+  padding: 12px 10px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAiCAYAAADCp/A1AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAApjAAAKYwGDMomsAAAAB3RJTUUH3AkYCxg3B2a5QgAAAKtJREFUWMPt17sNgDAMRdE8tsj+w2UM6CiQEv9jIvm1COl0uUZbbIxxt03rvWP27WoHrJCFLGQhC1nIQr7DzohQI3fXjqaOkJFl0nxDVj9K+hKZocsNYGQXOafQ8YfTgTohcMKNA+rnHdAVkIWMhlJANjIKygGKkN5QLlCM9IJKgCqkFSoFqpFaqAZoQkqhWqAZyYVagC5ICmoFuiFnUA+gK/IL9QKGLOJlegBB2VeWydvIHgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+  font-size: 12px;
+  color: #558;
+  vertical-align: middle;
+  margin-left: 5px
+}
+
+#load-file {
+  position: fixed;
+  top: -100em;
+  opacity: 0;
+}
+
+section {
+}
+
+#workarea {
+  display: none;
+  overflow: scroll;
+}
+
+.dragging#workarea {
+  cursor: all-scroll;
+}
+
+#container {
+	position: relative;
+}
+
+#img-display {
+  position: relative;
+	z-index: 1;
+}
+
+#grid-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: block;
+}
+
+#draw-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: block;
+}
+
+.drawing#draw-area {
+  cursor: crosshair;
+}
+
+.moving#draw-area {
+  cursor: move;
+}
+
+.editing#draw-area {
+  cursor: crosshair;
+}
+
+#draw-area {
+  stroke-width: 1px;
+  fill: rgba(255,255,255,0.3);
+}
+
+#draw-area polyline,
+#draw-area polygon {
+  stroke: #ff0;
+}
+
+#draw-area rect {
+  stroke: #f00;
+}
+
+#draw-area rect.square {
+  stroke: #f80;
+}
+
+#draw-area polygon.rhombus {
+  stroke: #f64;
+}
+
+#draw-area polygon.isosceles {
+  stroke: #06d;
+}
+
+#draw-area polygon.equilateral {
+  stroke: #4ae;
+}
+
+#draw-area polygon.right-angle {
+  stroke: #8df;
+}
+
+#draw-area polygon.hex {
+  stroke: #080;
+}
+
+#draw-area polygon.hex.extended {
+  stroke: #0a0;
+}
+
+#draw-area circle {
+  stroke: #808;
+}
+
+#draw-area circle.extended {
+  stroke: #c2c;
+}
+
+#draw-area ellipse {
+  stroke: #f4f;
+}
+
+#draw-area rect:hover,
+#draw-area polygon:hover,
+#draw-area polygon.extended:hover,
+#draw-area circle:hover,
+#draw-area ellipse:hover {
+  fill: rgba(255,255,255,0.4);
+}
+#draw-area rect.selected,
+#draw-area polygon.selected,
+#draw-area polygon.extended.selected,
+#draw-area circle.selected,
+#draw-area ellipse.selected {
+  stroke-width: 3px;
+  fill: rgba(200,200,255,0.4);
+}
+
+#draw-area rect.selected:hover,
+#draw-area polygon.selected:hover,
+#draw-area polygon.extended.selected:hover,
+#draw-area circle.selected:hover,
+#draw-area ellipse.selected:hover {
+  cursor: move;
+}
+
+#draw-area rect.gridscope,
+#draw-area polygon.gridscope,
+#draw-area circle.gridscope {
+  stroke-width: 3px;
+  stroke-dasharray: 8;
+  stroke-opacity: 0.3;
+  fill: rgba(200,255,200,0.3);
+} 
+
+#draw-area rect.gridscope:hover,
+#draw-area polygon.gridscope:hover,
+#draw-area circle.gridscope:hover {
+  fill: rgba(200,255,200,0.4);
+} 
+
+#draw-area rect.gridscope.selected,
+#draw-area polygon.gridscope.selected,
+#draw-area circle.gridscope.selected {
+  stroke-width: 5px;
+  stroke-opacity: 0.6;
+	fill: rgba(140,255,140,0.4);
+} 
+
+#draw-area rect.gridbond,
+#draw-area polygon.gridbond,
+#draw-area circle.gridbond {
+  fill: rgba(255,200,200,0.3);
+} 
+
+#draw-area rect.gridbond:hover,
+#draw-area polygon.gridbond:hover,
+#draw-area circle.gridbond:hover {
+  fill: rgba(255,200,200,0.5);
+} 
+
+#draw-area rect.gridbond.selected,
+#draw-area polygon.gridbond.selected,
+#draw-area circle.gridbond.selected {
+  fill: rgba(255,140,140,0.5);
+} 
+
+@keyframes gridscope {
+  0%   {fill-opacity: 0.4}
+  40%  {fill-opacity: 0.8}
+  80%  {fill-opacity: 0.4}
+}
+
+#draw-area rect.gridscope.highlighted,
+#draw-area polygon.gridscope.highlighted,
+#draw-area circle.gridscope.highlighted {
+  fill: #ff8c8c;
+  fill-opacity: 0.4;
+  animation: gridscope 1s linear infinite;
+} 
+
+@keyframes gridbond {
+  0%   {fill-opacity: 0.4}
+  40%  {fill-opacity: 0.8}
+  80%  {fill-opacity: 0.4}
+}
+
+#draw-area rect.gridbond.highlighted,
+#draw-area polygon.gridbond.highlighted,
+#draw-area circle.gridbond.highlighted {
+  fill: #72d88b;
+  fill-opacity: 0.4;
+  animation: gridbond 1s linear infinite;
+} 
+
+#draw-area rect.tracker {
+  stroke-width: 1px;
+  stroke: #222;
+  stroke-dasharray: 2, 5;
+  fill: none;
+}
+
+#draw-area rect.grabber {
+  stroke-width: 1px;
+  stroke: #000;
+  fill: #fff;
+}
+
+#draw-area rect.grabber:hover {
+  fill: #000; 
+}
+
+#draw-area rect.grabber.ew-resize {
+  cursor : ew-resize;
+}
+
+#draw-area rect.grabber.ns-resize {
+  cursor : ns-resize;
+}
+
+#draw-area rect.grabber.nesw-resize {
+  cursor : nesw-resize;
+}
+
+#draw-area rect.grabber.nwse-resize {
+  cursor : nwse-resize;
+}
+
+#draw-area rect.grabber.move {
+  cursor : move;
+}
+
+aside {
+  display: none;
+	background-color: #000;
+  color: #ccc;
+}
+
+aside div {
+  margin: 5px;
+}
+
+aside img {
+  background-color: #ccc;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  padding: 0px 3px;
+  margin: 4px 4px 1px;
+}
+
+aside img.selected {
+  background-color: #e8ffdd;
+  border: 2px solid #008000;
+}
+
+aside img.disabled, aside img.on.disabled, aside img.off.disabled {
+  background-color: #222;
+  border: 2px solid #888;
+}
+
+aside img.on {
+  background-color: #eaeaff;
+  border: 2px solid #9999ff;
+}
+
+aside img.off {
+  background-color: #fff1ea;
+  border: 2px solid #ffba99;
+}
+
+footer {
+  background-color: black;
+  padding: 5px 0px;
+  width: 100%;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  margin-top: 5px;
+}
+
+#selected-file {
+  color: #ccc;
+}
+
+.error#selected-file {
+  color: #f44;
+}
+
+footer p {
+  background-color: black;
+  font-size: 12px;
+  vertical-align: middle;
+  padding: 5px 10px;
+  display: inline;
+}
+
+footer img {
+  height: 64px;
+  margin: 5px 10px 3px;
+  display: inline;
+  vertical-align: middle;
+}
+
+.loading {
+  background-color: #bfb;
+  color: #000;
+  border-radius: 3px;
+}
+
+#load-indicator {
+	display : none;
+}
+
+#coordinates {
+  background-color: black;
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 5px 10px;
+}
