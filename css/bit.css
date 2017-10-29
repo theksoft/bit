@@ -1,0 +1,43 @@
+/**
+ * Boardgame image tool (BIT)
+ * Copyright 2017 Herve Retaureau
+ */
+
+@charset "UTF-8";
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font-style: inherit;
+  font-size: 100%;
+  font-family: inherit;
+  vertical-align: baseline;
+  background: transparent;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  min-height: 100%;
+  font-family: Arial, Tahoma, sans-serif;
+  color: #000;
+  height: 100%;
+  min-height: 100%;
+  background-color: #ddd;
+  line-height: 1;
+}
+
+img {
+  border: 0;
+}
+
+ul, ol {
+  list-style-type: none;
+}
