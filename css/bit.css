@@ -51,6 +51,23 @@ ul, ol {
 
 /* MAIN AREA POSITIONING */
 
+#wks-wrap {
+  display: flex;
+  flex-flow: row;
+  order: 1;
+  align-self: stretch;
+  margin-bottom: auto;
+}
+
+#wks-wrap section {
+  margin: auto;
+}
+
+#tools {
+  order: 1;
+  align-self: stretch;
+}
+
 #footer {
   display: inline-flex;
   flex-flow: row;
@@ -155,6 +172,29 @@ ul, ol {
   position: fixed;
   top: -100em;
   opacity: 0;
+}
+
+/* WORKAREA ELEMENTS */
+
+#wks-wrap section {
+}
+
+#workarea {
+  display: none;
+  overflow: scroll;
+}
+
+.dragging#workarea {
+  cursor: all-scroll;
+}
+
+#container {
+  position: relative;
+}
+
+#img-display {
+  position: relative;
+  z-index: 1;
 }
 
 /* FOOTER ELEMENTS */

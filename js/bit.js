@@ -99,48 +99,234 @@ var bit = (function() {
   })(); /* mdl */
 
   /*
+   * WORKAREA MANAGEMENT
+   */
+
+  var wks = (function() {
+
+    var doms = {
+      wks       : $('wks-wrap'),
+      aside     : $('tools'),
+      footer    : $('footer'),
+      workarea  : $('workarea'),
+      container : $('container'),
+      image     : $('img-display')/* TODO: ,
+      drawarea  : $('draw-area')*/
+    };
+
+    const states = {
+        OPEN      : 'open',
+        READY     : 'ready',
+        DRAGGING  : 'dragging',
+        DRAWING   : 'drawing',
+        SELECTING : 'selecting',
+        SELECTED  : 'selected',
+        MOVING    : 'moving',
+        MOVED     : 'moved',
+        EDITING   : 'editing',
+        EDITED    : 'edited'
+      };
+
+    var context = {
+      mode : 'new',
+      state : states.OPEN,
+      offset : { x : 0, y : 0 }
+    };
+
+    function addWel(t, f) {
+      doms.workarea.addEventListener(t, f, false);
+    }
+
+    function rmWel(t, f) {
+      doms.workarea.removeEventListener(t, f, false);
+    }
+
+    // VIEWPORT COMPUTATION 
+    // Workarea elements size and coordinate offsets.
+
+    var viewport = (function() {
+
+      return {
+
+        setWorkingDims : function(w,h) {
+//          doms.drawarea.setAttribute('width', w);
+//          doms.drawarea.setAttribute('height', h);
+          doms.container.style.width = w + 'px';
+          doms.container.style.height = h + 'px';
+          return this;
+        },
+
+        setViewDims : function() {
+          var fc = doms.footer.getBoundingClientRect(),
+              ac = doms.aside.getBoundingClientRect(),
+              wc = doms.wks.getBoundingClientRect();
+          var width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5),
+              height = Math.floor(fc.top - wc.top - 5);
+          doms.workarea.style.width = width + 'px';
+          doms.workarea.style.height = height + 'px';
+          return this;
+        },
+
+        resize : function() {
+          this.setViewDims()
+              .computeOffset();
+          return this;
+        },
+
+        computeOffset : function() {
+          var coords = doms.container.getBoundingClientRect();
+          context.offset.x = Math.round(coords.left + window.pageXOffset);
+          context.offset.y = Math.round(coords.top + window.pageYOffset);
+          return this;
+        },
+
+        computeCoords : function(x, y) {
+          return {
+            x : x - context.offset.x,
+            y : y - context.offset.y
+          };
+        },
+
+        isPointerInImage : function(x, y) {
+          var coords = this.computeCoords(x, y);
+          return (0 > coords.x || doms.image.width < coords.x || 0 > coords.y || doms.image.height < coords.y) ? false : true;
+        }
+
+      };
+
+    })(); // viewport
+
+    // COORDINATE TRACKER
+    // Images coordinates are set when moving within workarea.
+
+    var coordTracker = (function() {
+
+      var enabled = false;
+
+      function onWorkareaMove(e) {
+        console.log('state : ' + context.state);
+        e.preventDefault();
+        ftr.coords.set(viewport.computeCoords(e.pageX, e.pageY));
+      }
+
+      function onWorkareaLeave(e) {
+        e.preventDefault();
+        ftr.coords.clear();
+      }
+
+      return {
+        enable : function() {
+          if (enabled) return;
+          addWel('mousemove', onWorkareaMove);
+          addWel('mouseleave', onWorkareaLeave);
+          enabled = true;
+        },
+        disable : function() {
+          if (!enabled) return;
+          rmWel('mousemove', onWorkareaMove);
+          rmWel('mouseleave', onWorkareaLeave);
+          enabled = false;
+        }
+      };
+
+    })(); // coordTracker
+
+    function hide(obj) {
+      obj.style.display = 'none';
+    }
+
+    function show(obj) {
+      obj.style.display = 'block';
+    }
+
+    function onLoadImage() {
+      ftr.loading.hide();
+      show(doms.aside);
+      show(doms.workarea);
+      viewport.setWorkingDims(doms.image.width, doms.image.height)
+              .resize();
+      context.state = states.READY;
+      coordTracker.enable();
+/*      imageDragger.enable();
+      areaDrawer.enable();
+      areaMover.enable();
+      areaEditor.enable();
+      areaSelector.enable();*/
+    }
+
+    return {
+
+      init : function() {
+        addWel('scroll', function(e) { viewport.computeOffset(); }, false );
+        window.addEventListener('resize', function(e) { viewport.resize(); }, false);
+        return this;
+      },
+
+      reset : function() {
+        coordTracker.disable();
+/*        imageDragger.disable();
+        areaDrawer.disable();
+        areaMover.disable();
+        areaEditor.disable();
+        areaSelector.disable();*/
+        doms.image.src = '';
+        hide(doms.workarea);
+        hide(doms.aside);
+        context.mode = 'new';
+      },
+
+      load : function(f) {
+        ftr.loading.show();
+        doms.image.onload = onLoadImage;
+        doms.image.src = window.URL.createObjectURL(f);
+        return this;
+      }
+
+    };
+
+  })(); /* wks */
+
+  /*
    * FOOTER DISPLAY MANAGEMENT
    */
 
   var ftr = (function() {
 
-    var context = {
-      doms : null
-    }
+    var doms = {
+      info : $('selected-file'),
+      cursor : $('coordinates'),
+      load : $('load-indicator')
+    };
 
     var coords = (function() {
       return {
-        set : function(ci) { context.doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y; },
-        clear : function() { context.doms.cursor.innerHTML = ''; }
+        set : function(ci) { doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y; },
+        clear : function() { doms.cursor.innerHTML = ''; }
       };
     })();
 
     var loading = (function() {
       return {
-        show : function() { context.doms.load.style.display = 'inline'; },
-        hide : function() { context.doms.load.style.display = 'none'; }
+        show : function() { doms.load.style.display = 'inline'; },
+        hide : function() { doms.load.style.display = 'none'; }
       };
     })();
 
     function clear() {
-      while(context.doms.info.firstChild) {
-        context.doms.info.removeChild(context.doms.info.firstChild);
+      while(doms.info.firstChild) {
+        doms.info.removeChild(doms.info.firstChild);
       }
-      context.doms.info.classList.remove('error');
+      doms.info.classList.remove('error');
       return this;
     }
 
     return {
 
-      init : function(objs) {
-        context.doms = objs;
-      },
-
       reset : function() {
         clear();
         var info = document.createElement('p');
         info.textContent = 'No image file selected';
-        context.doms.info.appendChild(info);
+        doms.info.appendChild(info);
         return this;
       },
 
@@ -148,8 +334,8 @@ var bit = (function() {
         clear();
         var info = document.createElement('p');
         info.textContent = 'No image file selected - ' + ((f == null) ? 'Too many files selected' : ( 'Selected file is not an image file: ' + f.name ));
-        context.doms.info.classList.add('error');
-        context.doms.info.appendChild(info);
+        doms.info.classList.add('error');
+        doms.info.appendChild(info);
         return this;
       },
 
@@ -163,8 +349,8 @@ var bit = (function() {
         info.innerHTML = output.join(''); 
         var image = document.createElement('img');
         image.src = window.URL.createObjectURL(f);
-        context.doms.info.appendChild(image);
-        context.doms.info.appendChild(info);
+        doms.info.appendChild(image);
+        doms.info.appendChild(info);
         return this;
       },
 
@@ -180,9 +366,14 @@ var bit = (function() {
    */
 
   var mnu = (function() {
-    
-    var context = {
-      doms : null,
+
+    var doms = {
+      newProjectBtn : $('new-project'),
+      fileDropZone : $('file-drop-zone'),
+      loadFileLbl : $('load-file-lbl'),
+      loadFileInput : $('load-file')
+    },
+    context = {
       handlers : null
     };
 
@@ -222,33 +413,32 @@ var bit = (function() {
     
     return {
 
-      init : function(objs, handlers) {
-        context.doms = objs;
+      init : function(handlers) {
         context.handlers = handlers;
-        context.doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
-        context.doms.fileDropZone.draggable = true;
-        context.doms.fileDropZone.addEventListener('dragover', onFileDragOver, false);
-        context.doms.fileDropZone.addEventListener('dragleave', onFileDragLeave, false);
-        context.doms.fileDropZone.addEventListener('drop', onFileDrop, false);
-        context.doms.loadFileInput.addEventListener('change', onLoadFileInputChange, false);
+        doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
+        doms.fileDropZone.draggable = true;
+        doms.fileDropZone.addEventListener('dragover', onFileDragOver, false);
+        doms.fileDropZone.addEventListener('dragleave', onFileDragLeave, false);
+        doms.fileDropZone.addEventListener('drop', onFileDrop, false);
+        doms.loadFileInput.addEventListener('change', onLoadFileInputChange, false);
         return this.reset();
       },
 
       reset : function() {
-        context.doms.loadFileInput.style.opacity = '0';
-        context.doms.loadFileInput.style.position = 'fixed';
-        context.doms.loadFileInput.style.top = '-100em';
-        context.doms.loadFileInput.value = '';
-        show(context.doms.loadFileInput);
-        show(context.doms.loadFileLbl);
-        show(context.doms.fileDropZone);
+        doms.loadFileInput.style.opacity = '0';
+        doms.loadFileInput.style.position = 'fixed';
+        doms.loadFileInput.style.top = '-100em';
+        doms.loadFileInput.value = '';
+        show(doms.loadFileInput);
+        show(doms.loadFileLbl);
+        show(doms.fileDropZone);
         return this;
       },
 
       switchToEditMode : function() {
-        hide(context.doms.fileDropZone)
-        hide(context.doms.loadFileInput)
-        hide(context.doms.loadFileLbl)
+        hide(doms.fileDropZone)
+        hide(doms.loadFileInput)
+        hide(doms.loadFileLbl)
         return this;
       }
 
@@ -263,15 +453,7 @@ var bit = (function() {
   var app = (function() {
 
     var doms = {
-      // Header
-      newProjectBtn : $('new-project'),
-      fileDropZone : $('file-drop-zone'),
-      loadFileLbl : $('load-file-lbl'),
-      loadFileInput : $('load-file'),
-      // Footer
-      info : $('selected-file'),
-      cursor : $('coordinates'),
-      load : $('load-indicator')
+      fileDropZone : $('file-drop-zone')
     },
 
     mnuHandlers = {
@@ -279,7 +461,7 @@ var bit = (function() {
       onNewProject : function() {
         if (!mdl.isModified() || confirm('Discard all changes?')) {
           ftr.reset();
-//          wks.reset();
+          wks.reset();
 //          tls.reset();
           mnu.reset();
           mdl.reset();
@@ -295,11 +477,12 @@ var bit = (function() {
         } else if (mdl.setFile(selFile)) {
           mnu.switchToEditMode();
           ftr.info(selFile);
-//          wks.load(selFile);
+          wks.load(selFile);
         } else {
           ftr.error(selFile);
         }
       }
+
     }
 
     function preventWindowDrop(e) {
@@ -314,8 +497,7 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
-    ftr.init(doms);
-    mnu.init(doms, mnuHandlers);
+    mnu.init(mnuHandlers);
 
   })(); /* app */
 
