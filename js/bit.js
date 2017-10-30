@@ -99,6 +99,83 @@ var bit = (function() {
   })(); /* mdl */
 
   /*
+   * FOOTER DISPLAY MANAGEMENT
+   */
+
+  var ftr = (function() {
+
+    var context = {
+      doms : null
+    }
+
+    var coords = (function() {
+      return {
+        set : function(ci) { context.doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y; },
+        clear : function() { context.doms.cursor.innerHTML = ''; }
+      };
+    })();
+
+    var loading = (function() {
+      return {
+        show : function() { context.doms.load.style.display = 'inline'; },
+        hide : function() { context.doms.load.style.display = 'none'; }
+      };
+    })();
+
+    function clear() {
+      while(context.doms.info.firstChild) {
+        context.doms.info.removeChild(context.doms.info.firstChild);
+      }
+      context.doms.info.classList.remove('error');
+      return this;
+    }
+
+    return {
+
+      init : function(objs) {
+        context.doms = objs;
+      },
+
+      reset : function() {
+        clear();
+        var info = document.createElement('p');
+        info.textContent = 'No image file selected';
+        context.doms.info.appendChild(info);
+        return this;
+      },
+
+      error : function(f) {
+        clear();
+        var info = document.createElement('p');
+        info.textContent = 'No image file selected - ' + ((f == null) ? 'Too many files selected' : ( 'Selected file is not an image file: ' + f.name ));
+        context.doms.info.classList.add('error');
+        context.doms.info.appendChild(info);
+        return this;
+      },
+
+      info : function(f) {
+        clear();
+        var output = [];
+        output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+            f.size, ' bytes, last modified: ',
+            f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a');      
+        var info = document.createElement('p');
+        info.innerHTML = output.join(''); 
+        var image = document.createElement('img');
+        image.src = window.URL.createObjectURL(f);
+        context.doms.info.appendChild(image);
+        context.doms.info.appendChild(info);
+        return this;
+      },
+
+      coords,
+      loading
+
+    };
+
+  })(); /* ftr */
+  
+  /*
    * MENU MANAGEMENT
    */
 
@@ -186,16 +263,22 @@ var bit = (function() {
   var app = (function() {
 
     var doms = {
-        newProjectBtn : $('new-project'),
-        fileDropZone : $('file-drop-zone'),
-        loadFileLbl : $('load-file-lbl'),
-        loadFileInput : $('load-file')
+      // Header
+      newProjectBtn : $('new-project'),
+      fileDropZone : $('file-drop-zone'),
+      loadFileLbl : $('load-file-lbl'),
+      loadFileInput : $('load-file'),
+      // Footer
+      info : $('selected-file'),
+      cursor : $('coordinates'),
+      load : $('load-indicator')
     },
+
     mnuHandlers = {
 
       onNewProject : function() {
         if (!mdl.isModified() || confirm('Discard all changes?')) {
-//          ftr.reset();
+          ftr.reset();
 //          wks.reset();
 //          tls.reset();
           mnu.reset();
@@ -206,15 +289,15 @@ var bit = (function() {
       onNewFiles : function(files) {
         var selFile = files[0];
         if (0 === files.length) {
-//          ftr.reset();
+          ftr.reset();
         } else if (1 < files.length) {
-//          ftr.error(null);
+          ftr.error(null);
         } else if (mdl.setFile(selFile)) {
           mnu.switchToEditMode();
-//          ftr.info(selFile);
+          ftr.info(selFile);
 //          wks.load(selFile);
         } else {
-//          ftr.error(selFile);
+          ftr.error(selFile);
         }
       }
     }
@@ -231,6 +314,7 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
+    ftr.init(doms);
     mnu.init(doms, mnuHandlers);
 
   })(); /* app */
