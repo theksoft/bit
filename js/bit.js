@@ -8,6 +8,32 @@ var bit = (function() {
 
   function $(s) { return document.getElementById(s); }
 
+  var utils = (function() {
+
+    const clsActions = {
+      DRAGGING      : 'dragging',
+      DRAWING       : 'drawing',
+      TRACKING      : 'tracking',
+      MOVING        : 'moving',
+      EDITING       : 'editing'
+    };
+
+    return {
+
+      leftButton : function(e) {
+        return (0 !== e.buttons && 0 === e.button) ? true : false;
+      },
+
+      ctrlKey : function(e) {
+        return (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false;
+      },
+
+      clsActions
+
+    };
+
+  })();
+  
   /*
    * MODEL
    */
@@ -141,6 +167,10 @@ var bit = (function() {
       doms.workarea.removeEventListener(t, f, false);
     }
 
+    function ready() {
+      return (states.READY === context.state) ? true : false;
+    }
+
     // VIEWPORT COMPUTATION 
     // Workarea elements size and coordinate offsets.
 
@@ -189,7 +219,7 @@ var bit = (function() {
 
         isPointerInImage : function(x, y) {
           var coords = this.computeCoords(x, y);
-          return (0 > coords.x || doms.image.width < coords.x || 0 > coords.y || doms.image.height < coords.y) ? false : true;
+          return (0 > coords.x || 0 > coords.y || doms.image.width < coords.x || doms.image.height < coords.y) ? false : true;
         }
 
       };
@@ -231,6 +261,82 @@ var bit = (function() {
 
     })(); // coordTracker
 
+    /*
+     * BACKGROUND IMAGE DRAGGER
+     * 
+     * Dragging start with a mouse down on image and CTRL key
+     * Dragging is active as long as the pointer is in the workarea and button is down
+     * Dragging stop on mouse up or if a move w/o buttons down is caught
+     * 
+     * Dragging move and top listeners are installed only if a dragging is started.
+     */
+
+    var imageDragger = (function() {
+
+      var enabled = false;
+
+      function enter() {
+        doms.workarea.classList.add(utils.clsActions.DRAGGING);
+        addWel('mouseup', onImageDragStop);
+        addWel('mousemove', onImageDragMove);
+//        tls.freeze();
+        context.state = states.DRAGGING;
+      } 
+
+      function exit() {
+        doms.workarea.classList.remove(utils.clsActions.DRAGGING);
+        rmWel('mouseup', onImageDragStop);
+        rmWel('mousemove', onImageDragMove);
+//        tls.release();
+        context.state = states.READY;
+      }
+
+      function move(dx, dy) {
+        doms.workarea.scrollLeft -= dx;
+        doms.workarea.scrollTop  -= dy;
+      }
+
+      function onImageDragStart(e) {
+        e.preventDefault();
+//        if (tls.modes.NONE !== tls.getDrawingMode()) return;
+//        if (app.areas.select.isAreaTargeted(e.target)) return;
+        if (ready() && utils.leftButton(e) && utils.ctrlKey(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
+          enter();
+        }
+      }
+
+      function onImageDragStop(e) {
+        e.preventDefault();
+        exit();
+      }
+
+      function onImageDragMove(e) {
+        e.preventDefault();
+        if (!utils.leftButton(e) || !utils.ctrlKey(e)) {
+          exit();
+        } else {
+          move(e.movementX, e.movementY);
+        }
+      }
+
+      return {
+        enable : function() {
+          if (enabled) return;
+          addWel('mousedown', onImageDragStart);
+          enabled = true;
+        },
+        disable : function() {
+          if (!enabled) return;
+          if (states.DRAGGING == context.state) {
+            exit();
+          }
+          rmWel('mousedown', onImageDragStart);
+          enabled = false;
+        }
+      };
+
+    })(); // imageDragger
+
     function hide(obj) {
       obj.style.display = 'none';
     }
@@ -247,8 +353,8 @@ var bit = (function() {
               .resize();
       context.state = states.READY;
       coordTracker.enable();
-/*      imageDragger.enable();
-      areaDrawer.enable();
+      imageDragger.enable();
+/*      areaDrawer.enable();
       areaMover.enable();
       areaEditor.enable();
       areaSelector.enable();*/
@@ -264,8 +370,8 @@ var bit = (function() {
 
       reset : function() {
         coordTracker.disable();
-/*        imageDragger.disable();
-        areaDrawer.disable();
+        imageDragger.disable();
+/*        areaDrawer.disable();
         areaMover.disable();
         areaEditor.disable();
         areaSelector.disable();*/
