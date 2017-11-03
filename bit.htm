@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Boardgame Image Tool</title>
   <link href="css/bit.css" type="text/css" rel="stylesheet" />
+  <link href="css/bitsvg.css" type="text/css" rel="stylesheet" />
   <!--
     Boardgame dedicated image tool (BIT)
     Copyright 2017 Herve Retaureau
@@ -26,6 +27,7 @@
         <div id=workarea>
           <div id="container">
             <img src="" alt="#" id="img-display" />
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" id="draw-area"></svg>
           </div>
         </div>
       </section>
@@ -77,6 +79,7 @@
       <div id="coordinates"></div>
     </footer>
   </div>
+  <script type="text/javascript" src="js/bitarea.js"></script>
   <script type="text/javascript" src="js/bit.js"></script>
 </body>
 </html>

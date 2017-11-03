@@ -162,8 +162,8 @@ var bit = (function() {
       footer    : $('footer'),
       workarea  : $('workarea'),
       container : $('container'),
-      image     : $('img-display')/* TODO: ,
-      drawarea  : $('draw-area')*/
+      image     : $('img-display'),
+      drawarea  : $('draw-area')
     };
 
     const states = {
@@ -198,9 +198,9 @@ var bit = (function() {
     }
 
     function preventImageDragger(e) {
-      if (!tls.none()) return false;
+      if (!tls.none()) return true;
 //    if (app.areas.select.isAreaTargeted(e.target)) return;
-      return true;
+      return false;
     }
 
     // VIEWPORT COMPUTATION 
@@ -211,8 +211,8 @@ var bit = (function() {
       return {
 
         setWorkingDims : function(w,h) {
-//          doms.drawarea.setAttribute('width', w);
-//          doms.drawarea.setAttribute('height', h);
+          doms.drawarea.setAttribute('width', w);
+          doms.drawarea.setAttribute('height', h);
           doms.container.style.width = w + 'px';
           doms.container.style.height = h + 'px';
           return this;
