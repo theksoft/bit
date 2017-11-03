@@ -197,6 +197,48 @@ ul, ol {
   z-index: 1;
 }
 
+/* TOOLS ELEMENTS */
+
+#tools {
+  display: none;
+  background-color: #000;
+  color: #ccc;
+}
+
+#tools div {
+  margin: 5px;
+}
+
+#tools img {
+  background-color: #ccc;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  padding: 0px 3px;
+  margin: 4px 4px 1px;
+}
+
+#tools img.selected {
+  background-color: #e8ffdd;
+  border: 2px solid #008000;
+}
+
+#tools img.disabled,
+#tools img.on.disabled,
+#tools img.off.disabled {
+  background-color: #222;
+  border: 2px solid #888;
+}
+
+#tools img.on {
+  background-color: #eaeaff;
+  border: 2px solid #9999ff;
+}
+
+#tools img.off {
+  background-color: #fff1ea;
+  border: 2px solid #ffba99;
+}
+
 /* FOOTER ELEMENTS */
 
 #footer {

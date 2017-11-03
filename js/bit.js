@@ -10,12 +10,37 @@ var bit = (function() {
 
   var utils = (function() {
 
+    const fgTypes = {
+      NONE          : 'none',
+      HEXDTR        : 'hexDtr',
+      HEXRCT        : 'hexRct',
+      RECTANGLE     : 'rectangle',
+      SQUARE        : 'square',
+      RHOMBUS       : 'rhombus',
+      TRIANGLEEQL   : 'triangleEql',
+      TRIANGLEISC   : 'triangleIsc',
+      TRIANGLERCT   : 'triangleRct',
+      ELLIPSE       : 'ellipse',
+      CIRCLEDTR     : 'circleDtr',
+      CIRCLECTR     : 'circleCtr',
+      POLYGON       : 'polygon',
+      HEXDTRGRID    : 'hexDtrGrid',
+      RECTANGLEGRID : 'rectangleGrid',
+      CIRCLEDTRGRID : 'circleDtrGrid'
+    };
+
     const clsActions = {
       DRAGGING      : 'dragging',
       DRAWING       : 'drawing',
       TRACKING      : 'tracking',
       MOVING        : 'moving',
       EDITING       : 'editing'
+    };
+
+    const clsStatus = {
+      DISABLED      : 'disabled',
+      SELECTED      : 'selected',
+      HIGHLIGHTED   : 'highlighted'
     };
 
     return {
@@ -28,14 +53,15 @@ var bit = (function() {
         return (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false;
       },
 
-      clsActions
+      fgTypes,
+      clsActions, clsStatus
 
     };
 
   })();
   
   /*
-   * MODEL
+   * DATA MODEL MANAGEMENT
    */
 
   var mdl = (function() {
@@ -168,7 +194,13 @@ var bit = (function() {
     }
 
     function ready() {
-      return (states.READY === context.state) ? true : false;
+      return states.READY === context.state ? true : false;
+    }
+
+    function preventImageDragger(e) {
+      if (!tls.none()) return false;
+//    if (app.areas.select.isAreaTargeted(e.target)) return;
+      return true;
     }
 
     // VIEWPORT COMPUTATION 
@@ -279,7 +311,7 @@ var bit = (function() {
         doms.workarea.classList.add(utils.clsActions.DRAGGING);
         addWel('mouseup', onImageDragStop);
         addWel('mousemove', onImageDragMove);
-//        tls.freeze();
+        tls.freeze();
         context.state = states.DRAGGING;
       } 
 
@@ -287,7 +319,7 @@ var bit = (function() {
         doms.workarea.classList.remove(utils.clsActions.DRAGGING);
         rmWel('mouseup', onImageDragStop);
         rmWel('mousemove', onImageDragMove);
-//        tls.release();
+        tls.release();
         context.state = states.READY;
       }
 
@@ -298,8 +330,7 @@ var bit = (function() {
 
       function onImageDragStart(e) {
         e.preventDefault();
-//        if (tls.modes.NONE !== tls.getDrawingMode()) return;
-//        if (app.areas.select.isAreaTargeted(e.target)) return;
+        if (preventImageDragger()) return;
         if (ready() && utils.leftButton(e) && utils.ctrlKey(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
           enter();
         }
@@ -391,6 +422,310 @@ var bit = (function() {
     };
 
   })(); /* wks */
+
+  /*
+   * TOOLS PALETTE MANAGEMENT 
+   */
+
+  var tls = (function() {
+
+    const doms = {
+        btnHexDtr         : $('hex-d'),
+        btnHexRct         : $('hex-r'),
+        btnRectangle      : $('rectangle'),
+        btnSquare         : $('square'),
+        btnRhombus        : $('rhombus'),
+        btnTriangleEql    : $('triangle-e'),
+        btnTriangleIsc    : $('triangle-i'),
+        btnTriangleRct    : $('triangle-r'),
+        btnEllipse        : $('ellipse'),
+        btnCircleDtr      : $('circle-d'),
+        btnCircleCtr      : $('circle-c'),
+        btnPolygon        : $('polygon'),
+
+        btnHexDtrGrid     : $('hex-d-grid'),
+        btnRectangleGrid  : $('rectangle-grid'),
+        btnCircleDtrGrid  : $('circle-d-grid'),
+
+        btnInnerGridScope : $('grid-scope-inner'),
+        btnOuterGridScope : $('grid-scope-outer'),
+        btnStdGridAlign   : $('grid-algn-std'),
+        btnAltGridAlign   : $('grid-algn-alt')
+    };
+
+    const modes = utils.fgTypes;
+
+    var context = {
+        selected : null,
+        mode : modes.NONE,
+        allowGrid : false,
+        freezed : true
+    };
+
+    function setDrawingMode() {
+      switch(context.selected) {
+      case doms.btnHexDtr:
+        context.mode = modes.HEXDTR;
+        break;
+      case doms.btnHexRct:
+        context.mode = modes.HEXRCT;
+        break;
+      case doms.btnRectangle:
+        context.mode = modes.RECTANGLE;
+        break;
+      case doms.btnSquare:
+        context.mode = modes.SQUARE;
+        break;
+      case doms.btnRhombus:
+        context.mode = modes.RHOMBUS;
+        break;
+      case doms.btnTriangleEql:
+        context.mode = modes.TRIANGLEEQL;
+        break;
+      case doms.btnTriangleIsc:
+        context.mode = modes.TRIANGLEISC;
+        break;
+      case doms.btnTriangleRct:
+        context.mode = modes.TRIANGLERCT;
+        break;
+      case doms.btnEllipse:
+        context.mode = modes.ELLIPSE;
+        break;
+      case doms.btnCircleDtr:
+        context.mode = modes.CIRCLEDTR;
+        break;
+      case doms.btnCircleCtr:
+        context.mode = modes.CIRCLECTR;
+        break;
+      case doms.btnPolygon:
+        context.mode = modes.POLYGON;
+        break;
+// TODO: Change this!
+      case doms.btnHexDtrGrid:
+        context.mode = modes.HEXDTRGRID;
+        break;
+      case doms.btnRectangleGrid:
+        context.mode = modes.RECTANGLEGRID;
+        break;
+      case doms.btnCircleDtrGrid:
+        context.mode = modes.CIRCLEDTRGRID;
+        break;
+
+      default:
+        context.mode = modes.NONE;
+      }
+    }
+// TODO: Change this!
+    function isGridDrawingModeSelected() {
+      let rtn = false;
+      switch(context.selected) {
+      case doms.btnHexDtrGrid:
+      case doms.btnRectangleGrid:
+      case doms.btnCircleDtrGrid:
+        rtn = true;
+        break;
+      default:
+      }
+      return rtn;
+    }
+
+    function select(obj) {
+      if (null != obj) {
+        obj.classList.add(utils.clsStatus.SELECTED);
+      }
+      context.selected = obj;
+    }
+
+    function unselect(obj) {
+      if (obj != null) {
+        obj.classList.remove(utils.clsStatus.SELECTED);
+      }
+      context.selected = null;
+    }
+
+    function toggleSelect(obj) {
+      var sel = (context.selected === obj) ? false : true;
+      unselect(context.selected);
+      if (sel) { select(obj); }
+    }
+
+    function toggleState(objFrom, objTo) {
+      objFrom.style.display = 'none';
+      objTo.style.display = 'inline';
+    }
+
+    function onDrawModeSelect(evt) {
+      evt.preventDefault();
+      toggleSelect(evt.target);
+      setDrawingMode();
+    }
+
+    function onDrawGridModeSelect(evt) {
+      evt.preventDefault();
+      if(context.allowGrid) {
+        toggleSelect(evt.target);
+        setDrawingMode();
+      }
+    }
+
+    function onDrawGridScopeSelect(evt) {
+      evt.preventDefault();
+      if(context.allowGrid) {
+        if (evt.target === doms.btnInnerGridScope) {
+          toggleState(doms.btnInnerGridScope, doms.btnOuterGridScope);
+        } else {
+          toggleState(doms.btnOuterGridScope, doms.btnInnerGridScope);
+        }
+      }
+    }
+
+    function onDrawGridAlignSelect(evt) {
+      evt.preventDefault();
+      if(context.allowGrid) {
+        if (evt.target === doms.btnStdGridAlign) {
+          toggleState(doms.btnStdGridAlign, doms.btnAltGridAlign);
+        } else {
+          toggleState(doms.btnAltGridAlign, doms.btnStdGridAlign);
+        }
+      }
+    }
+
+    function canGrid(obj) {
+      let rtn = true;
+      switch(obj.type) {
+      case utils.fgTypes.NONE:
+      case utils.fgTypes.HEXDTRGRID:
+      case utils.fgTypes.RECTANGLEGRID:
+      case utils.fgTypes.CIRCLEDTRGRID:
+      case utils.fgTypes.POLYGON:
+        rtn = false;
+        break;
+      default:
+      }
+      return rtn;
+    }
+
+    function gridEnable() {
+      doms.btnHexDtrGrid.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnRectangleGrid.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnCircleDtrGrid.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnInnerGridScope.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnOuterGridScope.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnStdGridAlign.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnAltGridAlign.classList.remove(utils.clsStatus.DISABLED);
+    }
+
+    function gridDisable() {
+      doms.btnHexDtrGrid.classList.add(utils.clsStatus.DISABLED);
+      doms.btnRectangleGrid.classList.add(utils.clsStatus.DISABLED);
+      doms.btnCircleDtrGrid.classList.add(utils.clsStatus.DISABLED);
+      doms.btnInnerGridScope.classList.add(utils.clsStatus.DISABLED);
+      doms.btnOuterGridScope.classList.add(utils.clsStatus.DISABLED);
+      doms.btnStdGridAlign.classList.add(utils.clsStatus.DISABLED);
+      doms.btnAltGridAlign.classList.add(utils.clsStatus.DISABLED);
+    }
+
+    return {
+
+      init : function() {
+        this.release();
+      },
+
+      reset : function() {
+        toggleSelect(null);
+        gridDisable();
+        context.mode = modes.NONE;
+        this.release();
+      },
+
+      getDrawingMode : function() {
+        return context.mode;
+      },
+      
+      none : function() {
+        return modes.NONE === context.mode ? true : false;
+      },
+
+      freeze : function() {
+        if (context.freezed) return;
+        doms.btnHexDtr.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnHexRct.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnRectangle.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnSquare.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnRhombus.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnTriangleEql.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnTriangleIsc.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnTriangleRct.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnEllipse.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnCircleDtr.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnCircleCtr.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnPolygon.removeEventListener('click', onDrawModeSelect, false);
+        doms.btnHexDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
+        doms.btnRectangleGrid.removeEventListener('click', onDrawGridModeSelect, false);
+        doms.btnCircleDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
+        doms.btnInnerGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
+        doms.btnOuterGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
+        doms.btnStdGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
+        doms.btnAltGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
+        context.freezed = true;
+      },
+
+      release : function() {
+        if (!context.freezed) return;
+        doms.btnHexDtr.addEventListener('click', onDrawModeSelect, false);
+        doms.btnHexRct.addEventListener('click', onDrawModeSelect, false);
+        doms.btnRectangle.addEventListener('click', onDrawModeSelect, false);
+        doms.btnSquare.addEventListener('click', onDrawModeSelect, false);
+        doms.btnRhombus.addEventListener('click', onDrawModeSelect, false);
+        doms.btnTriangleEql.addEventListener('click', onDrawModeSelect, false);
+        doms.btnTriangleIsc.addEventListener('click', onDrawModeSelect, false);
+        doms.btnTriangleRct.addEventListener('click', onDrawModeSelect, false);
+        doms.btnEllipse.addEventListener('click', onDrawModeSelect, false);
+        doms.btnCircleDtr.addEventListener('click', onDrawModeSelect, false);
+        doms.btnCircleCtr.addEventListener('click', onDrawModeSelect, false);
+        doms.btnPolygon.addEventListener('click', onDrawModeSelect, false);
+        doms.btnHexDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnRectangleGrid.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnCircleDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnInnerGridScope.addEventListener('click', onDrawGridScopeSelect, false);
+        doms.btnOuterGridScope.addEventListener('click', onDrawGridScopeSelect, false);
+        doms.btnStdGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
+        doms.btnAltGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
+        context.freezed = false;
+      },
+
+      isGridDrawingModeSelected,
+
+      enableGridMode : function(obj) {
+        if (!context.allowGrid && canGrid(obj)) {
+          gridEnable();
+          context.allowGrid = true;
+        } else if (context.allowGrid && !canGrid(obj)) {
+          if (isGridDrawingModeSelected()) {
+            toggleSelect(null);
+            context.mode = modes.NONE;
+          }
+          gridDisable();
+          context.allowGrid = false;
+        }
+      },
+
+      disableGridMode : function() {
+        if (context.allowGrid) {
+          if (isGridDrawingModeSelected()) {
+            toggleSelect(null);
+            context.mode = modes.NONE;
+          }
+          gridDisable();
+          context.allowGrid = false;
+        }
+      },
+
+      modes
+
+    };
+
+  })(); /* tools */
 
   /*
    * FOOTER DISPLAY MANAGEMENT
@@ -568,7 +903,7 @@ var bit = (function() {
         if (!mdl.isModified() || confirm('Discard all changes?')) {
           ftr.reset();
           wks.reset();
-//          tls.reset();
+          tls.reset();
           mnu.reset();
           mdl.reset();
         }
@@ -604,6 +939,8 @@ var bit = (function() {
     window.addEventListener("drop", preventWindowDrop);
 
     mnu.init(mnuHandlers);
+    wks.init();
+    tls.init();
 
   })(); /* app */
 
