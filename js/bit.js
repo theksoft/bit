@@ -10,6 +10,15 @@ var bit = (function() {
 
   var utils = (function() {
 
+    const keyCodes = {
+      ESC   : 27,
+      DEL   : 46,
+      LEFT  : 37,
+      UP    : 38,
+      RIGHT : 39,
+      DOWN  : 40
+    };
+      
     const fgTypes = {
       NONE          : 'none',
       HEXDTR        : 'hexDtr',
@@ -46,14 +55,22 @@ var bit = (function() {
     return {
 
       leftButton : function(e) {
-        return (0 !== e.buttons && 0 === e.button) ? true : false;
+        return (0 === e.button) ? true : false;
+      },
+
+      leftButtonHeld : function(e) {
+        return Math.floor(e.buttons/2)*2 !== e.buttons ? true : false;
+      },
+
+      noKey : function(e) {
+        return (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false;
       },
 
       ctrlKey : function(e) {
         return (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false;
       },
 
-      fgTypes,
+      keyCodes, fgTypes,
       clsActions, clsStatus
 
     };
@@ -70,8 +87,8 @@ var bit = (function() {
         context = {
           mode : 'new',
           modified : false,
-          filename : ''/* TODO:,
-          areas : []*/
+          filename : '',
+          areas : []
         };
     
     function validateImgFile(f) {
@@ -92,12 +109,10 @@ var bit = (function() {
       reset : function() {
         context.filename = '';
         context.modified = false;
-/* TODO:
         context.areas.forEach(function(area) {
           area.remove();
         });
         context.areas.splice(0, context.areas.length);
-*/
         return this;
       },
 
@@ -109,12 +124,13 @@ var bit = (function() {
         }
         return false;
       },
-/* TODO:
+
       addArea : function(area) {
         context.areas.push(area);
         context.modified = true;
       },
 
+/* TODO:
       removeArea : function(area) {
         if(-1 != context.areas.indexOf(area)) {
           let bonds = [];
@@ -182,7 +198,8 @@ var bit = (function() {
     var context = {
       mode : 'new',
       state : states.OPEN,
-      offset : { x : 0, y : 0 }
+      offset : { x : 0, y : 0 },
+      iDrg : null, aDrw : null
     };
 
     function addWel(t, f) {
@@ -195,12 +212,6 @@ var bit = (function() {
 
     function ready() {
       return states.READY === context.state ? true : false;
-    }
-
-    function preventImageDragger(e) {
-      if (!tls.none()) return true;
-//    if (app.areas.select.isAreaTargeted(e.target)) return;
-      return false;
     }
 
     // VIEWPORT COMPUTATION 
@@ -293,15 +304,11 @@ var bit = (function() {
 
     })(); // coordTracker
 
-    /*
-     * BACKGROUND IMAGE DRAGGER
-     * 
-     * Dragging start with a mouse down on image and CTRL key
-     * Dragging is active as long as the pointer is in the workarea and button is down
-     * Dragging stop on mouse up or if a move w/o buttons down is caught
-     * 
-     * Dragging move and top listeners are installed only if a dragging is started.
-     */
+    // BACKGROUND IMAGE DRAGGER
+    // Dragging start with a mouse down on image and CTRL key
+    // Dragging is active as long as the pointer is in the workarea and button is down
+    // Dragging stop on mouse up or if a move w/o buttons down is caught
+    // Dragging move and top listeners are installed only if an image drag is started.
 
     var imageDragger = (function() {
 
@@ -312,6 +319,10 @@ var bit = (function() {
         addWel('mouseup', onImageDragStop);
         addWel('mousemove', onImageDragMove);
         tls.freeze();
+        areaDrawer.disable();
+//      areaMover.disable();
+//      areaEditor.disable();
+//      areaSelector.disable();
         context.state = states.DRAGGING;
       } 
 
@@ -319,6 +330,10 @@ var bit = (function() {
         doms.workarea.classList.remove(utils.clsActions.DRAGGING);
         rmWel('mouseup', onImageDragStop);
         rmWel('mousemove', onImageDragMove);
+        areaDrawer.enable();
+//      areaMover.enable();
+//      areaEditor.enable();
+//      areaSelector.enable();
         tls.release();
         context.state = states.READY;
       }
@@ -330,7 +345,7 @@ var bit = (function() {
 
       function onImageDragStart(e) {
         e.preventDefault();
-        if (preventImageDragger()) return;
+        if (context.iDrg.prevent()) return;
         if (ready() && utils.leftButton(e) && utils.ctrlKey(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
           enter();
         }
@@ -343,7 +358,7 @@ var bit = (function() {
 
       function onImageDragMove(e) {
         e.preventDefault();
-        if (!utils.leftButton(e) || !utils.ctrlKey(e)) {
+        if (!utils.leftButtonHeld(e) || !utils.ctrlKey(e)) {
           exit();
         } else {
           move(e.movementX, e.movementY);
@@ -368,6 +383,92 @@ var bit = (function() {
 
     })(); // imageDragger
 
+    // AREA DRAWER MANAGEMENT
+    // Drawing start with a click on image
+    // Additional click add points to some drawing e.g. polygon
+    // Drawing stop on further click if drawer asserts it
+    // Drawing is canceled on ESC key pressed
+
+    var areaDrawer = (function () {
+
+      var enabled = false;
+
+      function enter() {
+        doms.drawarea.classList.add(utils.clsActions.DRAWING);
+        imageDragger.disable();
+//        areaMover.disable();
+//        areaEditor.disable();
+//        areaSelector.disable();
+        rmWel('click', onDrawStart);
+        addWel('click', onDrawEnd);
+        addWel('mousemove', onDrawProgress);
+        document.addEventListener('keydown', onDrawCancel);
+        context.state = states.DRAWING;
+      }
+
+      function exit() {
+        doms.drawarea.classList.remove(utils.clsActions.DRAWING);
+        imageDragger.enable();
+//        areaMover.enable();
+//        areaEditor.enable();
+//        areaSelector.enable();
+        rmWel('click', onDrawEnd);
+        rmWel('mousemove', onDrawProgress);
+        addWel('click', onDrawStart);
+        document.removeEventListener('keydown', onDrawCancel);
+        context.state = states.READY; // TODO: Edit data on selected area ? or edit in tools ?
+      }
+
+      function onDrawStart(e) {
+        e.preventDefault();
+        if (context.aDrw.prevent() || (e.ctrlKey || e.shiftKey)) return;
+        if (ready() && utils.leftButton(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
+          if (context.aDrw.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), e.altKey)) {
+            enter();
+          }
+        }
+      }
+
+      function onDrawProgress(e) {
+        e.preventDefault();
+        context.aDrw.onProgress(viewport.computeCoords(e.pageX, e.pageY));
+      }
+
+      function onDrawEnd(e) {
+        e.preventDefault();
+        if (!utils.leftButton(e)) return;
+        if (context.aDrw.onEnd(viewport.computeCoords(e.pageX, e.pageY))) {
+          exit();
+        }
+      }
+
+      function onDrawCancel(e) {
+        e.preventDefault();
+        if (utils.keyCodes.ESC === e.keyCode) {
+          context.aDrw.onCancel();
+          exit();
+        }
+      }
+
+      return {
+        enable : function() {
+          if (enabled) return;
+          addWel('click', onDrawStart);
+          enabled = true;
+        },
+        disable : function() {
+          if (!enabled) return;
+          if (states.DRAWING === context.state) {
+            context.aDrw.onCancel();
+            exit();
+          }
+          rmWel('click', onDrawStart);
+          enabled = false;
+        }
+      };
+
+    })(); // areaDrawer
+
     function hide(obj) {
       obj.style.display = 'none';
     }
@@ -385,15 +486,17 @@ var bit = (function() {
       context.state = states.READY;
       coordTracker.enable();
       imageDragger.enable();
-/*      areaDrawer.enable();
-      areaMover.enable();
+      areaDrawer.enable();
+/*      areaMover.enable();
       areaEditor.enable();
       areaSelector.enable();*/
     }
 
     return {
 
-      init : function() {
+      init : function(iDrgHandlers, aDrwHandlers) {
+        context.iDrg = iDrgHandlers;
+        context.aDrw = aDrwHandlers;
         addWel('scroll', function(e) { viewport.computeOffset(); }, false );
         window.addEventListener('resize', function(e) { viewport.resize(); }, false);
         return this;
@@ -402,8 +505,8 @@ var bit = (function() {
       reset : function() {
         coordTracker.disable();
         imageDragger.disable();
-/*        areaDrawer.disable();
-        areaMover.disable();
+        areaDrawer.disable();
+/*        areaMover.disable();
         areaEditor.disable();
         areaSelector.disable();*/
         doms.image.src = '';
@@ -924,7 +1027,94 @@ var bit = (function() {
         }
       }
 
-    }
+    },
+    
+    dragHandlers = {
+
+      prevent : function(e) {
+        if (!tls.none()) return true;
+//        if (app.areas.select.isAreaTargeted(e.target)) return;
+        return false;
+      }
+
+    };
+
+    var draw = (function() {
+
+      var factory = {
+        rectangle : bitgen.Rectangle
+      };
+
+      var generator = null;
+
+      function create(parent, alt) {
+        let figCtor = factory[tls.getDrawingMode()];
+        if (!figCtor) {
+          console.log('ERROR - Drawing mode not handled');
+          return null;
+        }
+        return new figCtor(parent, alt);
+      }
+
+      var handlers = {
+
+        prevent : function(e) {
+          if (tls.none()) return true;
+//          if (app.areas.select.isAreaTargeted(e.target)) return;
+        },
+
+        onStart : function(parent, pt, alt) {
+//          context.selected.empty();
+          generator = create(parent, alt);
+          if (null == generator) {
+            alert('Unable to draw selected area!');
+//            tls.disableGridMode();
+            return false;
+          }
+          tls.freeze();
+          generator.start(pt);
+          return true;
+        },
+
+        onProgress : function(pt) {
+          generator.progress(pt);
+        },
+
+        onEnd : function(pt) {
+          let complete = true;
+          switch(generator.end(pt)) {
+          case 'done':
+            mdl.addArea(generator.getFigure());
+//            context.selected.set(context.gen);
+            tls.release();
+//            tls.enableGridMode(context.gen);
+            generator = null;
+            break;
+          case 'error':
+            alert('Invalid area dimensions!');
+            tls.release();
+            break;
+          case 'continue':
+          default:
+            complete = false;
+          }
+          return complete;
+        },
+
+        onCancel : function() {
+          generator.cancel();
+          generator = null;
+          tls.release();
+//          tls.disableGridMode();
+        }
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
 
     function preventWindowDrop(e) {
       if (e.target.id != doms.fileDropZone) {
@@ -939,7 +1129,7 @@ var bit = (function() {
     window.addEventListener("drop", preventWindowDrop);
 
     mnu.init(mnuHandlers);
-    wks.init();
+    wks.init(dragHandlers, draw.handlers);
     tls.init();
 
   })(); /* app */
