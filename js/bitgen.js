@@ -6,6 +6,10 @@
 var bitgen = (function() {
   'use strict';
 
+  const clsTypes = {
+    TRACKER : 'tracker'
+  }
+
   // FIGURE GENERATOR
 
   class Figure {
@@ -89,8 +93,31 @@ var bitgen = (function() {
 
   } // RECTANGLE GENERATOR
 
+  /*
+   * TRACKER
+   */
+
+  class Tracker extends Rectangle {
+
+    constructor(parent, g) {
+      super(parent, g);
+      this.figure.addClass(clsTypes.TRACKER);
+    }
+    
+    progress(point) {
+      this.figure.setCoords(this.computeCoords(point));
+      this.figure.redraw();
+    }
+
+    getCoords() {
+      return this.figure.getCoords();
+    }
+
+  } //TRACKER
+
   return {
-    Rectangle
+    Rectangle,
+    Tracker
   }
 
 })(); /* bitgen */

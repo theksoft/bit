@@ -47,6 +47,10 @@ var bitarea = (function() {
       console.log('createSVGElt() not defined');
     }
 
+    getType() {
+      return this.type;
+    }
+
     equalCoords(coords) {
       console.log('equalCoords() not defined');
       return false;
@@ -79,6 +83,18 @@ var bitarea = (function() {
     within(coords) {
       console.log('within() not defined');
       return false;
+    }
+
+    addClass(clsName) {
+      if(this.dom) {
+        this.dom.classList.add(clsName);
+      }
+    }
+
+    removeClass(clsName) {
+      if(this.dom) {
+        this.dom.classList.remove(clsName);
+      }
     }
 
   } // FIGURE

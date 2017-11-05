@@ -46,12 +46,6 @@ var bit = (function() {
       EDITING       : 'editing'
     };
 
-    const clsStatus = {
-      DISABLED      : 'disabled',
-      SELECTED      : 'selected',
-      HIGHLIGHTED   : 'highlighted'
-    };
-
     return {
 
       leftButton : function(e) {
@@ -71,7 +65,7 @@ var bit = (function() {
       },
 
       keyCodes, fgTypes,
-      clsActions, clsStatus
+      clsActions
 
     };
 
@@ -151,17 +145,18 @@ var bit = (function() {
           context.modified = true;
         }
       },
+*/
 
       findArea : function(obj) {
         return context.areas.find(function(e) {
-          return e.check(obj);
+          return e.is(obj);
         });
       },
-      
+
       forEachArea(f) {
         context.areas.forEach(f);
       }
-*/
+
     };
 
   })(); /* mdl */
@@ -199,7 +194,7 @@ var bit = (function() {
       mode : 'new',
       state : states.OPEN,
       offset : { x : 0, y : 0 },
-      iDrg : null, aDrw : null
+      iDrg : null, aDrw : null, aSel : null
     };
 
     function addWel(t, f) {
@@ -322,7 +317,7 @@ var bit = (function() {
         areaDrawer.disable();
 //      areaMover.disable();
 //      areaEditor.disable();
-//      areaSelector.disable();
+        areaSelector.disable();
         context.state = states.DRAGGING;
       } 
 
@@ -333,7 +328,7 @@ var bit = (function() {
         areaDrawer.enable();
 //      areaMover.enable();
 //      areaEditor.enable();
-//      areaSelector.enable();
+        areaSelector.enable();
         tls.release();
         context.state = states.READY;
       }
@@ -345,7 +340,7 @@ var bit = (function() {
 
       function onImageDragStart(e) {
         e.preventDefault();
-        if (context.iDrg.prevent()) return;
+        if (context.iDrg.prevent(e)) return;
         if (ready() && utils.leftButton(e) && utils.ctrlKey(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
           enter();
         }
@@ -398,7 +393,7 @@ var bit = (function() {
         imageDragger.disable();
 //        areaMover.disable();
 //        areaEditor.disable();
-//        areaSelector.disable();
+        areaSelector.disable();
         rmWel('click', onDrawStart);
         addWel('click', onDrawEnd);
         addWel('mousemove', onDrawProgress);
@@ -411,7 +406,7 @@ var bit = (function() {
         imageDragger.enable();
 //        areaMover.enable();
 //        areaEditor.enable();
-//        areaSelector.enable();
+        areaSelector.enable();
         rmWel('click', onDrawEnd);
         rmWel('mousemove', onDrawProgress);
         addWel('click', onDrawStart);
@@ -421,7 +416,7 @@ var bit = (function() {
 
       function onDrawStart(e) {
         e.preventDefault();
-        if (context.aDrw.prevent() || (e.ctrlKey || e.shiftKey)) return;
+        if (context.aDrw.prevent(e) || (e.ctrlKey || e.shiftKey)) return;
         if (ready() && utils.leftButton(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
           if (context.aDrw.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), e.altKey)) {
             enter();
@@ -467,7 +462,129 @@ var bit = (function() {
         }
       };
 
-    })(); // areaDrawer
+    })(); // AREA DRAWER
+
+    // AREA SELECTOR
+    // Area selection is achieved by clicking on existing area.
+    // Simple click select the desired area unselecting others.
+    // Holding shift key while clicking on existing areas achieves multiple selection (toggle effect).
+    // ESC key unselect all selected areas.
+    // DELETE key suppress all selected areas.
+
+    var areaSelector = (function() {
+
+      var enabled = false;
+
+      function enter() {
+        doms.drawarea.classList.add(utils.clsActions.TRACKING);
+        imageDragger.disable();
+        areaDrawer.disable();
+//        areaMover.disable();
+//        areaEditor.disable();
+        rmWel('mousedown', onSelectStart);
+        addWel('click', onSelectExit);
+        addWel('mouseup', onSelectEnd);
+        addWel('mousemove', onSelectProgress);
+        document.removeEventListener('keydown', onKeyAction);
+        context.state = states.SELECTING;
+      }
+
+      function exit() {
+        doms.drawarea.classList.remove(utils.clsActions.TRACKING);
+        rmWel('click', onSelectExit);
+        rmWel('mouseup', onSelectEnd);
+        rmWel('mousemove', onSelectProgress);
+        addWel('mousedown', onSelectStart);
+        document.addEventListener('keydown', onKeyAction);
+        imageDragger.enable();
+        areaDrawer.enable();
+//        areaMover.enable();
+//        areaEditor.enable();
+        context.state = states.READY;
+      }
+
+      function onSelectStart(e) {
+        e.preventDefault();
+        if (context.aSel.prevent(e)) return;
+        if (ready() && utils.leftButton(e)) {
+          context.aSel.onTrackStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), !e.shiftKey);
+          enter();
+        }
+      }
+
+      function onSelectProgress(e) {
+        e.preventDefault();
+        if (!utils.leftButtonHeld(e)) {
+          if (states.SELECTED !== context.state) {
+            context.aSel.onTrackCancel();
+          } else {
+            context.aSel.onSelect(e);
+          }
+          exit();
+        } else if (states.SELECTING === context.state) {
+          context.aSel.onTrackProgress(viewport.computeCoords(e.pageX, e.pageY));
+        }
+      }
+
+      function onSelectEnd(e) {
+        e.preventDefault();
+        if (states.SELECTING === context.state) {
+          context.aSel.onTrackEnd();
+          context.state = states.SELECTED;
+        }
+      }
+
+      function onSelectExit(e) {
+        e.preventDefault();
+        context.aSel.onSelect(e);
+        exit();
+      }
+
+      function onKeyAction(e) {
+        e.preventDefault();
+/*
+        switch(e.keyCode) {
+        case utils.keyCodes.ESC:
+          if (states.READY === context.state && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+            app.areas.select.areaUnselectAll();
+          }
+          break;
+        case utils.keyCodes.DEL:
+          if (states.READY === context.state && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+            app.areas.select.deleteSelection();
+          }
+          break;
+        case utils.keyCodes.LEFT:
+          if (states.READY === context.state && !e.shiftKey && (e.ctrlKey || e.metaKey)) {
+            app.areas.rotate.step(utils.directions.RACLK);
+          }
+          break;
+        case utils.keyCodes.RIGHT:
+          if (states.READY === context.state && !e.shiftKey && (e.ctrlKey || e.metaKey)) {
+            app.areas.rotate.step(utils.directions.RCLK);
+          }
+          break;
+        default:
+        }
+*/
+      }
+
+      return {
+        enable : function() {
+          if (enabled) return;
+          addWel('mousedown', onSelectStart);
+          document.addEventListener('keydown', onKeyAction);
+          enabled = true;
+        },
+        disable : function() {
+          if (!enabled) return;
+          rmWel('mousedown', onSelectStart);
+          document.removeEventListener('keydown', onKeyAction);
+          enabled = false;
+        }
+      };
+
+    })(); // AREA SELECTOR
 
     function hide(obj) {
       obj.style.display = 'none';
@@ -488,15 +605,16 @@ var bit = (function() {
       imageDragger.enable();
       areaDrawer.enable();
 /*      areaMover.enable();
-      areaEditor.enable();
-      areaSelector.enable();*/
+      areaEditor.enable();*/
+      areaSelector.enable();
     }
 
     return {
 
-      init : function(iDrgHandlers, aDrwHandlers) {
+      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers) {
         context.iDrg = iDrgHandlers;
         context.aDrw = aDrwHandlers;
+        context.aSel = aSelHandlers;
         addWel('scroll', function(e) { viewport.computeOffset(); }, false );
         window.addEventListener('resize', function(e) { viewport.resize(); }, false);
         return this;
@@ -507,8 +625,8 @@ var bit = (function() {
         imageDragger.disable();
         areaDrawer.disable();
 /*        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();*/
+        areaEditor.disable();*/
+        areaSelector.disable();
         doms.image.src = '';
         hide(doms.workarea);
         hide(doms.aside);
@@ -634,14 +752,14 @@ var bit = (function() {
 
     function select(obj) {
       if (null != obj) {
-        obj.classList.add(utils.clsStatus.SELECTED);
+        obj.classList.add(bitedit.clsStatus.SELECTED);
       }
       context.selected = obj;
     }
 
     function unselect(obj) {
       if (obj != null) {
-        obj.classList.remove(utils.clsStatus.SELECTED);
+        obj.classList.remove(bitedit.clsStatus.SELECTED);
       }
       context.selected = null;
     }
@@ -709,23 +827,23 @@ var bit = (function() {
     }
 
     function gridEnable() {
-      doms.btnHexDtrGrid.classList.remove(utils.clsStatus.DISABLED);
-      doms.btnRectangleGrid.classList.remove(utils.clsStatus.DISABLED);
-      doms.btnCircleDtrGrid.classList.remove(utils.clsStatus.DISABLED);
-      doms.btnInnerGridScope.classList.remove(utils.clsStatus.DISABLED);
-      doms.btnOuterGridScope.classList.remove(utils.clsStatus.DISABLED);
-      doms.btnStdGridAlign.classList.remove(utils.clsStatus.DISABLED);
-      doms.btnAltGridAlign.classList.remove(utils.clsStatus.DISABLED);
+      doms.btnHexDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnRectangleGrid.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnCircleDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnInnerGridScope.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnOuterGridScope.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnStdGridAlign.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnAltGridAlign.classList.remove(bitedit.clsStatus.DISABLED);
     }
 
     function gridDisable() {
-      doms.btnHexDtrGrid.classList.add(utils.clsStatus.DISABLED);
-      doms.btnRectangleGrid.classList.add(utils.clsStatus.DISABLED);
-      doms.btnCircleDtrGrid.classList.add(utils.clsStatus.DISABLED);
-      doms.btnInnerGridScope.classList.add(utils.clsStatus.DISABLED);
-      doms.btnOuterGridScope.classList.add(utils.clsStatus.DISABLED);
-      doms.btnStdGridAlign.classList.add(utils.clsStatus.DISABLED);
-      doms.btnAltGridAlign.classList.add(utils.clsStatus.DISABLED);
+      doms.btnHexDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnRectangleGrid.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnCircleDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnInnerGridScope.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnOuterGridScope.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnStdGridAlign.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnAltGridAlign.classList.add(bitedit.clsStatus.DISABLED);
     }
 
     return {
@@ -1000,6 +1118,10 @@ var bit = (function() {
       fileDropZone : $('file-drop-zone')
     },
 
+    context = {
+      selected : new bitedit.MultiSelector()
+    },
+
     mnuHandlers = {
 
       onNewProject : function() {
@@ -1033,7 +1155,7 @@ var bit = (function() {
 
       prevent : function(e) {
         if (!tls.none()) return true;
-//        if (app.areas.select.isAreaTargeted(e.target)) return;
+        if (mdl.findArea(e.target)) return true;
         return false;
       }
 
@@ -1048,24 +1170,26 @@ var bit = (function() {
       var generator = null;
 
       function create(parent, alt) {
-        let figCtor = factory[tls.getDrawingMode()];
-        if (!figCtor) {
+        let figGen = factory[tls.getDrawingMode()];
+        if (!figGen) {
           console.log('ERROR - Drawing mode not handled');
           return null;
         }
-        return new figCtor(parent, alt);
+        return new figGen(parent, alt);
       }
 
       var handlers = {
 
         prevent : function(e) {
           if (tls.none()) return true;
-//          if (app.areas.select.isAreaTargeted(e.target)) return;
+          if (mdl.findArea(e.target)) return true;
         },
 
         onStart : function(parent, pt, alt) {
-//          context.selected.empty();
+//          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0) : null; 
+          context.selected.empty();
           generator = create(parent, alt);
+//          context.gen = create(alt, bondElt);
           if (null == generator) {
             alert('Unable to draw selected area!');
 //            tls.disableGridMode();
@@ -1077,15 +1201,24 @@ var bit = (function() {
         },
 
         onProgress : function(pt) {
+/*
+            let width = doms.drawarea.getAttribute('width');
+            let height = doms.drawarea.getAttribute('height');
+            context.gen.drawMove(pt, width, height);
+ */
           generator.progress(pt);
         },
 
         onEnd : function(pt) {
           let complete = true;
+//          let width = doms.drawarea.getAttribute('width');
+//          let height = doms.drawarea.getAttribute('height');
+//          switch(context.gen.drawEnd(pt, width, height)) {
           switch(generator.end(pt)) {
           case 'done':
-            mdl.addArea(generator.getFigure());
-//            context.selected.set(context.gen);
+            let fig = generator.getFigure();
+            mdl.addArea(fig);
+            context.selected.set(fig);
             tls.release();
 //            tls.enableGridMode(context.gen);
             generator = null;
@@ -1116,6 +1249,111 @@ var bit = (function() {
 
     })();
 
+    var selector = (function() {
+
+      var tracker = null,
+          moved = false;
+
+      function areaSelect(area) {
+        context.selected.set(mdl.findArea(area));
+//        tls.enableGridMode(context.selected.get(0));
+      }
+
+      function areaMultiSelect(area) {
+        context.selected.toggle(mdl.findArea(area));
+//        if (context.selected.length() === 1) {
+//          tls.enableGridMode(context.selected.get(0));
+//        } else {
+//          tls.disableGridMode();
+//        }
+      }
+
+      function computeSelection(coords) {
+        mdl.forEachArea(function(e) {
+          if (e.within(coords)) {
+            if (!context.selected.has(e)) {
+              context.selected.toggle(e);
+            }
+          } else if (context.selected.has(e)) {
+            context.selected.toggle(e);
+          }
+        });
+//        if (context.selected.length() === 1) {
+//          tls.enableGridMode(context.selected.get(0));
+//        } else {
+//          tls.disableGridMode();
+//        }
+      }
+
+      function isAreaSelected(area) {
+        return context.selected.has(mdl.findArea(area));
+      }
+
+      function unselectAll() {
+        context.selected.empty();
+//        tls.disableGridMode();
+      }
+
+      var handlers = {
+
+        prevent : function(e) {
+          if (!tls.none()) return true;
+          if (e.ctrlKey || e.metaKey || e.altKey) return true;
+//          if (app.areas.edit.isGrabber(e.target)) return;
+          if (mdl.findArea(e.target) && isAreaSelected(e.target) && !e.shiftKey) return true; // is a move
+          return false;
+        },
+
+        onTrackStart : function(parent, pt, unselect) {
+          if (unselect) {
+            unselectAll();
+          }
+          moved = false;
+          tracker = new bitgen.Tracker(parent);
+          tracker.start(pt);
+          tls.freeze();
+        },
+
+        onTrackProgress : function(pt) {
+          moved = true;
+          tracker.progress(pt);
+          computeSelection(tracker.getCoords());
+        },
+
+        onTrackEnd : function() {
+          tracker.cancel();
+          tracker = null;
+        },
+
+        onSelect(e) {
+          if (!moved) {
+            if (mdl.findArea(e.target)) {
+              if (!e.shiftKey) {
+                areaSelect(e.target);
+              } else {
+                areaMultiSelect(e.target);
+              }
+            }
+          }
+          moved = false;
+          tls.release();
+        },
+
+        onTrackCancel : function() {
+          tracker.cancel();
+          moved = false;
+          tracker = null;
+          tls.release();
+        }
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
+
     function preventWindowDrop(e) {
       if (e.target.id != doms.fileDropZone) {
         e.preventDefault();
@@ -1129,7 +1367,7 @@ var bit = (function() {
     window.addEventListener("drop", preventWindowDrop);
 
     mnu.init(mnuHandlers);
-    wks.init(dragHandlers, draw.handlers);
+    wks.init(dragHandlers, draw.handlers, selector.handlers);
     tls.init();
 
   })(); /* app */

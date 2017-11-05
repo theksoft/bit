@@ -15,6 +15,10 @@
   cursor: crosshair;
 }
 
+.tracking#draw-area {
+  cursor: crosshair;
+}
+
 #draw-area {
   stroke-width: 1px;
   fill: rgba(255,255,255,0.3);
@@ -22,5 +26,36 @@
 
 #draw-area rect {
   stroke: #f00;
+}
+
+#draw-area rect:hover/*,
+#draw-area polygon:hover,
+#draw-area polygon.extended:hover,
+#draw-area circle:hover,
+#draw-area ellipse:hover*/ {
+  fill: rgba(255,255,255,0.4);
+}
+#draw-area rect.selected/*,
+#draw-area polygon.selected,
+#draw-area polygon.extended.selected,
+#draw-area circle.selected,
+#draw-area ellipse.selected*/ {
+  stroke-width: 3px;
+  fill: rgba(200,200,255,0.4);
+}
+
+#draw-area rect.selected:hover/*,
+#draw-area polygon.selected:hover,
+#draw-area polygon.extended.selected:hover,
+#draw-area circle.selected:hover,
+#draw-area ellipse.selected:hover*/ {
+  cursor: move;
+}
+
+#draw-area rect.tracker {
+  stroke-width: 1px;
+  stroke: #222;
+  stroke-dasharray: 2, 5;
+  fill: none;
 }
 
