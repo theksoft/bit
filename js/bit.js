@@ -124,28 +124,26 @@ var bit = (function() {
         context.modified = true;
       },
 
-/* TODO:
       removeArea : function(area) {
         if(-1 != context.areas.indexOf(area)) {
-          let bonds = [];
-          if (!area.isGrid() &&
-              area.hasBonds() &&
-              (true == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?"))) {
-            bonds = area.getBonds();
-            bonds.forEach(function(e) {
-              let j = context.areas.indexOf(e);
-              e.remove();
-              context.areas.splice(j, 1);
-            });
-            bonds.splice(0, bonds.length);
-          }
+//          let bonds = [];
+//          if (!area.isGrid() &&
+//              area.hasBonds() &&
+//              (true == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?"))) {
+//            bonds = area.getBonds();
+//            bonds.forEach(function(e) {
+//              let j = context.areas.indexOf(e);
+//              e.remove();
+//              context.areas.splice(j, 1);
+//            });
+//            bonds.splice(0, bonds.length);
+//          }
           let i = context.areas.indexOf(area);
           area.remove();
           context.areas.splice(i, 1);
           context.modified = true;
         }
       },
-*/
 
       findArea : function(obj) {
         return context.areas.find(function(e) {
@@ -542,18 +540,18 @@ var bit = (function() {
 
       function onKeyAction(e) {
         e.preventDefault();
-/*
         switch(e.keyCode) {
         case utils.keyCodes.ESC:
-          if (states.READY === context.state && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-            app.areas.select.areaUnselectAll();
+          if (ready() && utils.noKey(e)) {
+            context.aSel.onUnselectAll();
           }
           break;
         case utils.keyCodes.DEL:
-          if (states.READY === context.state && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-            app.areas.select.deleteSelection();
+          if (ready() && utils.noKey(e)) {
+            context.aSel.onDeleteAll();
           }
           break;
+/*
         case utils.keyCodes.LEFT:
           if (states.READY === context.state && !e.shiftKey && (e.ctrlKey || e.metaKey)) {
             app.areas.rotate.step(utils.directions.RACLK);
@@ -564,9 +562,9 @@ var bit = (function() {
             app.areas.rotate.step(utils.directions.RCLK);
           }
           break;
+*/
         default:
         }
-*/
       }
 
       return {
@@ -1289,7 +1287,7 @@ var bit = (function() {
         return context.selected.has(mdl.findArea(area));
       }
 
-      function unselectAll() {
+      function areaUnselectAll() {
         context.selected.empty();
 //        tls.disableGridMode();
       }
@@ -1306,7 +1304,7 @@ var bit = (function() {
 
         onTrackStart : function(parent, pt, unselect) {
           if (unselect) {
-            unselectAll();
+            areaUnselectAll();
           }
           moved = false;
           tracker = new bitgen.Tracker(parent);
@@ -1325,6 +1323,13 @@ var bit = (function() {
           tracker = null;
         },
 
+        onTrackCancel : function() {
+          tracker.cancel();
+          moved = false;
+          tracker = null;
+          tls.release();
+        },
+        
         onSelect(e) {
           if (!moved) {
             if (mdl.findArea(e.target)) {
@@ -1339,11 +1344,20 @@ var bit = (function() {
           tls.release();
         },
 
-        onTrackCancel : function() {
-          tracker.cancel();
-          moved = false;
-          tracker = null;
-          tls.release();
+        onUnselectAll : function() {
+          areaUnselectAll();
+        },
+
+        onDeleteAll : function() {
+//          context.selected.sort(function(a,b) {
+//            // in order to delete grid before non-grid elements => avoid prompting when grid and bond are selected
+//            return (a.isGrid() ? -1 : 1);
+//          });
+          context.selected.forEach(function(e) {
+            mdl.removeArea(e.getFigure());
+          });
+          context.selected.empty();
+//          tls.disableGridMode();
         }
 
       };

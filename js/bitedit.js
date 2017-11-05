@@ -59,6 +59,10 @@ var bitedit = (function() {
       });*/
     }
 
+    getFigure() {
+      return this.figure;
+    }
+
   }
 
   /*
@@ -189,11 +193,11 @@ var bitedit = (function() {
       }
     }
 
-/*
     forEach(f) {
       return this.selection.forEach(f);
     }
 
+/*
     sort(f) {
       return this.selection.sort(f);
     }
