@@ -192,7 +192,7 @@ var bit = (function() {
       mode : 'new',
       state : states.OPEN,
       offset : { x : 0, y : 0 },
-      iDrg : null, aDrw : null, aSel : null
+      iDrg : null, aDrw : null, aSel : null, aMov : null
     };
 
     function addWel(t, f) {
@@ -313,7 +313,7 @@ var bit = (function() {
         addWel('mousemove', onImageDragMove);
         tls.freeze();
         areaDrawer.disable();
-//      areaMover.disable();
+        areaMover.disable();
 //      areaEditor.disable();
         areaSelector.disable();
         context.state = states.DRAGGING;
@@ -324,7 +324,7 @@ var bit = (function() {
         rmWel('mouseup', onImageDragStop);
         rmWel('mousemove', onImageDragMove);
         areaDrawer.enable();
-//      areaMover.enable();
+        areaMover.enable();
 //      areaEditor.enable();
         areaSelector.enable();
         tls.release();
@@ -389,7 +389,7 @@ var bit = (function() {
       function enter() {
         doms.drawarea.classList.add(utils.clsActions.DRAWING);
         imageDragger.disable();
-//        areaMover.disable();
+        areaMover.disable();
 //        areaEditor.disable();
         areaSelector.disable();
         rmWel('click', onDrawStart);
@@ -402,7 +402,7 @@ var bit = (function() {
       function exit() {
         doms.drawarea.classList.remove(utils.clsActions.DRAWING);
         imageDragger.enable();
-//        areaMover.enable();
+        areaMover.enable();
 //        areaEditor.enable();
         areaSelector.enable();
         rmWel('click', onDrawEnd);
@@ -477,7 +477,7 @@ var bit = (function() {
         doms.drawarea.classList.add(utils.clsActions.TRACKING);
         imageDragger.disable();
         areaDrawer.disable();
-//        areaMover.disable();
+        areaMover.disable();
 //        areaEditor.disable();
         rmWel('mousedown', onSelectStart);
         addWel('click', onSelectExit);
@@ -496,7 +496,7 @@ var bit = (function() {
         document.addEventListener('keydown', onKeyAction);
         imageDragger.enable();
         areaDrawer.enable();
-//        areaMover.enable();
+        areaMover.enable();
 //        areaEditor.enable();
         context.state = states.READY;
       }
@@ -584,6 +584,136 @@ var bit = (function() {
 
     })(); // AREA SELECTOR
 
+    // AREA MOVER
+    // Area moving starts by pressing mouse down on a selection of areas.
+    // Moves are constrained so that moved figures remains in SVG container.
+    // ESC key cancels selection move.
+
+    var areaMover = (function() {
+
+      var enabled = false;
+
+      function enter() {
+        doms.drawarea.classList.add(utils.clsActions.MOVING);
+        imageDragger.disable();
+        areaDrawer.disable();
+//        areaEditor.disable();
+        areaSelector.disable();
+        rmWel('mousedown', onMoveStart);
+        addWel('click', onMoveExit);
+        addWel('mouseup', onMoveEnd);
+        addWel('mousemove', onMoveProgress);
+        document.removeEventListener('keydown', onMoveStep);
+        document.addEventListener('keydown', onMoveCancel);
+        context.state = states.MOVING;
+      }
+
+      function exit() {
+        doms.drawarea.classList.remove(utils.clsActions.MOVING);
+        rmWel('click', onMoveExit);
+        rmWel('mouseup', onMoveEnd);
+        rmWel('mousemove', onMoveProgress);
+        document.removeEventListener('keydown', onMoveCancel);
+        addWel('mousedown', onMoveStart);
+        document.addEventListener('keydown', onMoveStep);
+        imageDragger.enable();
+        areaDrawer.enable();
+//        areaEditor.enable();
+        areaSelector.enable();
+        context.state = states.READY;
+      }
+
+      function onMoveStart(e) {
+        e.preventDefault();
+        if (context.aMov.prevent(e)) return;
+        if(ready() && utils.leftButton(e) && utils.noKey(e)) {
+          context.aMov.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY))
+          enter();
+        }
+      }
+ 
+      function onMoveProgress(e) {
+        e.preventDefault();
+        if (!utils.leftButtonHeld(e)) {
+          context.aMov.onCancel();
+          exit();
+        } else if (states.MOVING === context.state) {
+          context.aMov.onProgress(viewport.computeCoords(e.pageX, e.pageY));
+        }
+      }
+
+      function onMoveEnd(e) {
+        e.preventDefault();
+        if (states.MOVING === context.state) {
+          context.aMov.onEnd(viewport.computeCoords(e.pageX, e.pageY));
+          context.state = states.MOVED;
+        }
+      }
+
+      function onMoveExit(e) {
+        e.preventDefault();
+        context.aMov.onExit();
+        exit();
+      }
+
+      function onMoveCancel(e) {
+        e.preventDefault();
+        if (utils.keyCodes.ESC === e.keyCode) {
+          context.aMov.onCancel();
+          context.state = states.MOVED;
+        }
+      }
+
+      function onMoveStep(e) {
+        e.preventDefault();
+        switch(e.keyCode) {
+        case utils.keyCodes.LEFT:
+          if (ready() && utils.noKey(e)) {
+            context.aMov.onStep(doms.drawarea, -1, 0);
+          }
+          break;
+        case utils.keyCodes.RIGHT:
+          if (ready() && utils.noKey(e)) {
+            context.aMov.onStep(doms.drawarea, 1, 0);
+          }
+          break;
+        case utils.keyCodes.UP:
+          if (ready() && utils.noKey(e)) {
+            context.aMov.onStep(doms.drawarea, 0, -1);
+          }
+          break;
+        case utils.keyCodes.DOWN:
+          if (ready() && utils.noKey(e)) {
+            context.aMov.onStep(doms.drawarea, 0, 1);
+          }
+          break;
+        default:
+        }
+      }
+
+      return {
+        enable : function() {
+          if (enabled) return;
+          addWel('mousedown', onMoveStart);
+          document.addEventListener('keydown', onMoveStep);
+          enabled = true;
+        },
+        disable : function() {
+          if (!enabled) return;
+          if (states.MOVING === context.state) {
+            app.areas.move.cancel();
+          }
+          if (states.MOVING === context.state || states.MOVED === context.state) {
+            exit();
+          }
+          rmWel('mousedown', onMoveStart);
+          document.removeEventListener('keydown', onMoveStep);
+          enabled = false;
+        }
+      };
+
+    })(); // AREA MOVER
+ 
     function hide(obj) {
       obj.style.display = 'none';
     }
@@ -602,17 +732,18 @@ var bit = (function() {
       coordTracker.enable();
       imageDragger.enable();
       areaDrawer.enable();
-/*      areaMover.enable();
-      areaEditor.enable();*/
+      areaMover.enable();
+//      areaEditor.enable();
       areaSelector.enable();
     }
 
     return {
 
-      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers) {
+      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers, aMovHandlers) {
         context.iDrg = iDrgHandlers;
         context.aDrw = aDrwHandlers;
         context.aSel = aSelHandlers;
+        context.aMov = aMovHandlers;
         addWel('scroll', function(e) { viewport.computeOffset(); }, false );
         window.addEventListener('resize', function(e) { viewport.resize(); }, false);
         return this;
@@ -622,8 +753,8 @@ var bit = (function() {
         coordTracker.disable();
         imageDragger.disable();
         areaDrawer.disable();
-/*        areaMover.disable();
-        areaEditor.disable();*/
+        areaMover.disable();
+//        areaEditor.disable();
         areaSelector.disable();
         doms.image.src = '';
         hide(doms.workarea);
@@ -1117,7 +1248,8 @@ var bit = (function() {
     },
 
     context = {
-      selected : new bitedit.MultiSelector()
+      selected : new bitedit.MultiSelector(),
+      mover : new bitedit.Mover()
     },
 
     mnuHandlers = {
@@ -1158,6 +1290,10 @@ var bit = (function() {
       }
 
     };
+
+    function isAreaSelected(area) {
+      return context.selected.has(mdl.findArea(area));
+    }
 
     var draw = (function() {
 
@@ -1283,10 +1419,6 @@ var bit = (function() {
 //        }
       }
 
-      function isAreaSelected(area) {
-        return context.selected.has(mdl.findArea(area));
-      }
-
       function areaUnselectAll() {
         context.selected.empty();
 //        tls.disableGridMode();
@@ -1368,6 +1500,54 @@ var bit = (function() {
 
     })();
 
+    var mover = (function() {
+
+      var handlers = {
+
+          prevent : function(e) {
+            if (!mdl.findArea(e.target)) return true;
+            if (!isAreaSelected(e.target)) return true;
+            return false;
+          },
+
+          onStart : function(parent, pt) {
+            let width = parent.getAttribute('width');
+            let height = parent.getAttribute('height');
+            context.mover.start(context.selected, pt, width, height);
+            tls.freeze();
+          },
+
+          onProgress : function(pt) {
+            context.mover.progress(pt);
+          },
+
+          onEnd : function(pt) {
+            context.mover.end(pt);
+          },
+
+          onCancel : function() {
+            context.mover.cancel();
+            tls.release();
+          },
+          
+          onExit(e) {
+            tls.release();
+          },
+
+          onStep(parent, dx, dy) {
+            let width = parent.getAttribute('width');
+            let height = parent.getAttribute('height');
+            context.mover.step(context.selected, dx, dy, width, height);
+          }
+
+        };
+
+        return {
+          handlers
+        };
+
+    })();
+
     function preventWindowDrop(e) {
       if (e.target.id != doms.fileDropZone) {
         e.preventDefault();
@@ -1381,7 +1561,7 @@ var bit = (function() {
     window.addEventListener("drop", preventWindowDrop);
 
     mnu.init(mnuHandlers);
-    wks.init(dragHandlers, draw.handlers, selector.handlers);
+    wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers);
     tls.init();
 
   })(); /* app */
