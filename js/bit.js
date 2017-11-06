@@ -46,6 +46,11 @@ var bit = (function() {
       EDITING       : 'editing'
     };
 
+    const directions = {
+      RCLK  : 'clockwise',
+      RACLK : 'anti-clockwise'
+    };
+
     return {
 
       leftButton : function(e) {
@@ -65,7 +70,7 @@ var bit = (function() {
       },
 
       keyCodes, fgTypes,
-      clsActions
+      clsActions, directions
 
     };
 
@@ -551,18 +556,6 @@ var bit = (function() {
             context.aSel.onDeleteAll();
           }
           break;
-/*
-        case utils.keyCodes.LEFT:
-          if (states.READY === context.state && !e.shiftKey && (e.ctrlKey || e.metaKey)) {
-            app.areas.rotate.step(utils.directions.RACLK);
-          }
-          break;
-        case utils.keyCodes.RIGHT:
-          if (states.READY === context.state && !e.shiftKey && (e.ctrlKey || e.metaKey)) {
-            app.areas.rotate.step(utils.directions.RCLK);
-          }
-          break;
-*/
         default:
         }
       }
@@ -668,13 +661,21 @@ var bit = (function() {
         e.preventDefault();
         switch(e.keyCode) {
         case utils.keyCodes.LEFT:
-          if (ready() && utils.noKey(e)) {
-            context.aMov.onStep(doms.drawarea, -1, 0);
+          if (ready()) {
+            if (utils.noKey(e)) {
+              context.aMov.onStep(doms.drawarea, -1, 0);
+            } else if (utils.ctrlKey(e)) {
+              context.aMov.onRotate(doms.drawarea, utils.directions.RACLK);
+            }
           }
           break;
         case utils.keyCodes.RIGHT:
-          if (ready() && utils.noKey(e)) {
-            context.aMov.onStep(doms.drawarea, 1, 0);
+          if (ready()) {
+            if (utils.noKey(e)) {
+              context.aMov.onStep(doms.drawarea, 1, 0);
+            } else if (utils.ctrlKey(e)) {
+              context.aMov.onRotate(doms.drawarea, utils.directions.RCLK);
+            }
           }
           break;
         case utils.keyCodes.UP:
@@ -1462,7 +1463,7 @@ var bit = (function() {
           tls.release();
         },
         
-        onSelect(e) {
+        onSelect : function(e) {
           if (!moved) {
             if (mdl.findArea(e.target)) {
               if (!e.shiftKey) {
@@ -1530,14 +1531,26 @@ var bit = (function() {
             tls.release();
           },
           
-          onExit(e) {
+          onExit : function(e) {
             tls.release();
           },
 
-          onStep(parent, dx, dy) {
+          onStep : function(parent, dx, dy) {
             let width = parent.getAttribute('width');
             let height = parent.getAttribute('height');
             context.mover.step(context.selected, dx, dy, width, height);
+          },
+
+          onRotate : function(parent, direction) {
+            if (1 < context.selected.length()) {
+              alert('Rotation is supported for a single selected area!');
+              return;
+            }
+            let width = parent.getAttribute('width');
+            let height = parent.getAttribute('height');
+            if (!context.selected.get(0).rotate(direction, width, height)) {
+              alert('ERROR - Rotation possibly makes area go beyond limits!');
+            }
           }
 
         };

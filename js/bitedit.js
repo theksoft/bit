@@ -63,6 +63,8 @@ var bitedit = (function() {
       return this.figure;
     }
 
+    // MOVE
+
     computeMoveDLims(wmax, hmax) {
       console.log('computeMoveDLims() not defined - ' + wmax + 'x' + hmax);
       return { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
@@ -80,6 +82,26 @@ var bitedit = (function() {
     moveToOffset(dx, dy) {
       this.figure.setCoords(this.computeMoveCoords(dx, dy));
       this.figure.redraw();
+    }
+
+    // ROTATE
+
+    computeRotateCoords(direction, wmax, hmax) {
+      console.log('computeRotateCoords() not defined');
+      return this.figure.getCoords();
+    }
+
+    rotate(direction, wmax, hmax) {
+      let coords = this.computeRotateCoords(direction, wmax, hmax);
+      if (null != coords) {
+//        this.destroyGrabbers();
+        this.figure.setCoords(coords);
+//        this.createGrabbers();
+        this.figure.redraw();
+        this.enableEdition();
+        return true;
+      }
+      return false;
     }
 
   }
@@ -109,6 +131,21 @@ var bitedit = (function() {
       rtn.x += dx;
       rtn.y += dy;
       return rtn;
+    }
+
+    computeRotateCoords(direction, wmax, hmax) {
+      let rtn = Object.create(this.figure.coords);
+      let w2 = Math.round(rtn.width / 2), h2 = Math.round(rtn.height / 2)
+      rtn.x += w2 - h2;
+      rtn.y += h2 - w2;
+      let tmp = rtn.width;
+      rtn.width = rtn.height;
+      rtn.height = tmp;
+      if (rtn.x >= 0 && rtn.x + rtn.width <= wmax &&
+          rtn.y >= 0 && rtn.y + rtn.height <= hmax) {
+        return rtn;
+      }
+      return null;
     }
 
   }
@@ -207,7 +244,6 @@ var bitedit = (function() {
       });
     }
 
-/*
     get(id) {
       return this.selection[id];
     }
@@ -215,7 +251,6 @@ var bitedit = (function() {
     length() {
       return this.selection.length;
     }
-*/
 
     enableEdition() {
       if (1 == this.selection.length) {
