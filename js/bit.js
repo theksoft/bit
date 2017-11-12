@@ -197,7 +197,7 @@ var bit = (function() {
       mode : 'new',
       state : states.OPEN,
       offset : { x : 0, y : 0 },
-      iDrg : null, aDrw : null, aSel : null, aMov : null
+      iDrg : null, aDrw : null, aSel : null, aMov : null, aEdt : null
     };
 
     function addWel(t, f) {
@@ -319,7 +319,7 @@ var bit = (function() {
         tls.freeze();
         areaDrawer.disable();
         areaMover.disable();
-//      areaEditor.disable();
+      areaEditor.disable();
         areaSelector.disable();
         context.state = states.DRAGGING;
       } 
@@ -330,7 +330,7 @@ var bit = (function() {
         rmWel('mousemove', onImageDragMove);
         areaDrawer.enable();
         areaMover.enable();
-//      areaEditor.enable();
+        areaEditor.enable();
         areaSelector.enable();
         tls.release();
         context.state = states.READY;
@@ -395,7 +395,7 @@ var bit = (function() {
         doms.drawarea.classList.add(utils.clsActions.DRAWING);
         imageDragger.disable();
         areaMover.disable();
-//        areaEditor.disable();
+        areaEditor.disable();
         areaSelector.disable();
         rmWel('click', onDrawStart);
         addWel('click', onDrawEnd);
@@ -408,7 +408,7 @@ var bit = (function() {
         doms.drawarea.classList.remove(utils.clsActions.DRAWING);
         imageDragger.enable();
         areaMover.enable();
-//        areaEditor.enable();
+        areaEditor.enable();
         areaSelector.enable();
         rmWel('click', onDrawEnd);
         rmWel('mousemove', onDrawProgress);
@@ -483,7 +483,7 @@ var bit = (function() {
         imageDragger.disable();
         areaDrawer.disable();
         areaMover.disable();
-//        areaEditor.disable();
+        areaEditor.disable();
         rmWel('mousedown', onSelectStart);
         addWel('click', onSelectExit);
         addWel('mouseup', onSelectEnd);
@@ -502,7 +502,7 @@ var bit = (function() {
         imageDragger.enable();
         areaDrawer.enable();
         areaMover.enable();
-//        areaEditor.enable();
+        areaEditor.enable();
         context.state = states.READY;
       }
 
@@ -590,7 +590,7 @@ var bit = (function() {
         doms.drawarea.classList.add(utils.clsActions.MOVING);
         imageDragger.disable();
         areaDrawer.disable();
-//        areaEditor.disable();
+        areaEditor.disable();
         areaSelector.disable();
         rmWel('mousedown', onMoveStart);
         addWel('click', onMoveExit);
@@ -611,7 +611,7 @@ var bit = (function() {
         document.addEventListener('keydown', onMoveStep);
         imageDragger.enable();
         areaDrawer.enable();
-//        areaEditor.enable();
+        areaEditor.enable();
         areaSelector.enable();
         context.state = states.READY;
       }
@@ -702,7 +702,7 @@ var bit = (function() {
         disable : function() {
           if (!enabled) return;
           if (states.MOVING === context.state) {
-            app.areas.move.cancel();
+            context.aMov.onCancel();
           }
           if (states.MOVING === context.state || states.MOVED === context.state) {
             exit();
@@ -714,6 +714,105 @@ var bit = (function() {
       };
 
     })(); // AREA MOVER
+ 
+    // AREA EDITOR
+    // Area editing starts by pressing mouse down on grabber of a selected area.
+    // ESC key cancels selection editing.
+    // Resizing cannot invert some figure dimension e.g. rectangle width becoming negative.
+
+    var areaEditor = (function() {
+
+      var enabled = false;
+
+      function enter() {
+        doms.drawarea.classList.add(utils.clsActions.EDITING);
+        imageDragger.disable();
+        areaDrawer.disable();
+        areaMover.disable();
+        areaSelector.disable();
+        rmWel('mousedown', onEditStart);
+        addWel('click', onEditExit);
+        addWel('mouseup', onEditEnd);
+        addWel('mousemove', onEditProgress);
+        document.addEventListener('keydown', onEditCancel);
+        context.state = states.EDITING;
+      }
+
+      function exit() {
+        doms.drawarea.classList.remove(utils.clsActions.EDITING);
+        rmWel('click', onEditExit);
+        rmWel('mouseup', onEditEnd);
+        rmWel('mousemove', onEditProgress);
+        document.removeEventListener('keydown', onEditCancel);
+        addWel('mousedown', onEditStart);
+        imageDragger.enable();
+        areaDrawer.enable();
+        areaMover.enable();
+        areaSelector.enable();
+        context.state = states.READY;
+      }
+
+      function onEditStart(e) {
+        e.preventDefault();
+        if (context.aEdt.prevent(e)) return;
+        if(ready() && utils.leftButton(e) && utils.noKey(e)) {
+          context.aEdt.onStart(doms.drawarea, e.target, viewport.computeCoords(e.pageX, e.pageY));
+          enter();
+        }
+      }
+ 
+      function onEditProgress(e) {
+        e.preventDefault();
+        if (!utils.leftButtonHeld(e)) {
+          context.aEdt.onCancel();
+          exit();
+        } else if (states.EDITING === context.state) {
+          context.aEdt.onProgress(viewport.computeCoords(e.pageX, e.pageY));
+        }
+      }
+
+      function onEditEnd(e) {
+        e.preventDefault();
+        if (states.EDITING === context.state) {
+          context.aEdt.onEnd(viewport.computeCoords(e.pageX, e.pageY));
+          context.state = states.EDITED;
+        }
+      }
+
+      function onEditExit(e) {
+        e.preventDefault();
+        context.aEdt.onExit();
+        exit();
+      }
+
+      function onEditCancel(e) {
+        e.preventDefault();
+        if (utils.keyCodes.ESC === e.keyCode) {
+          context.aEdt.onCancel();
+          context.state = states.EDITED;
+        }
+      }
+
+      return {
+        enable : function() {
+          if (enabled) return;
+          addWel('mousedown', onEditStart);
+          enabled = true;
+        },
+        disable : function() {
+          if (!enabled) return;
+          if (states.EDITING === context.state) {
+            context.aEdt.onCancel();
+          }
+          if (states.EDITING === context.state || states.EDITED === context.state) {
+            exit();
+          }
+          rmWel('mousedown', onEditStart);
+          enabled = false;
+        }
+      };
+
+    })(); // AREA EDITOR
  
     function hide(obj) {
       obj.style.display = 'none';
@@ -734,17 +833,18 @@ var bit = (function() {
       imageDragger.enable();
       areaDrawer.enable();
       areaMover.enable();
-//      areaEditor.enable();
+      areaEditor.enable();
       areaSelector.enable();
     }
 
     return {
 
-      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers, aMovHandlers) {
+      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers, aMovHandlers, aEdtHandlers) {
         context.iDrg = iDrgHandlers;
         context.aDrw = aDrwHandlers;
         context.aSel = aSelHandlers;
         context.aMov = aMovHandlers;
+        context.aEdt = aEdtHandlers;
         addWel('scroll', function(e) { viewport.computeOffset(); }, false );
         window.addEventListener('resize', function(e) { viewport.resize(); }, false);
         return this;
@@ -755,7 +855,7 @@ var bit = (function() {
         imageDragger.disable();
         areaDrawer.disable();
         areaMover.disable();
-//        areaEditor.disable();
+        areaEditor.disable();
         areaSelector.disable();
         doms.image.src = '';
         hide(doms.workarea);
@@ -1250,7 +1350,8 @@ var bit = (function() {
 
     context = {
       selected : new bitedit.MultiSelector(),
-      mover : new bitedit.Mover()
+      mover : new bitedit.Mover(),
+      editor : new bitedit.Editor()
     },
 
     mnuHandlers = {
@@ -1431,6 +1532,7 @@ var bit = (function() {
           if (!tls.none()) return true;
           if (e.ctrlKey || e.metaKey || e.altKey) return true;
 //          if (app.areas.edit.isGrabber(e.target)) return;
+          if (bitedit.isGrip(e.target)) return true;
           if (mdl.findArea(e.target) && isAreaSelected(e.target) && !e.shiftKey) return true; // is a move
           return false;
         },
@@ -1559,6 +1661,48 @@ var bit = (function() {
           handlers
         };
 
+      })();
+
+      var editor = (function() {
+
+        var handlers = {
+
+          prevent : function(e) {
+            if (0 === context.selected.length()) return true;
+            if (!context.selected.get(0).isEditable(e.target)) return true;
+            return false;
+          },
+
+          onStart : function(parent, target, pt) {
+            let width = parent.getAttribute('width');
+            let height = parent.getAttribute('height');
+            context.editor.start(context.selected.get(0), target, pt, width, height);
+            tls.freeze();
+          },
+
+          onProgress : function(pt) {
+            context.editor.progress(pt);
+          },
+
+          onEnd : function(pt) {
+            context.editor.end(pt);
+          },
+
+          onCancel : function() {
+            context.editor.cancel();
+            tls.release();
+          },
+          
+          onExit : function(e) {
+            tls.release();
+          }
+
+        };
+
+        return {
+          handlers
+        };
+
     })();
 
     function preventWindowDrop(e) {
@@ -1574,7 +1718,7 @@ var bit = (function() {
     window.addEventListener("drop", preventWindowDrop);
 
     mnu.init(mnuHandlers);
-    wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers);
+    wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init();
 
   })(); /* app */

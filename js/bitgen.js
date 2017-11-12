@@ -99,8 +99,8 @@ var bitgen = (function() {
 
   class Tracker extends Rectangle {
 
-    constructor(parent, g) {
-      super(parent, g);
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
       this.figure.addClass(clsTypes.TRACKER);
     }
     

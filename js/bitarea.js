@@ -26,19 +26,16 @@ var bitarea = (function() {
 
   class Figure {
 
-    constructor(type, parent, g) {
+    constructor(type, parent, noGroup) {
       if (this.constructor == Figure.constructor) {
         throw new Error('Invalid Figure constructor call: abstract class');
       }
       this.type = type;
-      this.parent = parent;
-      this.g = g;
+      this.parent = this.domParent = parent;
       this.dom = null;
-      this.gOwner = false;
-      if (!g) {
-        this.g = document.createElementNS(NSSVG, 'g');
-        this.parent.appendChild(this.g);
-        this.gOwner = true;
+      if (!noGroup) {
+        this.domParent = document.createElementNS(NSSVG, 'g');
+        this.parent.appendChild(this.domParent);
       }
       this.createSVGElt();
     }
@@ -74,15 +71,17 @@ var bitarea = (function() {
     }
 
     remove() {
-      if (this.gOwner) {
-        this.parent.removeChild(this.g);
-      }
-      this.parent = this.g = this.dom = null;
+      this.parent.removeChild((this.parent === this.domParent) ? this.dom : this.domParent);
+      this.parent = this.domParent = this.dom = null;
     }
 
     within(coords) {
       console.log('within() not defined');
       return false;
+    }
+
+    getDomParent() {
+      return this.domParent;
     }
 
     addClass(clsName) {
@@ -105,14 +104,14 @@ var bitarea = (function() {
 
   class Rectangle extends Figure {
 
-    constructor(parent, g) {
-      super(types.RECTANGLE, parent, g);
+    constructor(parent, noGroup) {
+      super(types.RECTANGLE, parent, noGroup);
       this.coords = { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT };
     }
 
     createSVGElt() {
       this.dom = document.createElementNS(NSSVG, 'rect');
-      this.g.appendChild(this.dom);
+      this.domParent.appendChild(this.dom);
     }
 
     equalCoords(coords) {

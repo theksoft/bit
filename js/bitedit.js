@@ -12,6 +12,78 @@ var bitedit = (function() {
     HIGHLIGHTED   : 'highlighted'
   };
 
+  const clsQualifiers = {
+    GRIP          : 'grip'  
+  };
+
+  const cursors = {
+    EW            : 'ew-resize',
+    NS            : 'ns-resize',
+    NWSE          : 'nwse-resize',
+    NESW          : 'nesw-resize',
+    ALL           : 'move'
+  };
+
+  // EDITION GRIP
+
+  function isGrip(dom) {
+    return dom.classList.contains(clsQualifiers.GRIP) ? true : false;
+  }
+
+  class Grip extends bitarea.Rectangle {
+    
+    constructor(id, group, center, cursor) {
+      super(group, true);
+      this.id = id;
+      this.cursor = cursor;
+      this.Enable = true;
+      this.addClass(this.className());
+      this.coords.x = center.x + this.lims().offset;
+      this.coords.y = center.y + this.lims().offset;
+      this.coords.width = this.lims().size;
+      this.coords.height = this.lims().size;
+      this.disable();
+      this.draw();
+    }
+
+    reposition(center) {
+      this.coords.x = center.x + this.lims().offset;
+      this.coords.y = center.y + this.lims().offset;
+      this.draw();
+    }
+
+    getID() {
+      return this.id;
+    }
+
+    is(dom) {
+      return (dom === this.dom) ? true : false;
+    }
+
+    enable() {
+      this.removeClass(clsStatus.DISABLED);
+      this.addClass(this.cursor);
+    }
+
+    disable() {
+      this.removeClass(this.cursor);
+      this.addClass(clsStatus.DISABLED);
+    }
+
+    className() {
+      return clsQualifiers.GRIP;
+    }
+
+    lims() {
+      const sz = 5;
+      return {
+        size : sz,
+        offset : -Math.ceil(sz/2)
+      };
+    }
+
+  } // GRIP
+
   // FIGURE EDITOR
 
   class Figure {
@@ -21,6 +93,9 @@ var bitedit = (function() {
         throw new Error('Invalid Figure generator constructor call: abstract class');
       }
       this.figure = fig;
+      this.grips = [];
+      this.createGrips();
+      this.enabled = false;
     }
 
     is(fig) {
@@ -30,7 +105,6 @@ var bitedit = (function() {
     markSelected() {
       if (this.figure) {
         this.figure.addClass(clsStatus.SELECTED);
-//        this.createGrabbers();
 //        this.bonds.forEach(function(e) {
 //          e.dom.classList.add(utils.clsNames.HIGHLIGHTED);
 //        });
@@ -40,30 +114,46 @@ var bitedit = (function() {
     markUnselected() {
       if (this.figure) {
         this.figure.removeClass(clsStatus.SELECTED);
-//        this.destroyGrabbers();
 //        this.bonds.forEach(function(e) {
 //          e.dom.classList.remove(utils.clsNames.HIGHLIGHTED);
 //        });
       }
     }
 
+    remove() {
+      this.destroyGrips();
+      this.figure = this.grips = null;
+    }
+
+    isEditable(grip) {
+      if (!this.enabled) return false;
+      if (!isGrip(grip)) return false;
+      return (this.getGrip(grip) ? true : false);
+    }
+
     enableEdition() {
-/*      this.grabbers.forEach(function(e) {
-        e.enable();
-      });*/
+      if(!this.enabled) {
+        this.grips.forEach(function(e) {
+          e.enable();
+        });
+        this.enabled = true;
+      }
     }
 
     disableEdition() {
-/*      this.grabbers.forEach(function(e) {
-        e.disable();
-      });*/
+      if (this.enabled) {
+        this.grips.forEach(function(e) {
+          e.disable();
+        });
+        this.enabled = false;
+      }
     }
 
     getFigure() {
       return this.figure;
     }
 
-    // MOVE
+    // MOVE SECTION
 
     computeMoveDLims(wmax, hmax) {
       console.log('computeMoveDLims() not defined - ' + wmax + 'x' + hmax);
@@ -76,31 +166,102 @@ var bitedit = (function() {
     }
 
     drawToOffset(dx, dy) {
-      this.figure.redraw(this.computeMoveCoords(dx, dy));
+      let coords = this.computeMoveCoords(dx, dy);
+      this.figure.redraw(coords);
+      this.repositionGrips(coords);
     }
 
     moveToOffset(dx, dy) {
-      this.figure.setCoords(this.computeMoveCoords(dx, dy));
+      let coords = this.computeMoveCoords(dx, dy);
+      this.figure.setCoords(coords);
       this.figure.redraw();
+      this.repositionGrips(coords);
     }
 
-    // ROTATE
+    // ROTATE SECTION
 
     computeRotateCoords(direction, wmax, hmax) {
       console.log('computeRotateCoords() not defined');
       return this.figure.getCoords();
     }
 
+    rotateGrips(direction) {
+      console.log('rotateGrips() not defined');
+    }
+
     rotate(direction, wmax, hmax) {
       let coords = this.computeRotateCoords(direction, wmax, hmax);
       if (null != coords) {
-//        this.destroyGrabbers();
         this.figure.setCoords(coords);
-//        this.createGrabbers();
+        this.rotateGrips(direction);
         this.figure.redraw();
+        this.repositionGrips();
         this.enableEdition();
         return true;
       }
+      return false;
+    }
+
+    // GRIPS SECTION
+
+    createGrips() {
+      console.log('createGrips() not defined');
+    }
+
+    destroyGrips() {
+      this.grips.forEach(function(e) {
+        e.remove();
+      });
+      this.grips.splice(0, this.grips.length);
+    }
+
+    getGrip(dom) {
+      return this.grips.find(function(e) {
+        return e.is(dom);
+      });
+    }
+
+    gripCoords(id, coords) {
+      console.log('gripCoords() not defined');
+      return (coords || this.figure.getCoords());
+    }
+
+    repositionGrips(coords) {
+      let c = coords || this.figure.getCoords();
+      let getCoords = this.gripCoords.bind(this);
+      this.grips.forEach(function(e) {
+        e.reposition(getCoords(e.getID(), c));
+      });
+    }
+
+    // EDIT SECTION
+
+    computeEditDLims(grip, wmax, hmax) {
+      console.log('computeEditDLims() not defined - ' + wmax + 'x' + hmax + ' for ' + grip);
+      return { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
+    }
+
+    static checkCoords(coords) {
+      console.log('checkCoords() not defined');
+      return false;
+    }
+
+    drawModified(id, dx, dy) {
+      let coords = this.computeEditCoords(id, dx, dy);
+      this.figure.redraw(coords);
+      this.repositionGrips(coords);
+    }
+
+    modify(id, dx, dy) {
+      let coords = this.computeEditCoords(id, dx, dy);
+      if (this.checkCoords(coords)) {
+        this.figure.setCoords(coords);
+        this.figure.redraw();
+        this.repositionGrips(coords);
+        return true;
+      }
+      this.figure.redraw();
+      this.repositionGrips();
       return false;
     }
 
@@ -109,6 +270,72 @@ var bitedit = (function() {
   /*
    * RECTANGLE EDITOR
    */
+
+  var fRectangle = (function() {
+    
+    // GRIP POSITIONS
+
+    function tPos(coords)   { return { x : Math.round(coords.x + coords.width/2), y : coords.y }; }
+    function bPos(coords)   { return { x : Math.round(coords.x + coords.width/2), y : coords.y + coords.height }; }
+    function lPos(coords)   { return { x : coords.x, y : Math.round(coords.y + coords.height/2) }; }
+    function rPos(coords)   { return { x : coords.x + coords.width, y : Math.round(coords.y + coords.height/2) }; }
+    function tlPos(coords)  { return { x : coords.x, y : coords.y }; }
+    function trPos(coords)  { return { x : coords.x + coords.width, y : coords.y }; }
+    function blPos(coords)  { return { x : coords.x, y : coords.y + coords.height }; }
+    function brPos(coords)  { return { x : coords.x + coords.width, y : coords.y + coords.height }; }
+
+    // GRIP CONSTRAINTS
+
+    function leftCns(coords, wmax)    { return [ -coords.x, coords.width ]; }
+    function rightCns(coords, wmax)   { return [ -coords.width, wmax - (coords.x + coords.width) ]; }
+    function topCns(coords, hmax)     { return [ -coords.y, coords.height ]; }
+    function bottomCns(coords, hmax)  { return [ -coords.height,  hmax - (coords.y + coords.height) ]; }
+    function editCns(coords, wmax, hmax, fx, fy) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
+      if (fx) [rtn.dxmin, rtn.dxmax] = fx(coords, wmax);
+      if (fy) [rtn.dymin, rtn.dymax] = fy(coords, hmax);
+      return rtn;
+    }
+
+    function tEditCns(obj, wmax, hmax)  { return editCns(obj.coords, wmax, hmax, null, topCns); }
+    function bEditCns(obj, wmax, hmax)  { return editCns(obj.coords, wmax, hmax, null, bottomCns); }
+    function lEditCns(obj, wmax, hmax)  { return editCns(obj.coords, wmax, hmax, leftCns, null); }
+    function rEditCns(obj, wmax, hmax)  { return editCns(obj.coords, wmax, hmax, rightCns, null); }
+    function tlEditCns(obj, wmax, hmax) { return editCns(obj.coords, wmax, hmax, leftCns, topCns); }
+    function trEditCns(obj, wmax, hmax) { return editCns(obj.coords, wmax, hmax, rightCns, topCns); }
+    function blEditCns(obj, wmax, hmax) { return editCns(obj.coords, wmax, hmax, leftCns, bottomCns); }
+    function brEditCns(obj, wmax, hmax) { return editCns(obj.coords, wmax, hmax, rightCns, bottomCns); }
+
+    // GRIP EDITIONS
+
+    function leftEdit(coords, dx)   { coords.x += dx; coords.width -= dx; }
+    function rightEdit(coords, dx)  { coords.width += dx; }
+    function topEdit(coords, dy)    { coords.y += dy; coords.height -= dy; }
+    function bottomEdit(coords, dy) { coords.height += dy; }
+    function edit(obj, dx, dy, fx, fy) {
+      let coords = Object.create(obj.coords);
+      if (fx) fx(coords, dx);
+      if (fy) fy(coords, dy);
+      return coords;
+    }
+
+    function tEdit(obj, dx, dy)   { return edit(obj, dx, dy, null, topEdit); }
+    function bEdit(obj, dx, dy)   { return edit(obj, dx, dy, null, bottomEdit); }
+    function lEdit(obj, dx, dy)   { return edit(obj, dx, dy, leftEdit, null); }
+    function rEdit(obj, dx, dy)   { return edit(obj, dx, dy, rightEdit, null); }
+    function tlEdit(obj, dx, dy)  { return edit(obj, dx, dy, leftEdit, topEdit); }
+    function trEdit(obj, dx, dy)  { return edit(obj, dx, dy, rightEdit, topEdit); }
+    function blEdit(obj, dx, dy)  { return edit(obj, dx, dy, leftEdit, bottomEdit); }
+    function brEdit(obj, dx, dy)  { return edit(obj, dx, dy, rightEdit, bottomEdit); }
+
+    return {
+
+      tPos, bPos, lPos, rPos, tlPos, trPos, blPos, brPos,
+      tEditCns, bEditCns, lEditCns, rEditCns, tlEditCns, trEditCns, blEditCns, brEditCns,
+      tEdit, bEdit, lEdit, rEdit, tlEdit, trEdit, blEdit, brEdit
+    };
+    
+  })(); // fRectangle
 
   class Rectangle extends Figure {
 
@@ -148,7 +375,54 @@ var bitedit = (function() {
       return null;
     }
 
-  }
+    gripCoords(id, coords) {
+      const gripPosition = {
+        't' : fRectangle.tPos, 'b' : fRectangle.bPos, 'l' : fRectangle.lPos, 'r' : fRectangle.rPos,  
+        'tl' : fRectangle.tlPos, 'tr' : fRectangle.trPos, 'bl' : fRectangle.blPos, 'br' : fRectangle.brPos
+      };
+      return gripPosition[id](coords || this.figure.getCoords());
+    }
+
+    gripCursor(id) {
+      const gripCursors = {
+        't' : cursors.NS, 'b' : cursors.NS, 'l' : cursors.EW, 'r' : cursors.EW,  
+        'tl' : cursors.NWSE, 'tr' : cursors.NESW, 'bl' : cursors.NESW, 'br' : cursors.NWSE
+      };
+      return gripCursors[id];
+    }
+
+    createGrips() {
+      this.grips.push(new Grip('t', this.figure.getDomParent(), this.gripCoords('t'), this.gripCursor('t')));
+      this.grips.push(new Grip('b', this.figure.getDomParent(), this.gripCoords('b'), this.gripCursor('b')));
+      this.grips.push(new Grip('l', this.figure.getDomParent(), this.gripCoords('l'), this.gripCursor('l')));
+      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
+      this.grips.push(new Grip('tl', this.figure.getDomParent(), this.gripCoords('tl'), this.gripCursor('tl')));
+      this.grips.push(new Grip('tr', this.figure.getDomParent(), this.gripCoords('tr'), this.gripCursor('tr')));
+      this.grips.push(new Grip('bl', this.figure.getDomParent(), this.gripCoords('bl'), this.gripCursor('bl')));
+      this.grips.push(new Grip('br', this.figure.getDomParent(), this.gripCoords('br'), this.gripCursor('br')));
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = {
+        't' : fRectangle.tEditCns, 'b' : fRectangle.bEditCns, 'l' : fRectangle.lEditCns, 'r' : fRectangle.rEditCns,  
+        'tl' : fRectangle.tlEditCns, 'tr' : fRectangle.trEditCns, 'bl' : fRectangle.blEditCns, 'br' : fRectangle.brEditCns
+      };
+      return constraints[id](this.figure, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        't' : fRectangle.tEdit, 'b' : fRectangle.bEdit, 'l' : fRectangle.lEdit, 'r' : fRectangle.rEdit,  
+        'tl' : fRectangle.tlEdit, 'tr' : fRectangle.trEdit, 'bl' : fRectangle.blEdit, 'br' : fRectangle.brEdit
+      };
+      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
+    }
+
+    checkCoords(coords) {
+      return (coords.width > 0 && coords.height > 0) ? true : false;
+    }
+
+  } // RECTANGLE
 
   /*
    * EDITOR FACTORY
@@ -211,6 +485,7 @@ var bitedit = (function() {
       } else {
         this.selection.splice(id, 1);
         editor.markUnselected();
+        editor.remove();
         this.enableEdition();
       }
     }
@@ -229,6 +504,7 @@ var bitedit = (function() {
     empty() {
       this.selection.forEach(function(e) { 
         e.markUnselected();
+        e.remove();
       });
       this.selection.splice(0, this.selection.length);
     }
@@ -280,9 +556,13 @@ var bitedit = (function() {
 
   } // MULTI-SELECTOR
 
+  /*
+   * MOVER
+   */
+
   class Mover {
 
-    constructor(selector) {
+    constructor() {
       this.selector = null;
       this.org = { x : 0, y : 0 };
       this.lims = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
@@ -356,11 +636,76 @@ var bitedit = (function() {
       return rtn;
     }
 
-  }
+  } // MOVER
+
+  /*
+   * EDITOR
+   */
+
+  class Editor {
+
+    constructor() {
+      this.selection = null;
+      this.id = '';
+      this.org = { x : 0, y : 0 };
+      this.lims = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
+    }
+
+    start(selection, target, pt, wmax, hmax) {
+      this.selection = selection;
+      this.id = this.selection.getGrip(target).getID();
+      this.org.x = pt.x;
+      this.org.y = pt.y;
+      this.setLims(this.selection, this.id, wmax, hmax);
+    }
+
+    progress(pt) {
+      let d = this.constrain(pt.x - this.org.x, pt.y - this.org.y);
+      this.selection.drawModified(this.id, d.dx, d.dy);
+    }
+
+    end(pt) {
+      let d = this.constrain(pt.x - this.org.x, pt.y - this.org.y);
+      if(!this.selection.modify(this.id, d.dx, d.dy)) {
+        alert('Invalid area dimensions!');
+      }
+      this.reset();
+    }
+
+    cancel() {
+      this.selection.drawToOffset(0, 0);
+      this.reset();
+    }
+
+    reset() {
+      this.org.x = this.org.y = 0;
+      this.lims.dxmin = this.lims.dxmax = this.lims.dymin = this.lims.dymax = 0;
+      this.selection = null;
+      this.id = '';
+    }
+
+    setLims(selection, id, wmax, hmax) {
+      let dlims = selection.computeEditDLims(id, wmax, hmax);
+      this.lims.dxmin = dlims.dxmin;
+      this.lims.dxmax = dlims.dxmax;
+      this.lims.dymin = dlims.dymin;
+      this.lims.dymax = dlims.dymax;
+    }
+
+    constrain(dx, dy) {
+      let rtn = { dx : dx, dy : dy };
+      if (dx < this.lims.dxmin) rtn.dx = this.lims.dxmin;
+      if (dx > this.lims.dxmax) rtn.dx = this.lims.dxmax;
+      if (dy < this.lims.dymin) rtn.dy = this.lims.dymin;
+      if (dy > this.lims.dymax) rtn.dy = this.lims.dymax;
+      return rtn;
+    }
+
+  } // EDITOR
 
   return {
-    clsStatus,
-    MultiSelector, Mover
+    clsStatus, isGrip,
+    MultiSelector, Mover, Editor
   };
-
+  
 })(); /* bitedit */

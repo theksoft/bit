@@ -59,3 +59,37 @@
   fill: none;
 }
 
+#draw-area rect.grip {
+  stroke-width: 1px;
+  stroke: #000;
+  fill: #fff;
+}
+
+#draw-area rect.grip.disabled {
+	stroke: #333;
+	fill: #555;
+}
+
+#draw-area rect.grip:hover {
+  fill: #000; 
+}
+
+#draw-area rect.grip.ew-resize {
+  cursor : ew-resize;
+}
+
+#draw-area rect.grip.ns-resize {
+  cursor : ns-resize;
+}
+
+#draw-area rect.grip.nesw-resize {
+  cursor : nesw-resize;
+}
+
+#draw-area rect.grip.nwse-resize {
+  cursor : nwse-resize;
+}
+
+#draw-area rect.grip.move {
+  cursor : move;
+}
