@@ -1400,7 +1400,8 @@ var bit = (function() {
     var draw = (function() {
 
       var factory = {
-        rectangle : bitgen.Rectangle
+        'rectangle' : bitgen.Rectangle,
+        'square'    : bitgen.Square
       };
 
       var generator = null;

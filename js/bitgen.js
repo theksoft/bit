@@ -10,7 +10,9 @@ var bitgen = (function() {
     TRACKER : 'tracker'
   }
 
-  // FIGURE GENERATOR
+  /*
+   * FIGURE GENERATOR
+   */
 
   class Figure {
 
@@ -46,13 +48,20 @@ var bitgen = (function() {
 
   }
 
-  // RECTANGLE GENERATOR
+  /*
+   * RECTANGLE GENERATOR
+   */
 
   class Rectangle extends Figure {
 
     constructor(parent, g) {
       super();
       this.org = { x : 0, y : 0 };
+      this.figure = null;
+      this.createFigure(parent, g);
+    }
+
+    createFigure(parent, g) {
       this.figure = new bitarea.Rectangle(parent, g);
     }
 
@@ -94,6 +103,41 @@ var bitgen = (function() {
   } // RECTANGLE GENERATOR
 
   /*
+   * SQUARE GENERATOR
+   */
+
+  class Square extends Rectangle {
+
+    constructor(parent, g) {
+      super(parent, g);
+    }
+
+    createFigure(parent, g) {
+      this.figure = new bitarea.Square(parent, g);
+    }
+
+    computeCoords(point) {
+      let width = point.x - this.org.x;
+      let height = point.y - this.org.y;
+      let coords = super.computeCoords(point);
+      let delta = coords.width - coords.height;
+      if (delta > 0) {
+        coords.width = coords.height;
+        if (point.x < this.org.x) {
+          coords.x = this.org.x - coords.width;
+        }
+      } else if (delta < 0){
+        coords.height = coords.width;
+        if (point.y < this.org.y) {
+          coords.y = this.org.y - coords.height;
+        }
+      }
+      return coords;
+    }
+
+  } // SQUARE GENERATOR
+
+  /*
    * TRACKER
    */
 
@@ -116,7 +160,7 @@ var bitgen = (function() {
   } //TRACKER
 
   return {
-    Rectangle,
+    Rectangle, Square,
     Tracker
   }
 

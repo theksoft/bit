@@ -9,7 +9,8 @@ var bitarea = (function() {
   const NSSVG = 'http://www.w3.org/2000/svg';
 
   const types = {
-    RECTANGLE     : 'rectangle'
+    RECTANGLE     : 'rectangle',
+    SQUARE        : 'square'
   };
 
   const tilts = {
@@ -18,6 +19,10 @@ var bitarea = (function() {
     LEFT    : Math.PI / 2,
     TOP     : Math.PI,
     RIGHT   : -Math.PI / 2
+  };
+
+  const clsQualifiers = {
+    SQUARE  : 'square'
   };
 
   /*
@@ -154,9 +159,41 @@ var bitarea = (function() {
 
   } // RECTANGLE
 
+  /*
+   * SQUARE CLASS
+   */
+
+  class Square extends Rectangle {
+    
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
+      this.type = types.SQUARE;
+    }
+
+    createSVGElt() {
+      super.createSVGElt();
+      this.dom.classList.add(clsQualifiers.SQUARE);
+    }
+
+    setCoords(coords) {
+      if(coords.width !== coords.height) {
+        throw new Error('This is not a square: ' + this.width + 'x' + this.height);
+      }
+      super.setCoords(coords);
+    }
+
+    draw(coords) {
+      if(coords && coords.width !== coords.height) {
+        throw new Error('This is not a square: ' + this.width + 'x' + this.height);
+      }
+      super.draw(coords);
+    }
+
+  } // SQUARE
+
   return {
     tilts,
-    Rectangle
+    Rectangle, Square
   }
 
 })(); /* bitarea */

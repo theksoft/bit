@@ -28,6 +28,10 @@
   stroke: #f00;
 }
 
+#draw-area rect.square {
+  stroke: #f80;
+}
+
 #draw-area rect:hover/*,
 #draw-area polygon:hover,
 #draw-area polygon.extended:hover,

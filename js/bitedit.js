@@ -329,7 +329,6 @@ var bitedit = (function() {
     function brEdit(obj, dx, dy)  { return edit(obj, dx, dy, rightEdit, bottomEdit); }
 
     return {
-
       tPos, bPos, lPos, rPos, tlPos, trPos, blPos, brPos,
       tEditCns, bEditCns, lEditCns, rEditCns, tlEditCns, trEditCns, blEditCns, brEditCns,
       tEdit, bEdit, lEdit, rEdit, tlEdit, trEdit, blEdit, brEdit
@@ -425,11 +424,69 @@ var bitedit = (function() {
   } // RECTANGLE
 
   /*
+   * SQUARE
+   */
+
+  var fSquare = (function() {
+
+    // GRIP EDITIONS
+
+    function tlEdit(obj, dx, dy) {
+      let d = (dx > dy) ? dx : dy;
+      return fRectangle.tlEdit(obj, d, d);
+    }
+    function trEdit(obj, dx, dy) {
+      let d = (-dx > dy) ? -dx : dy;
+      return fRectangle.trEdit(obj, -d, d);
+    }
+    function blEdit(obj, dx, dy) {
+      let d = (dx > -dy) ? dx : -dy;
+      return fRectangle.blEdit(obj, d, -d);
+    }
+    function brEdit(obj, dx, dy) {
+      let d = (dx > dy) ? dy : dx;
+      return fRectangle.brEdit(obj, d, d);
+    }
+   
+    return {
+      tlEdit, trEdit, blEdit, brEdit
+    };
+
+  })(); // fSquare
+
+  class Square extends Rectangle {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    computeRotateCoords(direction, wmax, hmax) {
+      return Object.create(this.figure.coords);
+    }
+
+    createGrips() {
+      this.grips.push(new Grip('tl', this.figure.getDomParent(), this.gripCoords('tl'), this.gripCursor('tl')));
+      this.grips.push(new Grip('tr', this.figure.getDomParent(), this.gripCoords('tr'), this.gripCursor('tr')));
+      this.grips.push(new Grip('bl', this.figure.getDomParent(), this.gripCoords('bl'), this.gripCursor('bl')));
+      this.grips.push(new Grip('br', this.figure.getDomParent(), this.gripCoords('br'), this.gripCursor('br')));
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        'tl' : fSquare.tlEdit, 'tr' : fSquare.trEdit, 'bl' : fSquare.blEdit, 'br' : fSquare.brEdit
+      };
+      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
+    }
+
+  }
+
+  /*
    * EDITOR FACTORY
    */
 
   var factory = {
-    rectangle : Rectangle
+    'rectangle' : Rectangle,
+    'square'    : Square
   };
 
   function create(fig) {
