@@ -11,12 +11,14 @@ var bitarea = (function() {
   const types = {
     RECTANGLE     : 'rectangle',
     SQUARE        : 'square',
-    RHOMBUS       : 'rhombus'
+    RHOMBUS       : 'rhombus',
+    TRIANGLEISC   : 'triangleIsc'
   };
 
   const clsQualifiers = {
     SQUARE        : 'square',
-    RHOMBUS       : 'rhombus'
+    RHOMBUS       : 'rhombus',
+    ISOSCELES     : 'isosceles'
   };
 
   const tilts = {
@@ -101,6 +103,13 @@ var bitarea = (function() {
       if(this.dom) {
         this.dom.classList.remove(clsName);
       }
+    }
+
+    hasClass(clsName) {
+      if(this.dom) {
+        return this.dom.classList.contains(clsName);
+      }
+      return false;
     }
 
   } // FIGURE
@@ -199,8 +208,8 @@ var bitarea = (function() {
 
   class Rhombus extends Rectangle {
 
-    constructor(parent, alt) {
-      super(parent, alt);
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
       this.type = types.RHOMBUS;
     }
 
@@ -227,9 +236,64 @@ var bitarea = (function() {
 
   } // RHOMBUS
 
+  /*
+   * ISOSCELES TRIANGLE
+   */
+  
+  class IsoscelesTriangle extends Rectangle {
+    
+    constructor(parent, noGroup, tilt) {
+      super(parent, noGroup);
+      this.type = types.TRIANGLEISC;
+      this.coords.tilt = tilt;
+    }
+
+    createSVGElt() {
+      this.dom = document.createElementNS(NSSVG, 'polygon');
+      this.dom.classList.add(clsQualifiers.ISOSCELES);
+      this.domParent.appendChild(this.dom);
+    }
+
+    draw(coords) {
+      let c = coords || this.coords;
+      let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
+      let points = [];
+      switch(c.tilt) {
+      case tilts.BOTTOM:
+        points.push({ x : lx, y : by });
+        points.push({ x : rx, y : by });
+        points.push({ x : cx, y : ty });
+        break;
+      case tilts.TOP:
+        points.push({ x : lx, y : ty });
+        points.push({ x : rx, y : ty });
+        points.push({ x : cx, y : by });
+        break;
+      case tilts.LEFT:
+        points.push({ x : lx, y : ty });
+        points.push({ x : lx, y : by });
+        points.push({ x : rx, y : cy });
+        break;
+      case tilts.RIGHT:
+        points.push({ x : lx, y : cy });
+        points.push({ x : rx, y : ty });
+        points.push({ x : rx, y : by });
+        break;
+      default:
+      }
+      let attrVal = points.reduce(function(r, e) {
+        return r + e.x + ' ' + e.y + ' ';
+      }, '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+  } // ISOSCELES TRIANGLE
+
   return {
     tilts,
-    Rectangle, Square, Rhombus
+    Rectangle, Square, Rhombus,
+    IsoscelesTriangle
   }
 
 })(); /* bitarea */

@@ -54,21 +54,22 @@ var bitgen = (function() {
 
   class Rectangle extends Figure {
 
-    constructor(parent, g) {
+    constructor(parent, noGroup, alt) {
       super();
       this.org = { x : 0, y : 0 };
       this.figure = null;
-      this.createFigure(parent, g);
+      this.createFigure(parent, noGroup, alt);
     }
 
-    createFigure(parent, g) {
-      this.figure = new bitarea.Rectangle(parent, g);
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Rectangle(parent, noGroup);
     }
 
     start(point) {
-      this.org.x = point.x;
-      this.org.y = point.y;
-      this.figure.setCoords( { x : point.x, y : point.y, width : 0, height : 0, tilt : bitarea.tilts.DEFAULT });
+      let coords = this.figure.getCoords();
+      this.org.x = coords.x = point.x;
+      this.org.y = coords.y = point.y;
+      this.figure.setCoords(coords);
       this.figure.redraw();
     }
 
@@ -108,12 +109,12 @@ var bitgen = (function() {
 
   class Square extends Rectangle {
 
-    constructor(parent, g) {
-      super(parent, g);
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
     }
 
-    createFigure(parent, g) {
-      this.figure = new bitarea.Square(parent, g);
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Square(parent, noGroup);
     }
 
     computeCoords(point) {
@@ -165,13 +166,13 @@ var bitgen = (function() {
 
   class Rhombus extends Rectangle {
 
-    constructor(parent, noGroup) {
-      super(parent, noGroup);
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
       this.tracker = new Tracker(parent);
     }
 
-    createFigure(parent, g) {
-      this.figure = new bitarea.Rhombus(parent, g);
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Rhombus(parent, noGroup);
     }
 
     start(point) {
@@ -181,7 +182,9 @@ var bitgen = (function() {
 
     progress(point) {
       super.progress(point);
-      this.tracker.progress(point);
+      if (this.tracker) {
+        this.tracker.progress(point);
+      }
     }
 
     end(point) {
@@ -202,8 +205,69 @@ var bitgen = (function() {
 
   } // RHOMBUS GENERATOR
 
+  /*
+   * ISOSCELES TRIANGLE GENERATOR
+   */
+
+  class IsoscelesTriangle extends Rectangle {
+    
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+      this.tracker = new Tracker(parent);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.IsoscelesTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
+    }
+
+    computeCoords(point) {
+      let coords = super.computeCoords(point);
+      switch(coords.tilt) {
+      case bitarea.tilts.TOP:
+      case bitarea.tilts.BOTTOM:
+        coords.tilt = (point.y < this.org.y) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
+        break;
+      case bitarea.tilts.LEFT:
+      case bitarea.tilts.RIGHT:
+        coords.tilt = (point.x < this.org.x) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+        break;
+      }
+      return coords;
+    }
+
+    start(point) {
+      super.start(point);
+      this.tracker.start(point);
+    }
+
+    progress(point) {
+      super.progress(point);
+      if (this.tracker) {
+        this.tracker.progress(point);
+      }
+    }
+
+    end(point) {
+      let rtn = super.end(point);
+      if ('continue' !== rtn) { 
+        this.tracker.cancel();
+        this.tracker = null;
+      }
+      return rtn;
+    }
+
+    cancel() {
+      super.cancel();
+      if (this.tracker) {
+        this.tracker.cancel();
+      }
+    }
+
+  } // ISOSCELES GENERATOR
+
   return {
     Rectangle, Square, Rhombus,
+    IsoscelesTriangle,
     Tracker
   }
 

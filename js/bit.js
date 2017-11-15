@@ -46,11 +46,6 @@ var bit = (function() {
       EDITING       : 'editing'
     };
 
-    const directions = {
-      RCLK  : 'clockwise',
-      RACLK : 'anti-clockwise'
-    };
-
     return {
 
       leftButton : function(e) {
@@ -70,7 +65,7 @@ var bit = (function() {
       },
 
       keyCodes, fgTypes,
-      clsActions, directions
+      clsActions
 
     };
 
@@ -673,7 +668,7 @@ var bit = (function() {
             if (utils.noKey(e)) {
               context.aMov.onStep(doms.drawarea, -1, 0);
             } else if (utils.ctrlKey(e)) {
-              context.aMov.onRotate(doms.drawarea, utils.directions.RACLK);
+              context.aMov.onRotate(doms.drawarea, bitedit.directions.RACLK);
             }
           }
           break;
@@ -682,7 +677,7 @@ var bit = (function() {
             if (utils.noKey(e)) {
               context.aMov.onStep(doms.drawarea, 1, 0);
             } else if (utils.ctrlKey(e)) {
-              context.aMov.onRotate(doms.drawarea, utils.directions.RCLK);
+              context.aMov.onRotate(doms.drawarea, bitedit.directions.RCLK);
             }
           }
           break;
@@ -1408,9 +1403,10 @@ var bit = (function() {
     var draw = (function() {
 
       var factory = {
-        'rectangle' : bitgen.Rectangle,
-        'square'    : bitgen.Square,
-        'rhombus'   : bitgen.Rhombus
+        'rectangle'   : bitgen.Rectangle,
+        'square'      : bitgen.Square,
+        'rhombus'     : bitgen.Rhombus,
+        'triangleIsc' : bitgen.IsoscelesTriangle
       };
 
       var generator = null;
@@ -1421,7 +1417,7 @@ var bit = (function() {
           console.log('ERROR - Drawing mode not handled');
           return null;
         }
-        return new figGen(parent, alt);
+        return new figGen(parent, false, alt);
       }
 
       var handlers = {

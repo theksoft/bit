@@ -24,6 +24,11 @@ var bitedit = (function() {
     ALL           : 'move'
   };
 
+  const directions = {
+    RCLK  : 'clockwise',
+    RACLK : 'anti-clockwise'
+  };
+
   // EDITION GRIP
 
   function isGrip(dom) {
@@ -56,6 +61,10 @@ var bitedit = (function() {
       return this.id;
     }
 
+    setID(id) {
+      this.id = id;
+    }
+
     is(dom) {
       return (dom === this.dom) ? true : false;
     }
@@ -68,6 +77,14 @@ var bitedit = (function() {
     disable() {
       this.removeClass(this.cursor);
       this.addClass(clsStatus.DISABLED);
+    }
+
+    setCursor(cursor) {
+      if (this.hasClass(this.cursor)) {
+        this.removeClass(this.cursor);
+        this.addClass(cursor);
+      }
+      this.cursor = cursor;
     }
 
     className() {
@@ -224,6 +241,10 @@ var bitedit = (function() {
     gripCoords(id, coords) {
       console.log('gripCoords() not defined');
       return (coords || this.figure.getCoords());
+    }
+
+    gripCursor(id) {
+      return cursors.ALL;
     }
 
     repositionGrips(coords) {
@@ -387,7 +408,7 @@ var bitedit = (function() {
         't' : cursors.NS, 'b' : cursors.NS, 'l' : cursors.EW, 'r' : cursors.EW,  
         'tl' : cursors.NWSE, 'tr' : cursors.NESW, 'bl' : cursors.NESW, 'br' : cursors.NWSE
       };
-      return gripCursors[id];
+      return gripCursors[id] || super.gripCursor(id);
     }
 
     createGrips() {
@@ -500,13 +521,180 @@ var bitedit = (function() {
   } // RHOMBUS EDITOR
 
   /*
+   * ISOSCELES TRIANGLE EDITOR
+   */
+
+  var fIsoscelesTriangle = (function() {
+
+    // GRIP CONSTRAINTS
+
+    function leftCns(lr, coords, lims)    { lr.dxmin = -Math.min(-lims.dxmin, lims.dxmax);  lr.dxmax = Math.round(coords.width/2); };
+    function rightCns(lr, coords, lims)   { lr.dxmin = -Math.round(coords.width/2);         lr.dxmax = Math.min(-lims.dxmin, lims.dxmax); };
+    function topCns(lr, coords, lims)     { lr.dymin = -Math.min(-lims.dymin, lims.dymax);  lr.dymax = Math.round(coords.height/2); };
+    function bottomCns(lr, coords, lims)  { lr.dymin = -Math.round(coords.height/2);        lr.dymax = Math.min(-lims.dymin, lims.dymax); };
+    function editCns(obj, wmax, hmax, fBase, fAdjust) {
+      let rtn = fBase(obj, wmax, hmax);
+      let lims = this.computeMoveDLims(wmax, hmax);
+      fAdjust(rtn, obj.coords, lims);
+      return rtn;
+    }
+
+    function ttlEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.tlEditCns, leftCns); }
+    function ttrEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.trEditCns, rightCns); }
+    function bblEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.blEditCns, leftCns); }
+    function bbrEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.brEditCns, rightCns); }
+    function ltlEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.tlEditCns, topCns); }
+    function lblEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.blEditCns, bottomCns); }
+    function rtrEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.trEditCns, topCns); }
+    function rbrEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.brEditCns, bottomCns); }
+
+    // GRIP EDITION
+
+    function leftAdjust(dx, dy, coords)   { coords.width -= dx; }
+    function rightAdjust(dx, dy, coords)  { coords.x -= dx; coords.width += dx; }
+    function topAdjust(dx, dy, coords)    { coords.height -= dy; }
+    function bottomAdjust(dx, dy, coords) { coords.y -= dy; coords.height += dy; }
+    function edit(obj, dx, dy, fBase, fAdjust) {
+      let coords = fBase(obj, dx, dy);
+      fAdjust(dx, dy, coords);
+      return coords;
+    }
+
+    function ttlEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.tlEdit, leftAdjust); }
+    function ttrEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.trEdit, rightAdjust); }
+    function bblEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.blEdit, leftAdjust); }
+    function bbrEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.brEdit, rightAdjust); }
+    function ltlEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.tlEdit, topAdjust); }
+    function lblEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.blEdit, bottomAdjust); }
+    function rtrEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.trEdit, topAdjust); }
+    function rbrEdit(obj, dx, dy) { return edit(obj, dx, dy, fRectangle.brEdit, bottomAdjust); }
+
+    return {
+
+      ttlEditCns, ttrEditCns, bblEditCns, bbrEditCns, ltlEditCns, lblEditCns, rtrEditCns, rbrEditCns,
+      ttlEdit, ttrEdit, bblEdit, bbrEdit, ltlEdit, lblEdit, rtrEdit, rbrEdit      
+    };
+
+  })(); // fIsoscelesTriangle
+
+  class IsoscelesTriangle extends Rectangle {
+
+    constructor(fig) {
+      super(fig);
+    }
+
+    computeRotateCoords(direction, wmax, hmax) {
+      let rtn = super.computeRotateCoords(direction, wmax, hmax);
+      if (null != rtn) {
+        switch (rtn.tilt) {
+        case bitarea.tilts.BOTTOM:
+          rtn.tilt = (directions.RCLK === direction) ? bitarea.tilts.LEFT : bitarea.tilts.RIGHT;
+          break;
+        case bitarea.tilts.TOP:
+          rtn.tilt = (directions.RCLK === direction) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+          break;
+        case bitarea.tilts.LEFT:
+          rtn.tilt = (directions.RCLK === direction) ? bitarea.tilts.TOP : bitarea.tilts.BOTTOM;
+          break;
+        case bitarea.tilts.RIGHT:
+          rtn.tilt = (directions.RCLK === direction) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
+          break;
+        default:
+          rtn = null;
+        }
+      }
+      return rtn;
+    }
+
+    gripCoords(id, coords) {
+      const gripPosition = {
+        't' : fRectangle.tPos, 'b' : fRectangle.bPos, 'l' : fRectangle.lPos, 'r' : fRectangle.rPos,  
+        'bbl' : fRectangle.blPos, 'bbr' : fRectangle.brPos,
+        'ttl' : fRectangle.tlPos, 'ttr' : fRectangle.trPos,
+        'ltl' : fRectangle.tlPos, 'lbl' : fRectangle.blPos,
+        'rtr' : fRectangle.trPos, 'rbr' : fRectangle.brPos
+      };
+      return gripPosition[id](coords || this.figure.getCoords());
+    }
+
+    createGrips() {
+      switch (this.figure.coords.tilt) {
+      case bitarea.tilts.BOTTOM:
+        this.grips.push(new Grip('t', this.figure.getDomParent(), this.gripCoords('t'), this.gripCursor('t')));
+        this.grips.push(new Grip('bbl', this.figure.getDomParent(), this.gripCoords('bbl'), this.gripCursor('bbl')));
+        this.grips.push(new Grip('bbr', this.figure.getDomParent(), this.gripCoords('bbr'), this.gripCursor('bbr')));
+        break;
+      case bitarea.tilts.TOP:
+        this.grips.push(new Grip('b', this.figure.getDomParent(), this.gripCoords('b'), this.gripCursor('b')));
+        this.grips.push(new Grip('ttl', this.figure.getDomParent(), this.gripCoords('ttl'), this.gripCursor('ttl')));
+        this.grips.push(new Grip('ttr', this.figure.getDomParent(), this.gripCoords('ttr'), this.gripCursor('ttr')));
+        break;
+      case bitarea.tilts.LEFT:
+        this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
+        this.grips.push(new Grip('ltl', this.figure.getDomParent(), this.gripCoords('ltl'), this.gripCursor('ltl')));
+        this.grips.push(new Grip('lbl', this.figure.getDomParent(), this.gripCoords('lbl'), this.gripCursor('lbl')));
+        break;
+      case bitarea.tilts.RIGHT:
+        this.grips.push(new Grip('l', this.figure.getDomParent(), this.gripCoords('l'), this.gripCursor('l')));
+        this.grips.push(new Grip('rtr', this.figure.getDomParent(), this.gripCoords('rtr'), this.gripCursor('rtr')));
+        this.grips.push(new Grip('rbr', this.figure.getDomParent(), this.gripCoords('rbr'), this.gripCursor('rbr')));
+        break;
+      default:
+      }
+    }
+
+    rotateGrips(direction) {
+      const rclkNext = {
+        't' : 'r', 'r' : 'b', 'b' : 'l', 'l' : 't',
+        'bbl' : 'ltl', 'ltl' : 'ttr', 'ttr' : 'rbr', 'rbr' : 'bbl',
+        'bbr' : 'lbl', 'lbl' : 'ttl', 'ttl' : 'rtr', 'rtr' : 'bbr'
+      };
+      const raclkNext = {
+        't' : 'l', 'l' : 'b', 'b' : 'r', 'r' : 't',
+        'bbl' : 'rbr', 'rbr' : 'ttr', 'ttr' : 'ltl', 'ltl' : 'bbl',
+        'bbr' : 'rtr', 'rtr' : 'ttl', 'ttl' : 'lbl', 'lbl' : 'bbr'
+      };
+      let newCursor = this.gripCursor.bind(this);
+      this.grips.forEach(function f(e) {
+        let newId = (direction === directions.RCLK) ? rclkNext[e.getID()] : raclkNext[e.getID()];
+        e.setID(newId);
+        e.setCursor(newCursor(newId));
+      });
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = {
+        't' : fRectangle.tEditCns, 'b' : fRectangle.bEditCns, 'l' : fRectangle.lEditCns, 'r' : fRectangle.rEditCns,  
+        'bbl' : fIsoscelesTriangle.bblEditCns, 'bbr' : fIsoscelesTriangle.bbrEditCns,
+        'ttl' : fIsoscelesTriangle.ttlEditCns, 'ttr' : fIsoscelesTriangle.ttrEditCns,
+        'ltl' : fIsoscelesTriangle.ltlEditCns, 'lbl' : fIsoscelesTriangle.lblEditCns,
+        'rtr' : fIsoscelesTriangle.rtrEditCns, 'rbr' : fIsoscelesTriangle.rbrEditCns
+      };
+      return constraints[id].bind(this)(this.figure, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        't' : fRectangle.tEdit, 'b' : fRectangle.bEdit, 'l' : fRectangle.lEdit, 'r' : fRectangle.rEdit,  
+        'bbl' : fIsoscelesTriangle.bblEdit, 'bbr' : fIsoscelesTriangle.bbrEdit,
+        'ttl' : fIsoscelesTriangle.ttlEdit, 'ttr' : fIsoscelesTriangle.ttrEdit,
+        'ltl' : fIsoscelesTriangle.ltlEdit, 'lbl' : fIsoscelesTriangle.lblEdit,
+        'rtr' : fIsoscelesTriangle.rtrEdit, 'rbr' : fIsoscelesTriangle.rbrEdit
+      };
+      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
+    }
+
+  } // ISOSCELES TRIANGLE EDITOR
+
+  /*
    * EDITOR FACTORY
    */
 
   var factory = {
-    'rectangle' : Rectangle,
-    'square'    : Square,
-    'rhombus'   : Rhombus
+    'rectangle'   : Rectangle,
+    'square'      : Square,
+    'rhombus'     : Rhombus,
+    'triangleIsc' : IsoscelesTriangle
   };
 
   function create(fig) {
@@ -781,7 +969,7 @@ var bitedit = (function() {
   } // EDITOR
 
   return {
-    clsStatus, isGrip,
+    directions, clsStatus, isGrip,
     MultiSelector, Mover, Editor
   };
   

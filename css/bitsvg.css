@@ -36,6 +36,10 @@
   stroke: #f64;
 }
 
+#draw-area polygon.isosceles {
+  stroke: #06d;
+}
+
 #draw-area rect:hover,
 #draw-area polygon:hover/*,
 #draw-area polygon.extended:hover,
