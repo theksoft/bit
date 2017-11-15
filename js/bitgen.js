@@ -159,8 +159,51 @@ var bitgen = (function() {
 
   } //TRACKER
 
+  /*
+   * RHOMBUS GENERATOR 
+   */
+
+  class Rhombus extends Rectangle {
+
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
+      this.tracker = new Tracker(parent);
+    }
+
+    createFigure(parent, g) {
+      this.figure = new bitarea.Rhombus(parent, g);
+    }
+
+    start(point) {
+      super.start(point);
+      this.tracker.start(point);
+    }
+
+    progress(point) {
+      super.progress(point);
+      this.tracker.progress(point);
+    }
+
+    end(point) {
+      let rtn = super.end(point);
+      if ('continue' !== rtn) { 
+        this.tracker.cancel();
+        this.tracker = null;
+      }
+      return rtn;
+    }
+
+    cancel() {
+      super.cancel();
+      if (this.tracker) {
+        this.tracker.cancel();
+      }
+    }
+
+  } // RHOMBUS GENERATOR
+
   return {
-    Rectangle, Square,
+    Rectangle, Square, Rhombus,
     Tracker
   }
 

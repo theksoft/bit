@@ -10,7 +10,13 @@ var bitarea = (function() {
 
   const types = {
     RECTANGLE     : 'rectangle',
-    SQUARE        : 'square'
+    SQUARE        : 'square',
+    RHOMBUS       : 'rhombus'
+  };
+
+  const clsQualifiers = {
+    SQUARE        : 'square',
+    RHOMBUS       : 'rhombus'
   };
 
   const tilts = {
@@ -19,10 +25,6 @@ var bitarea = (function() {
     LEFT    : Math.PI / 2,
     TOP     : Math.PI,
     RIGHT   : -Math.PI / 2
-  };
-
-  const clsQualifiers = {
-    SQUARE  : 'square'
   };
 
   /*
@@ -191,9 +193,43 @@ var bitarea = (function() {
 
   } // SQUARE
 
+  /*
+   * RHOMBUS CLASS
+   */
+
+  class Rhombus extends Rectangle {
+
+    constructor(parent, alt) {
+      super(parent, alt);
+      this.type = types.RHOMBUS;
+    }
+
+    createSVGElt() {
+      this.dom = document.createElementNS(NSSVG, 'polygon');
+      this.dom.classList.add(clsQualifiers.RHOMBUS);
+      this.domParent.appendChild(this.dom);
+    }
+
+    draw(coords) {
+      let c = coords || this.coords;
+      let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
+      let points = [];
+      points.push({ x : lx, y : cy });
+      points.push({ x : cx, y : ty });
+      points.push({ x : rx, y : cy });
+      points.push({ x : cx, y : by });
+      let attrVal = points.reduce(function(r, e) {
+        return r + e.x + ' ' + e.y + ' ';
+      }, '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+  } // RHOMBUS
+
   return {
     tilts,
-    Rectangle, Square
+    Rectangle, Square, Rhombus
   }
 
 })(); /* bitarea */

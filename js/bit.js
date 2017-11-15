@@ -319,7 +319,7 @@ var bit = (function() {
         tls.freeze();
         areaDrawer.disable();
         areaMover.disable();
-      areaEditor.disable();
+        areaEditor.disable();
         areaSelector.disable();
         context.state = states.DRAGGING;
       } 
@@ -479,7 +479,6 @@ var bit = (function() {
       var enabled = false;
 
       function enter() {
-        doms.drawarea.classList.add(utils.clsActions.TRACKING);
         imageDragger.disable();
         areaDrawer.disable();
         areaMover.disable();
@@ -493,7 +492,9 @@ var bit = (function() {
       }
 
       function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.TRACKING);
+        if (doms.drawarea.classList.contains(utils.clsActions.TRACKING)) {
+          doms.drawarea.classList.remove(utils.clsActions.TRACKING);
+        }
         rmWel('click', onSelectExit);
         rmWel('mouseup', onSelectEnd);
         rmWel('mousemove', onSelectProgress);
@@ -504,6 +505,12 @@ var bit = (function() {
         areaMover.enable();
         areaEditor.enable();
         context.state = states.READY;
+      }
+
+      function setClassMode() {
+        if (!doms.drawarea.classList.contains(utils.clsActions.TRACKING)) {
+          doms.drawarea.classList.add(utils.clsActions.TRACKING);
+        }
       }
 
       function onSelectStart(e) {
@@ -525,6 +532,7 @@ var bit = (function() {
           }
           exit();
         } else if (states.SELECTING === context.state) {
+          setClassMode();
           context.aSel.onTrackProgress(viewport.computeCoords(e.pageX, e.pageY));
         }
       }
@@ -1401,7 +1409,8 @@ var bit = (function() {
 
       var factory = {
         'rectangle' : bitgen.Rectangle,
-        'square'    : bitgen.Square
+        'square'    : bitgen.Square,
+        'rhombus'   : bitgen.Rhombus
       };
 
       var generator = null;
@@ -1532,7 +1541,6 @@ var bit = (function() {
         prevent : function(e) {
           if (!tls.none()) return true;
           if (e.ctrlKey || e.metaKey || e.altKey) return true;
-//          if (app.areas.edit.isGrabber(e.target)) return;
           if (bitedit.isGrip(e.target)) return true;
           if (mdl.findArea(e.target) && isAreaSelected(e.target) && !e.shiftKey) return true; // is a move
           return false;

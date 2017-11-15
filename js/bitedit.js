@@ -421,10 +421,10 @@ var bitedit = (function() {
       return (coords.width > 0 && coords.height > 0) ? true : false;
     }
 
-  } // RECTANGLE
+  } // RECTANGLE EDITOR
 
   /*
-   * SQUARE
+   * SQUARE EDITOR
    */
 
   var fSquare = (function() {
@@ -478,7 +478,26 @@ var bitedit = (function() {
       return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
     }
 
-  }
+  } // SQUARE EDITOR
+
+  /*
+   * RHOMBUS EDITOR
+   */
+
+  class Rhombus extends Rectangle {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    createGrips() {
+      this.grips.push(new Grip('l', this.figure.getDomParent(), this.gripCoords('l'), this.gripCursor('l')));
+      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
+      this.grips.push(new Grip('t', this.figure.getDomParent(), this.gripCoords('t'), this.gripCursor('t')));
+      this.grips.push(new Grip('b', this.figure.getDomParent(), this.gripCoords('b'), this.gripCursor('b')));
+    }
+
+  } // RHOMBUS EDITOR
 
   /*
    * EDITOR FACTORY
@@ -486,7 +505,8 @@ var bitedit = (function() {
 
   var factory = {
     'rectangle' : Rectangle,
-    'square'    : Square
+    'square'    : Square,
+    'rhombus'   : Rhombus
   };
 
   function create(fig) {
