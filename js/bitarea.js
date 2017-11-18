@@ -12,13 +12,15 @@ var bitarea = (function() {
     RECTANGLE     : 'rectangle',
     SQUARE        : 'square',
     RHOMBUS       : 'rhombus',
-    TRIANGLEISC   : 'triangleIsc'
+    TRIANGLEISC   : 'triangleIsc',
+    TRIANGLEEQL   : 'triangleEql'
   };
 
   const clsQualifiers = {
     SQUARE        : 'square',
     RHOMBUS       : 'rhombus',
-    ISOSCELES     : 'isosceles'
+    ISOSCELES     : 'isosceles',
+    EQUILATERAL   : 'equilateral'
   };
 
   const tilts = {
@@ -188,14 +190,14 @@ var bitarea = (function() {
 
     setCoords(coords) {
       if(coords.width !== coords.height) {
-        throw new Error('This is not a square: ' + this.width + 'x' + this.height);
+        throw new Error('This is not a square: ' + coords.width + 'x' + coords.height);
       }
       super.setCoords(coords);
     }
 
     draw(coords) {
       if(coords && coords.width !== coords.height) {
-        throw new Error('This is not a square: ' + this.width + 'x' + this.height);
+        throw new Error('This is not a square: ' + coords.width + 'x' + coords.height);
       }
       super.draw(coords);
     }
@@ -290,10 +292,61 @@ var bitarea = (function() {
 
   } // ISOSCELES TRIANGLE
 
+  /*
+   * EQUILATERAL TRIANGLE
+   */
+
+  class EquilateralTriangle extends IsoscelesTriangle {
+    
+    constructor(parent, noGroup, tilt) {
+      super(parent, noGroup, tilt);
+      this.type = types.TRIANGLEEQL;
+    }
+
+    createSVGElt() {
+      super.createSVGElt();
+      this.dom.classList.remove(clsQualifiers.ISOSCELES);
+      this.dom.classList.add(clsQualifiers.EQUILATERAL);
+    }
+
+    checkDims(coords) {
+      let r = Math.sqrt(3) / 2;
+      let dmax = coords.width, dmin = coords.height;
+      switch(coords.tilt) {
+      case tilts.LEFT:
+      case tilts.RIGHT:
+        break;
+      case tilts.TOP:
+      case tilts.BOTTOM:
+        dmax = coords.height;
+        dmin = coords.width;
+        break;
+      default:
+        r = 0;
+      }
+      return (Math.abs(Math.round(dmax - r * dmin)) <= 1) ? true : false;
+     }
+
+    setCoords(coords) {
+      if(!this.checkDims(coords)) {
+        throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height);
+      }
+      super.setCoords(coords);
+    }
+
+    draw(coords) {
+      if(coords && !this.checkDims(coords)) {
+        throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height);
+      }
+      super.draw(coords);
+    }
+
+  }
+
   return {
     tilts,
     Rectangle, Square, Rhombus,
-    IsoscelesTriangle
+    IsoscelesTriangle, EquilateralTriangle
   }
 
 })(); /* bitarea */

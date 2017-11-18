@@ -263,11 +263,67 @@ var bitgen = (function() {
       }
     }
 
-  } // ISOSCELES GENERATOR
+  } // ISOSCELES TRIANGLE GENERATOR
+
+  /*
+   * EQUILATERAL TRIANGLE GENERATOR
+   */
+
+  class EquilateralTriangle extends IsoscelesTriangle {
+    
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.EquilateralTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
+    }
+
+    computeCoords(point) {
+      let coords = super.computeCoords(point);
+      let r = Math.sqrt(3) / 2;
+      let delta = 0;
+      switch(coords.tilt) {
+      case bitarea.tilts.LEFT:
+      case bitarea.tilts.RIGHT:
+        delta = Math.round(coords.width - r * coords.height);
+        if (delta > 0) {
+          coords.width = Math.round(r * coords.height);
+          if (point.x < this.org.x) {
+            coords.x = this.org.x - coords.width;
+          }
+        } else if (delta < 0) {
+          coords.height = Math.round(coords.width / r);
+          if (point.y < this.org.y) {
+            coords.y = this.org.y - coords.height;
+          }
+        }
+        break;
+      case bitarea.tilts.TOP:
+      case bitarea.tilts.BOTTOM:
+        delta = Math.round(coords.height - r * coords.width);
+        if (delta > 0) {
+          coords.height = Math.round(r * coords.width);
+          if (point.y < this.org.y) {
+            coords.y = this.org.y - coords.height;
+          }
+        } else if (delta < 0) {
+          coords.width = Math.round(coords.height / r);
+          if (point.x < this.org.x) {
+            coords.x = this.org.x - coords.width;
+          }
+        }
+        break;
+      default:
+      }
+      return coords;
+    }
+
+  } // EQUILATERAL TRIANGLE GENERATOR
 
   return {
     Rectangle, Square, Rhombus,
-    IsoscelesTriangle,
+    IsoscelesTriangle, EquilateralTriangle,
     Tracker
   }
 

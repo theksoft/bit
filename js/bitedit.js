@@ -685,6 +685,269 @@ var bitedit = (function() {
     }
 
   } // ISOSCELES TRIANGLE EDITOR
+ 
+  /*
+   * EQUILATERAL TRIANGLE EDITOR
+   */
+
+var fEquilateralTriangle = (function() {
+    
+    const F = Math.sqrt(3);
+    const R = F/2;
+
+    // GRIP CONSTRAINTS
+
+    function sideCompute(msm, mso, mbm, mbM) {
+      return Math.min( msm, 2*mso, Math.min(mbm, mbM)/R );
+    }
+
+    function cornerCompute(msm, mso, mbm, mbM, ls, lb) {
+      let ms = Math.min(msm, Math.round(mso/2), Math.round(mbm/F), Math.round(mbM/F));
+      return [ms, Math.round(ms*F), Math.round(ls/3), Math.round(lb/2)];
+    }
+
+    function cornerAssign(minm, maxm, mino, maxo) {
+      return [-minm, maxm, -mino, maxo];
+    }
+
+    function lEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax);
+      rtn.dxmin = -sideCompute(-mlims.dxmin, mlims.dxmax, -mlims.dymin, mlims.dymax);
+      rtn.dxmax = Math.round(obj.coords.width * 2/3);
+      return rtn;
+    }
+    
+    function rEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax);
+      rtn.dxmin = -Math.round(obj.coords.width * 2/3);
+      rtn.dxmax = sideCompute(mlims.dxmax, -mlims.dxmin, -mlims.dymin, mlims.dymax);
+      return rtn;
+    }
+    
+    function tEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax);
+      rtn.dymin = -sideCompute(-mlims.dymin, mlims.dymax, -mlims.dxmin, mlims.dxmax);
+      rtn.dymax = Math.round(obj.coords.height * 2/3);
+      return rtn;
+    }
+    
+    function bEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax);
+      rtn.dymin = -Math.round(obj.coords.height * 2/3);
+      rtn.dymax = sideCompute(mlims.dymax, -mlims.dymin, -mlims.dxmin, mlims.dxmax);
+      return rtn;
+    }
+    
+    function ltlEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(-mlims.dxmin, mlims.dxmax, -mlims.dymin, mlims.dymax, obj.coords.width, obj.coords.height);
+      [rtn.dxmin, rtn.dxmax, rtn.dymin, rtn.dymax] = cornerAssign(mmv, mmf, mov, mof);
+      return rtn;
+    }
+
+    function lblEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(-mlims.dxmin, mlims.dxmax, -mlims.dymin, mlims.dymax, obj.coords.width, obj.coords.height);
+      [rtn.dxmin, rtn.dxmax, rtn.dymin, rtn.dymax] = cornerAssign(mmv, mmf, mof, mov);
+      return rtn;
+    }
+
+    function rtrEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(mlims.dxmax, -mlims.dxmin, -mlims.dymin, mlims.dymax, obj.coords.width, obj.coords.height);
+      [rtn.dxmin, rtn.dxmax, rtn.dymin, rtn.dymax] = cornerAssign(mmf, mmv, mov, mof);
+      return rtn;
+    }
+
+    function rbrEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(mlims.dxmax, -mlims.dxmin, -mlims.dymin, mlims.dymax, obj.coords.width, obj.coords.height);
+      [rtn.dxmin, rtn.dxmax, rtn.dymin, rtn.dymax] = cornerAssign(mmf, mmv, mof, mov);
+      return rtn;
+    }
+
+    function ttlEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(-mlims.dymin, mlims.dymax, -mlims.dxmin, mlims.dxmax, obj.coords.height, obj.coords.width);
+      [rtn.dymin, rtn.dymax, rtn.dxmin, rtn.dxmax] = cornerAssign(mmv, mmf, mov, mof);
+      return rtn;
+    }
+
+    function ttrEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(-mlims.dymin, mlims.dymax, -mlims.dxmin, mlims.dxmax, obj.coords.height, obj.coords.width);
+      [rtn.dymin, rtn.dymax, rtn.dxmin, rtn.dxmax] = cornerAssign(mmv, mmf, mof, mov);
+      return rtn;
+    }
+
+    function bblEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(mlims.dymax, -mlims.dymin, -mlims.dxmin, mlims.dxmax, obj.coords.height, obj.coords.width);
+      [rtn.dymin, rtn.dymax, rtn.dxmin, rtn.dxmax] = cornerAssign(mmf, mmv, mov, mof);
+      return rtn;
+    }
+
+    function bbrEditCns(obj, wmax, hmax) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 },
+          mlims = this.computeMoveDLims(wmax, hmax),
+          mmv = 0, mmf = 0, mov = 0, mof = 0;
+      [mmv, mov, mmf, mof] = cornerCompute(mlims.dymax, -mlims.dymin, -mlims.dxmin, mlims.dxmax, obj.coords.height, obj.coords.width);
+      [rtn.dymin, rtn.dymax, rtn.dxmin, rtn.dxmax] = cornerAssign(mmf, mmv, mof, mov);
+      return rtn;
+    }
+
+    // GRIP EDITION
+
+    let sideEdit = function(dm, pm, po, lm, lo) {
+      let dpm = Math.round(dm/2), dpo = Math.round(dm*R);
+      return [pm-dm, pm-dpm, po-dpo, lm+dm+dpm, lo+2*dpo];
+    };
+
+    let cornerEdit = function(ds, db, ps, pb, ls, lb) {
+      let dps = Math.min(ds, Math.round(db/F));
+      let dpb = Math.round(dps*F);
+      return [ps-2*dps, ps-dps, pb-dpb, ls+3*dps, lb+2*dpb]; // d = 2dps = sqrt(dps^2 + dpb^2) 
+    };
+
+    function lEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [rtn.x, , rtn.y, rtn.width, rtn.height] = sideEdit(-dx, rtn.x, rtn.y, rtn.width, rtn.height);
+      return rtn;
+    }
+
+    function rEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [, rtn.x, rtn.y, rtn.width, rtn.height] = sideEdit(dx, rtn.x, rtn.y, rtn.width, rtn.height);
+      return rtn;
+    }
+
+    function tEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [rtn.y, , rtn.x, rtn.height, rtn.width] = sideEdit(-dy, rtn.y, rtn.x, rtn.height, rtn.width);
+      return rtn;
+    }
+
+    function bEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [, rtn.y, rtn.x, rtn.height, rtn.width] = sideEdit(dy, rtn.y, rtn.x, rtn.height, rtn.width);
+      return rtn;
+    }
+
+    function ltlEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [, rtn.x, rtn.y, rtn.width, rtn.height] = cornerEdit(-dx, -dy, rtn.x, rtn.y, rtn.width, rtn.height);
+      return rtn;
+    }
+
+    function lblEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [, rtn.x, rtn.y, rtn.width, rtn.height] = cornerEdit(-dx, dy, rtn.x, rtn.y, rtn.width, rtn.height);
+      return rtn;
+    }
+
+    function rtrEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [rtn.x, , rtn.y, rtn.width, rtn.height] = cornerEdit(dx, -dy, rtn.x, rtn.y, rtn.width, rtn.height);
+      return rtn;
+    }
+
+    function rbrEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [rtn.x, , rtn.y, rtn.width, rtn.height] = cornerEdit(dx, dy, rtn.x, rtn.y, rtn.width, rtn.height);
+      return rtn;
+    }
+
+    function ttlEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [, rtn.y, rtn.x, rtn.height, rtn.width] = cornerEdit(-dy, -dx, rtn.y, rtn.x, rtn.height, rtn.width);
+      return rtn;
+    }
+
+    function ttrEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [, rtn.y, rtn.x, rtn.height, rtn.width] = cornerEdit(-dy, dx, rtn.y, rtn.x, rtn.height, rtn.width);
+      return rtn;
+    }
+
+    function bblEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [rtn.y, , rtn.x, rtn.height, rtn.width] = cornerEdit(dy, -dx, rtn.y, rtn.x, rtn.height, rtn.width);
+      return rtn;
+    }
+
+    function bbrEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [rtn.y, , rtn.x, rtn.height, rtn.width] = cornerEdit(dy, dx, rtn.y, rtn.x, rtn.height, rtn.width);
+      return rtn;
+    }
+
+    return {
+
+      lEditCns, rEditCns, tEditCns, bEditCns,
+      ltlEditCns, lblEditCns, rtrEditCns, rbrEditCns, ttlEditCns, ttrEditCns, bblEditCns, bbrEditCns,
+      lEdit, rEdit, tEdit, bEdit,
+      ltlEdit, lblEdit, rtrEdit, rbrEdit, ttlEdit, ttrEdit, bblEdit, bbrEdit
+    };
+
+  })(); // treqEd
+
+  class EquilateralTriangle extends IsoscelesTriangle {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    gripCursor(id) {
+      const gripCursors = {
+        'bbl' : cursors.NESW, 'bbr' : cursors.NWSE,
+        'ttl' : cursors.NWSE, 'ttr' : cursors.NESW,  
+        'ltl' : cursors.NWSE, 'lbl' : cursors.NESW,
+        'rtr' : cursors.NESW, 'rbr' : cursors.NWSE
+      };
+      return gripCursors[id] || super.gripCursor(id);
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = {
+        't' : fEquilateralTriangle.tEditCns, 'b' : fEquilateralTriangle.bEditCns, 'l' : fEquilateralTriangle.lEditCns, 'r' : fEquilateralTriangle.rEditCns,  
+        'bbl' : fEquilateralTriangle.bblEditCns, 'bbr' : fEquilateralTriangle.bbrEditCns,
+        'ttl' : fEquilateralTriangle.ttlEditCns, 'ttr' : fEquilateralTriangle.ttrEditCns,
+        'ltl' : fEquilateralTriangle.ltlEditCns, 'lbl' : fEquilateralTriangle.lblEditCns,
+        'rtr' : fEquilateralTriangle.rtrEditCns, 'rbr' : fEquilateralTriangle.rbrEditCns
+      };
+      return constraints[id].bind(this)(this.figure, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        't' : fEquilateralTriangle.tEdit, 'b' : fEquilateralTriangle.bEdit, 'l' : fEquilateralTriangle.lEdit, 'r' : fEquilateralTriangle.rEdit,  
+        'bbl' : fEquilateralTriangle.bblEdit, 'bbr' : fEquilateralTriangle.bbrEdit,
+        'ttl' : fEquilateralTriangle.ttlEdit, 'ttr' : fEquilateralTriangle.ttrEdit,
+        'ltl' : fEquilateralTriangle.ltlEdit, 'lbl' : fEquilateralTriangle.lblEdit,
+        'rtr' : fEquilateralTriangle.rtrEdit, 'rbr' : fEquilateralTriangle.rbrEdit
+      };
+      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
+    }
+
+  } // EQUILATERAL TRIANGLE GENERATOR
 
   /*
    * EDITOR FACTORY
@@ -694,7 +957,8 @@ var bitedit = (function() {
     'rectangle'   : Rectangle,
     'square'      : Square,
     'rhombus'     : Rhombus,
-    'triangleIsc' : IsoscelesTriangle
+    'triangleIsc' : IsoscelesTriangle,
+    'triangleEql': EquilateralTriangle
   };
 
   function create(fig) {

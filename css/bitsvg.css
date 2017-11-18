@@ -40,6 +40,10 @@
   stroke: #06d;
 }
 
+#draw-area polygon.equilateral {
+  stroke: #4ae;
+}
+
 #draw-area rect:hover,
 #draw-area polygon:hover/*,
 #draw-area polygon.extended:hover,
