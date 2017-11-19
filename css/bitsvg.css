@@ -60,6 +60,10 @@
   stroke: #8df;
 }
 
+#draw-area polygon.hex {
+  stroke: #080;
+}
+
 #draw-area rect:hover,
 #draw-area circle:hover,
 #draw-area ellipse:hover,

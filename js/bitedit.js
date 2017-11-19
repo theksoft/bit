@@ -1379,6 +1379,198 @@ var fEquilateralTriangle = (function() {
   } // RECTANGLE TRIANGLE GENERATOR
 
   /*
+   * HEX EDITOR
+   */
+
+  var fHex = (function() {
+
+    const F = Math.sqrt(3), R = F/2;
+
+    // GRABBER CONSTRAINTS
+
+    function hrEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmin : -obj.coords.width,
+                dxmax : Math.min(lims.dxmax, Math.round(-lims.dymin/R*2), Math.round(lims.dymax/R*2)),
+                dymin : 0, dymax : 0 };
+    }
+    function hlEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmax : obj.coords.width,
+                dxmin : -Math.min(-lims.dxmin, Math.round(-lims.dymin/R*2), Math.round(lims.dymax/R*2)),
+                dymin : 0, dymax : 0 };
+    }
+    function htEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dymax : obj.coords.heigth,
+                dymin : -Math.min(-lims.dymin, Math.round(-lims.dxmin*F), Math.round(lims.dxmax*F)),
+                dxmin : 0, dxmax : 0 };
+    }
+    function hbEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dymin : -obj.coords.height,
+                dymax : Math.min(lims.dymax, Math.round(-lims.dxmin*F), Math.round(lims.dxmax*F)),
+                dxmin : 0, dxmax : 0 };
+    }
+
+    function vrEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmin : -obj.coords.width,
+                dxmax : Math.min(lims.dxmax, Math.round(-lims.dymin*F), Math.round(lims.dymax*F)),
+                dymin : 0, dymax : 0 };
+    }
+    function vlEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmax : obj.coords.width,
+                dxmin : -Math.min(-lims.dxmin, Math.round(-lims.dymin*F), Math.round(lims.dymax*F)),
+                dymin : 0, dymax : 0 };
+    }
+    function vtEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dymax : obj.coords.heigth,
+                dymin : -Math.min(-lims.dymin, Math.round(-lims.dxmin/R*2), Math.round(lims.dxmax/R*2)),
+                dxmin : 0, dxmax : 0 };
+    }
+    function vbEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dymin : -obj.coords.heigth,
+                dymax : Math.min(lims.dymax, Math.round(-lims.dxmin/R*2), Math.round(lims.dxmax/R*2)),
+                dxmin : 0, dxmax : 0 };
+    }
+
+    // GRABBER EDITIONS
+
+    function SmEdit(ds, s, b, ls, lb) {
+      return [s, s-ds, b - Math.round(ds*R/2), ls + ds, lb + Math.round(ds*R)];
+    }
+    function BsEdit(db, b, s, lb, ls) {
+      return [b, b-db, s - Math.round(db/F), lb + db, ls + Math.round(db/R)];
+    }
+
+    function hrEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [coords.x, , coords.y, coords.width, coords.height] = SmEdit(dx, coords.x, coords.y, coords.width, coords.height);
+      return coords;
+    }
+    function hlEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [, coords.x, coords.y, coords.width, coords.height] = SmEdit(-dx, coords.x, coords.y, coords.width, coords.height);
+      return coords;
+    }
+    function htEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [, coords.y, coords.x, coords.height, coords.width] = BsEdit(-dy, coords.y, coords.x, coords.height, coords.width);
+      return coords;
+    }
+    function hbEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [coords.y, , coords.x, coords.height, coords.width] = BsEdit(dy, coords.y, coords.x, coords.height, coords.width);
+      return coords;
+    }
+    function vrEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [coords.x, , coords.y, coords.width, coords.height] = BsEdit(dx, coords.x, coords.y, coords.width, coords.height);
+      return coords;
+    }
+    function vlEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [, coords.x, coords.y, coords.width, coords.height] = BsEdit(-dx, coords.x, coords.y, coords.width, coords.height);
+      return coords;
+    }
+    function vtEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [, coords.y, coords.x, coords.height, coords.width] = SmEdit(-dy, coords.y, coords.x, coords.height, coords.width);
+      return coords;
+    }
+    function vbEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      [coords.y, , coords.x, coords.height, coords.width] = SmEdit(dy, coords.y, coords.x, coords.height, coords.width);
+      return coords;
+    }
+
+    return {
+
+      hrEditCns, hlEditCns, htEditCns, hbEditCns, vrEditCns, vlEditCns, vtEditCns, vbEditCns,
+      hrEdit, hlEdit, htEdit, hbEdit, vrEdit, vlEdit, vtEdit, vbEdit
+
+    };
+
+  })(); // fHex
+
+  class Hex extends Rectangle {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    gripCursor(id) {
+      const gripCursors = {
+          'hl' : cursors.EW, 'hr' : cursors.EW, 'ht' : cursors.NS, 'hb' : cursors.NS,
+          'vl' : cursors.EW, 'vr' : cursors.EW, 'vt' : cursors.NS, 'vb' : cursors.NS
+      };
+      return gripCursors[id] || super.gripCursor(id);
+    }
+
+    gripCoords(id, coords) {
+      const gripPosition = {
+        'hl' : fRectangle.lPos, 'hr' : fRectangle.rPos, 'ht' : fRectangle.tPos, 'hb' : fRectangle.bPos,
+        'vl' : fRectangle.lPos, 'vr' : fRectangle.rPos, 'vt' : fRectangle.tPos, 'vb' : fRectangle.bPos
+      };
+      let f = gripPosition[id];
+      return (f) ? f(coords || this.figure.getCoords()) : super.gripCoords(id, coords);
+    }
+
+    createGrips() {
+      if (this.figure.coords.width > this.figure.coords.height) {
+        this.grips.push(new Grip('hl', this.figure.getDomParent(), this.gripCoords('hl'), this.gripCursor('hl')));
+        this.grips.push(new Grip('hr', this.figure.getDomParent(), this.gripCoords('hr'), this.gripCursor('hr')));
+        this.grips.push(new Grip('ht', this.figure.getDomParent(), this.gripCoords('ht'), this.gripCursor('ht')));
+        this.grips.push(new Grip('hb', this.figure.getDomParent(), this.gripCoords('hb'), this.gripCursor('hb')));
+      } else {
+        this.grips.push(new Grip('vl', this.figure.getDomParent(), this.gripCoords('vl'), this.gripCursor('vl')));
+        this.grips.push(new Grip('vr', this.figure.getDomParent(), this.gripCoords('vr'), this.gripCursor('vr')));
+        this.grips.push(new Grip('vt', this.figure.getDomParent(), this.gripCoords('vt'), this.gripCursor('vt')));
+        this.grips.push(new Grip('vb', this.figure.getDomParent(), this.gripCoords('vb'), this.gripCursor('vb')));
+      }
+    }
+
+    rotateGrips(direction) {
+      const rNext = {
+          'hl' : 'vl', 'hr' : 'vr', 'ht' : 'vt', 'hb' : 'vb',  
+          'vl' : 'hl', 'vr' : 'hr', 'vt' : 'ht', 'vb' : 'hb'  
+      };
+      let newCursor = this.gripCursor.bind(this);
+      this.grips.forEach(function f(e) {
+        let newId = rNext[e.getID()];
+        e.setID(newId);
+        e.setCursor(newCursor(newId));
+      });
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = {
+        'hl' : fHex.hlEditCns, 'hr' : fHex.hrEditCns, 'ht' : fHex.htEditCns, 'hb' : fHex.hbEditCns,
+        'vl' : fHex.vlEditCns, 'vr' : fHex.vrEditCns, 'vt' : fHex.vtEditCns, 'vb' : fHex.vbEditCns
+      };
+      let f = constraints[id];
+      return (f) ? f.bind(this)(this.figure, wmax, hmax) : super.computeEditDLims(id, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        'hl' : fHex.hlEdit, 'hr' : fHex.hrEdit, 'ht' : fHex.htEdit, 'hb' : fHex.hbEdit,
+        'vl' : fHex.vlEdit, 'vr' : fHex.vrEdit, 'vt' : fHex.vtEdit, 'vb' : fHex.vbEdit
+      };
+      if (!this.enabled) {
+        return this.figure.getCoords();
+      }
+      let f = editCoords[id];
+      return (f) ? f(this.figure, dx, dy) : super.computeEditCoords(id, dx, dy);
+    }
+
+  }
+
+  /*
    * EDITOR FACTORY
    */
 
@@ -1391,7 +1583,8 @@ var fEquilateralTriangle = (function() {
     'ellipse'     : Ellipse,
     'triangleIsc' : IsoscelesTriangle,
     'triangleEql' : EquilateralTriangle,
-    'triangleRct' : RectangleTriangle
+    'triangleRct' : RectangleTriangle,
+    'hexRct'      : Hex
   };
 
   function create(fig) {

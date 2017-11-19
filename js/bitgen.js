@@ -475,10 +475,74 @@ var bitgen = (function() {
 
   } // RECTANGLE TRIANGLE GENERATOR
 
+  /*
+   * HEX (from RECTANGLE) GENERATOR
+   */
+
+  class Hex extends Rectangle {
+    
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+      this.tracker = new Tracker(parent);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Hex(parent, noGroup);
+    }
+
+    computeCoords(point) {
+      const r = Math.sqrt(3)/2;
+      let coords = super.computeCoords(point);
+      let w = coords.width, h = coords.height, dw = 0, dh = 0;
+      if (w >= h) {
+        if (w > h/r) { w = Math.round(h/r); } else { h = Math.round(w*r); }
+      } else {
+        if (h > w/r) { h = Math.round(w/r); } else { w = Math.round(h*r); }
+      }
+      dw = coords.width - w; 
+      dh = coords.height - h;
+      coords.width = w;
+      coords.height = h;
+      if (point.x < this.org.x) { coords.x += dw; }
+      if (point.y < this.org.y) { coords.y += dh; }
+      return coords;
+    }
+
+    start(point) {
+      super.start(point);
+      this.tracker.start(point);
+    }
+
+    progress(point) {
+      super.progress(point);
+      if (this.tracker) {
+        this.tracker.progress(point);
+      }
+    }
+
+    end(point) {
+      let rtn = super.end(point);
+      if ('continue' !== rtn) { 
+        this.tracker.cancel();
+        this.tracker = null;
+      }
+      return rtn;
+    }
+
+    cancel() {
+      super.cancel();
+      if (this.tracker) {
+        this.tracker.cancel();
+      }
+    }
+
+  } // HEX (from RECTANGLE) GENERATOR
+
   return {
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
+    Hex,
     Tracker
   }
 

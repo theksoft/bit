@@ -1411,7 +1411,8 @@ var bit = (function() {
         'ellipse'     : bitgen.Ellipse,
         'triangleIsc' : bitgen.IsoscelesTriangle,
         'triangleEql' : bitgen.EquilateralTriangle,
-        'triangleRct' : bitgen.RectangleTriangle
+        'triangleRct' : bitgen.RectangleTriangle,
+        'hexRct'      : bitgen.Hex
       };
 
       var generator = null;

@@ -17,7 +17,8 @@ var bitarea = (function() {
     RHOMBUS       : 'rhombus',
     TRIANGLEISC   : 'triangleIsc',
     TRIANGLEEQL   : 'triangleEql',
-    TRIANGLERCT   : 'triangleRct'
+    TRIANGLERCT   : 'triangleRct',
+    HEXRCT        : 'hexRct'
   };
 
   const clsQualifiers = {
@@ -26,6 +27,7 @@ var bitarea = (function() {
     ISOSCELES     : 'isosceles',
     EQUILATERAL   : 'equilateral',
     RIGHTANGLE    : 'right-angle',
+    HEX           : 'hex',
     EXTENDED      : 'extended'
   };
 
@@ -499,11 +501,61 @@ var bitarea = (function() {
 
   } // RIGHT-ANGLE TRIANGLE
 
+  /*
+   * HEX (from RECTANGLE) 
+   */
+
+  class Hex extends Rectangle {
+    
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
+      this.type = types.HEXRCT;
+    }
+
+    createSVGElt() {
+      this.dom = document.createElementNS(NSSVG, 'polygon');
+      this.dom.classList.add(clsQualifiers.HEX);
+      this.domParent.appendChild(this.dom);
+    }
+
+    getSBPt(s, b, ls, lb) {
+      let s1 = s + Math.round(ls/4), s2 = s + Math.round(3*ls/4), s3 = s + ls;
+      let b1 = b + Math.round(lb/2), b2 = b + lb;
+      return [ s1, b, s2, b, s3, b1, s2, b2, s1, b2, s, b1 ];
+    }
+
+    draw(coords) {
+      let c = coords || this.coords;
+      let pts = [{x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}];
+      if (c.width > c.height) {
+        [ pts[0].x, pts[0].y,
+          pts[1].x, pts[1].y,
+          pts[2].x, pts[2].y,
+          pts[3].x, pts[3].y,
+          pts[4].x, pts[4].y,
+          pts[5].x, pts[5].y ] = this.getSBPt(c.x, c.y, c.width, c.height);
+      } else {
+        [ pts[0].y, pts[0].x,
+          pts[1].y, pts[1].x,
+          pts[2].y, pts[2].x,
+          pts[3].y, pts[3].x,
+          pts[4].y, pts[4].x,
+          pts[5].y, pts[5].x ] = this.getSBPt(c.y, c.x, c.height, c.width);
+      }
+      let attrVal = pts.reduce(function(r, e) {
+        return r + e.x + ' ' + e.y + ' ';
+      }, '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+  } // HEX (from RECTANGLE)
+
   return {
     tilts,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
-    IsoscelesTriangle, EquilateralTriangle, RectangleTriangle
+    IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
+    Hex
   }
 
 })(); /* bitarea */
