@@ -102,6 +102,32 @@ var bitgen = (function() {
   } // CIRCLE (from CENTER) GENERATOR
 
   /*
+   * CIRCLE (from DIAMETER) GENERATOR
+   */
+
+  class CircleEx extends Circle {
+
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.CircleEx(parent, noGroup);
+    }
+
+    computeCoords(point) {
+      let dx = point.x - this.org.x,
+          dy = point.y - this.org.y; 
+      return {
+        x : this.org.x + Math.round(dx/2),
+        y : this.org.y + Math.round(dy/2),
+        r : Math.round(Math.sqrt(dx*dx + dy*dy)/2)
+      };
+    }
+
+  } // CIRCLE (from DIAMETER) GENERATOR
+
+  /*
    * RECTANGLE GENERATOR
    */
 
@@ -405,7 +431,7 @@ var bitgen = (function() {
   } // RECTANGLE TRIANGLE GENERATOR
 
   return {
-    Circle,
+    Circle, CircleEx,
     Rectangle, Square, Rhombus,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Tracker

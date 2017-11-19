@@ -10,6 +10,7 @@ var bitarea = (function() {
 
   const types = {
     CIRCLECTR     : 'circleCtr',
+    CIRCLEDTR     : 'circleDtr',
     RECTANGLE     : 'rectangle',
     SQUARE        : 'square',
     RHOMBUS       : 'rhombus',
@@ -23,7 +24,8 @@ var bitarea = (function() {
     RHOMBUS       : 'rhombus',
     ISOSCELES     : 'isosceles',
     EQUILATERAL   : 'equilateral',
-    RIGHTANGLE    : 'right-angle'
+    RIGHTANGLE    : 'right-angle',
+    EXTENDED      : 'extended'
   };
 
   const tilts = {
@@ -169,6 +171,25 @@ var bitarea = (function() {
     }
 
   } // CIRCLE CLASS (from CENTER)
+
+  /*
+   * CIRCLE CLASS (from DIAMETER) 
+   */
+
+  class CircleEx extends Circle {
+
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
+      this.type = types.CIRCLEDTR;
+    }
+
+    createSVGElt() {
+      super.createSVGElt();
+      this.dom.classList.add(clsQualifiers.EXTENDED);
+    }
+
+  } // CIRCLE CLASS (from DIAMETER)
+
 
   /*
    * RECTANGLE CLASS
@@ -452,7 +473,7 @@ var bitarea = (function() {
 
   return {
     tilts,
-    Circle,
+    Circle, CircleEx,
     Rectangle, Square, Rhombus,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle
   }

@@ -52,6 +52,10 @@
   stroke: #808;
 }
 
+#draw-area circle.extended {
+  stroke: #c2c;
+}
+
 #draw-area circle:hover,
 #draw-area rect:hover,
 #draw-area polygon:hover/*,

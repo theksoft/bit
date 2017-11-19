@@ -1404,6 +1404,7 @@ var bit = (function() {
 
       var factory = {
         'circleCtr'   : bitgen.Circle,
+        'circleDtr'   : bitgen.CircleEx,
         'rectangle'   : bitgen.Rectangle,
         'square'      : bitgen.Square,
         'rhombus'     : bitgen.Rhombus,
