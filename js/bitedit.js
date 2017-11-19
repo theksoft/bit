@@ -291,221 +291,6 @@ var bitedit = (function() {
   }
 
   /*
-   * CIRCLE (from CENTER) EDITOR
-   */
-
-  var fCircle = (function() {
-    
-    // GRIP POSITIONS
-    function rPos(coords) { return { x : coords.x + coords.r, y : coords.y }; }
-
-    // GRIP CONSTRAINTS
-    function rEditCns(obj, wmax, hmax) {
-      let lims = this.computeMoveDLims(wmax, hmax);
-      return {  dxmin : -obj.coords.r,
-                dxmax : Math.min(-lims.dxmin, lims.dxmax, -lims.dymin, lims.dymax),
-                dymin : 0, dymax : 0 };
-    }
-
-    // GRIP EDITIONS
-    function rEdit(obj, dx, dy)   {
-      let coords = Object.create(obj.coords);
-      coords.r += dx;
-      return coords;
-    }
-
-    return {
-      rPos, rEditCns, rEdit
-    };
-    
-  })(); // fCircle
-
-  class Circle extends Figure {
-
-    constructor(fig) {
-      super(fig);
-    }
-
-    computeMoveDLims(wmax, hmax) {
-      let c = this.figure.getCoords();
-      return {
-        dxmin : -(c.x - c.r),
-        dxmax : wmax - (c.x + c.r),
-        dymin : -(c.y - c.r),
-        dymax : hmax - (c.y + c.r)
-      };
-    }
-
-    computeMoveCoords(dx, dy) {
-      let rtn = Object.create(this.figure.coords);
-      rtn.x += dx;
-      rtn.y += dy;
-      return rtn;
-    }
-
-    computeRotateCoords(direction, wmax, hmax) {
-      return Object.create(this.figure.coords);
-    }
-
-    gripCoords(id, coords) {
-      const gripPosition = { 'r' : fCircle.rPos };
-      return gripPosition[id](coords || this.figure.getCoords());
-    }
-
-    gripCursor(id) {
-      const gripCursors = { 'r' : cursors.EW };
-      return gripCursors[id] || super.gripCursor(id);
-    }
-
-    createGrips() {
-      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
-    }
-
-    computeEditDLims(id, wmax, hmax) {
-      const constraints = { 'r' : fCircle.rEditCns };
-      return constraints[id].bind(this)(this.figure, wmax, hmax);
-    }
-
-    computeEditCoords(id, dx, dy) {
-      const editCoords = { 'r' : fCircle.rEdit };
-      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
-    }
-
-    checkCoords(coords) {
-      return (coords.r > 0) ? true : false;
-    }
-
-  } // CIRCLE (from CENTER)EDITOR
-
-  /*
-   * CIRCLE (from DIAMETER) EDITOR
-   */
-
-  var fCircleEx = (function() {
-    
-    // GRIP POSITIONS
-
-    function lPos(coords) { return { x : coords.x - coords.r, y : coords.y }; }
-    function tPos(coords) { return { x : coords.x, y : coords.y - coords.r }; }
-    function bPos(coords) { return { x : coords.x, y : coords.y + coords.r }; }
-
-    // GRIP CONSTRAINTS
-
-    function rEditCns(obj, wmax, hmax) {
-      let lims = this.computeMoveDLims(wmax, hmax);
-      return {  dxmin : -obj.coords.r*2,
-                dxmax : Math.min(lims.dxmax, -lims.dymin*2, lims.dymax*2),
-                dymin : 0, dymax : 0 };
-    }
-    function lEditCns(obj, wmax, hmax) {
-      let lims = this.computeMoveDLims(wmax, hmax);
-      return {  dxmax : obj.coords.r*2,
-                dxmin : -Math.min(-lims.dxmin, -lims.dymin*2, lims.dymax*2),
-                dymin : 0, dymax : 0 };
-    }
-    function tEditCns(obj, wmax, hmax) {
-      let lims = this.computeMoveDLims(wmax, hmax);
-      return {  dymax : obj.coords.r*2,
-                dymin : -Math.min(-lims.dymin, -lims.dxmin*2, lims.dxmax*2),
-                dxmin : 0, dxmax : 0 };
-    }
-    function bEditCns(obj, wmax, hmax) {
-      let lims = this.computeMoveDLims(wmax, hmax);
-      return {  dymin : -obj.coords.r*2,
-                dymax : Math.min(lims.dymax, -lims.dxmin*2, lims.dxmax*2),
-                dxmin : 0, dxmax : 0 };
-    }
-
-    // GRIP EDITIONS
-
-    function rEdit(obj, dx, dy)   {
-      let coords = Object.create(obj.coords);
-      let dxx = Math.round(dx/2);
-      coords.x += dxx;
-      coords.r += dxx;
-      return coords;
-    }
-
-    function lEdit(obj, dx, dy)   {
-      let coords = Object.create(obj.coords);
-      let dxx = Math.round(dx/2);
-      coords.x += dxx;
-      coords.r -= dxx;
-      return coords;
-    }
-
-    function tEdit(obj, dx, dy)   {
-      let coords = Object.create(obj.coords);
-      let dyy = Math.round(dy/2);
-      coords.y += dyy;
-      coords.r -= dyy;
-      return coords;
-    }
-
-    function bEdit(obj, dx, dy)   {
-      let coords = Object.create(obj.coords);
-      let dyy = Math.round(dy/2);
-      coords.y += dyy;
-      coords.r += dyy;
-      return coords;
-    }
-
-    return {
-      lPos, tPos, bPos,
-      rEditCns, lEditCns, tEditCns, bEditCns,
-      rEdit, lEdit, tEdit, bEdit
-    };
-    
-  })(); // fCircleEx
-
-  class CircleEx extends Circle {
-
-    constructor(fig) {
-      super(fig);
-    }
-
-    gripCoords(id, coords) {
-      const gripPosition = { 'l' : fCircleEx.lPos, 't' : fCircleEx.tPos, 'b' : fCircleEx.bPos };
-      let f = gripPosition[id];
-      return (f) ? f(coords || this.figure.getCoords()) : super.gripCoords(id, coords);
-    }
-
-    gripCursor(id) {
-      const gripCursors = { 'l' : cursors.EW, 't' : cursors.NS, 'b' : cursors.NS };
-      return gripCursors[id] || super.gripCursor(id);
-    }
-
-    createGrips() {
-      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
-      this.grips.push(new Grip('l', this.figure.getDomParent(), this.gripCoords('l'), this.gripCursor('l')));
-      this.grips.push(new Grip('t', this.figure.getDomParent(), this.gripCoords('t'), this.gripCursor('t')));
-      this.grips.push(new Grip('b', this.figure.getDomParent(), this.gripCoords('b'), this.gripCursor('b')));
-    }
-
-    computeEditDLims(id, wmax, hmax) {
-      const constraints = {
-        'r' : fCircleEx.rEditCns, 'l' : fCircleEx.lEditCns,
-        't' : fCircleEx.tEditCns, 'b' : fCircleEx.bEditCns
-      };
-      let f = constraints[id];
-      return (f) ? f.bind(this)(this.figure, wmax, hmax) : super.computeEditDLims(id, wmax, hmax);
-    }
-
-    computeEditCoords(id, dx, dy) {
-      const editCoords = {
-        'r' : fCircleEx.rEdit, 'l' : fCircleEx.lEdit,
-        't' : fCircleEx.tEdit, 'b' : fCircleEx.bEdit
-      };
-      if (!this.enabled) {
-        return this.figure.getCoords();
-      }
-      let f = editCoords[id];
-      return (f) ? f(this.figure, dx, dy) : super.computeEditCoords(id, dx, dy);
-    }
-
-  } // CIRCLE (from DIAMETER) EDITOR
-
-  /*
    * RECTANGLE EDITOR
    */
 
@@ -736,6 +521,240 @@ var bitedit = (function() {
     }
 
   } // RHOMBUS EDITOR
+
+  /*
+   * CIRCLE (from CENTER) EDITOR
+   */
+
+  var fCircle = (function() {
+    
+    // GRIP POSITIONS
+    function rPos(coords) { return { x : coords.x + coords.r, y : coords.y }; }
+
+    // GRIP CONSTRAINTS
+    function rEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmin : -obj.coords.r,
+                dxmax : Math.min(-lims.dxmin, lims.dxmax, -lims.dymin, lims.dymax),
+                dymin : 0, dymax : 0 };
+    }
+
+    // GRIP EDITIONS
+    function rEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      coords.r += dx;
+      return coords;
+    }
+
+    return {
+      rPos, rEditCns, rEdit
+    };
+    
+  })(); // fCircle
+
+  class Circle extends Figure {
+
+    constructor(fig) {
+      super(fig);
+    }
+
+    computeMoveDLims(wmax, hmax) {
+      let c = this.figure.getCoords();
+      return {
+        dxmin : -(c.x - c.r),
+        dxmax : wmax - (c.x + c.r),
+        dymin : -(c.y - c.r),
+        dymax : hmax - (c.y + c.r)
+      };
+    }
+
+    computeMoveCoords(dx, dy) {
+      let rtn = Object.create(this.figure.coords);
+      rtn.x += dx;
+      rtn.y += dy;
+      return rtn;
+    }
+
+    computeRotateCoords(direction, wmax, hmax) {
+      return Object.create(this.figure.coords);
+    }
+
+    gripCoords(id, coords) {
+      const gripPosition = { 'r' : fCircle.rPos };
+      return gripPosition[id](coords || this.figure.getCoords());
+    }
+
+    gripCursor(id) {
+      const gripCursors = { 'r' : cursors.EW };
+      return gripCursors[id] || super.gripCursor(id);
+    }
+
+    createGrips() {
+      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = { 'r' : fCircle.rEditCns };
+      return constraints[id].bind(this)(this.figure, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = { 'r' : fCircle.rEdit };
+      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
+    }
+
+    checkCoords(coords) {
+      return (coords.r > 0) ? true : false;
+    }
+
+  } // CIRCLE (from CENTER)EDITOR
+
+  /*
+   * CIRCLE (from DIAMETER) EDITOR
+   */
+
+  var fCircleEx = (function() {
+    
+    // GRIP POSITIONS
+
+    function lPos(coords) { return { x : coords.x - coords.r, y : coords.y }; }
+    function tPos(coords) { return { x : coords.x, y : coords.y - coords.r }; }
+    function bPos(coords) { return { x : coords.x, y : coords.y + coords.r }; }
+
+    // GRIP CONSTRAINTS
+
+    function rEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmin : -obj.coords.r*2,
+                dxmax : Math.min(lims.dxmax, -lims.dymin*2, lims.dymax*2),
+                dymin : 0, dymax : 0 };
+    }
+    function lEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dxmax : obj.coords.r*2,
+                dxmin : -Math.min(-lims.dxmin, -lims.dymin*2, lims.dymax*2),
+                dymin : 0, dymax : 0 };
+    }
+    function tEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dymax : obj.coords.r*2,
+                dymin : -Math.min(-lims.dymin, -lims.dxmin*2, lims.dxmax*2),
+                dxmin : 0, dxmax : 0 };
+    }
+    function bEditCns(obj, wmax, hmax) {
+      let lims = this.computeMoveDLims(wmax, hmax);
+      return {  dymin : -obj.coords.r*2,
+                dymax : Math.min(lims.dymax, -lims.dxmin*2, lims.dxmax*2),
+                dxmin : 0, dxmax : 0 };
+    }
+
+    // GRIP EDITIONS
+
+    function rEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      let dxx = Math.round(dx/2);
+      coords.x += dxx;
+      coords.r += dxx;
+      return coords;
+    }
+
+    function lEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      let dxx = Math.round(dx/2);
+      coords.x += dxx;
+      coords.r -= dxx;
+      return coords;
+    }
+
+    function tEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      let dyy = Math.round(dy/2);
+      coords.y += dyy;
+      coords.r -= dyy;
+      return coords;
+    }
+
+    function bEdit(obj, dx, dy)   {
+      let coords = Object.create(obj.coords);
+      let dyy = Math.round(dy/2);
+      coords.y += dyy;
+      coords.r += dyy;
+      return coords;
+    }
+
+    return {
+      lPos, tPos, bPos,
+      rEditCns, lEditCns, tEditCns, bEditCns,
+      rEdit, lEdit, tEdit, bEdit
+    };
+    
+  })(); // fCircleEx
+
+  class CircleEx extends Circle {
+
+    constructor(fig) {
+      super(fig);
+    }
+
+    gripCoords(id, coords) {
+      const gripPosition = { 'l' : fCircleEx.lPos, 't' : fCircleEx.tPos, 'b' : fCircleEx.bPos };
+      let f = gripPosition[id];
+      return (f) ? f(coords || this.figure.getCoords()) : super.gripCoords(id, coords);
+    }
+
+    gripCursor(id) {
+      const gripCursors = { 'l' : cursors.EW, 't' : cursors.NS, 'b' : cursors.NS };
+      return gripCursors[id] || super.gripCursor(id);
+    }
+
+    createGrips() {
+      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
+      this.grips.push(new Grip('l', this.figure.getDomParent(), this.gripCoords('l'), this.gripCursor('l')));
+      this.grips.push(new Grip('t', this.figure.getDomParent(), this.gripCoords('t'), this.gripCursor('t')));
+      this.grips.push(new Grip('b', this.figure.getDomParent(), this.gripCoords('b'), this.gripCursor('b')));
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = {
+        'r' : fCircleEx.rEditCns, 'l' : fCircleEx.lEditCns,
+        't' : fCircleEx.tEditCns, 'b' : fCircleEx.bEditCns
+      };
+      let f = constraints[id];
+      return (f) ? f.bind(this)(this.figure, wmax, hmax) : super.computeEditDLims(id, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        'r' : fCircleEx.rEdit, 'l' : fCircleEx.lEdit,
+        't' : fCircleEx.tEdit, 'b' : fCircleEx.bEdit
+      };
+      if (!this.enabled) {
+        return this.figure.getCoords();
+      }
+      let f = editCoords[id];
+      return (f) ? f(this.figure, dx, dy) : super.computeEditCoords(id, dx, dy);
+    }
+
+  } // CIRCLE (from DIAMETER) EDITOR
+
+  /*
+   * ELLIPSE EDITOR
+   */
+
+  class Ellipse extends Rectangle {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    createGrips() {
+      this.grips.push(new Grip('t', this.figure.getDomParent(), this.gripCoords('t'), this.gripCursor('t')));
+      this.grips.push(new Grip('b', this.figure.getDomParent(), this.gripCoords('b'), this.gripCursor('b')));
+      this.grips.push(new Grip('l', this.figure.getDomParent(), this.gripCoords('l'), this.gripCursor('l')));
+      this.grips.push(new Grip('r', this.figure.getDomParent(), this.gripCoords('r'), this.gripCursor('r')));
+    }
+
+  } // ELLIPSE EDITOR
 
   /*
    * ISOSCELES TRIANGLE EDITOR
@@ -1364,11 +1383,12 @@ var fEquilateralTriangle = (function() {
    */
 
   var factory = {
-    'circleCtr'   : Circle,
-    'circleDtr'   : CircleEx,
     'rectangle'   : Rectangle,
     'square'      : Square,
     'rhombus'     : Rhombus,
+    'circleCtr'   : Circle,
+    'circleDtr'   : CircleEx,
+    'ellipse'     : Ellipse,
     'triangleIsc' : IsoscelesTriangle,
     'triangleEql' : EquilateralTriangle,
     'triangleRct' : RectangleTriangle

@@ -36,6 +36,18 @@
   stroke: #f64;
 }
 
+#draw-area circle {
+  stroke: #808;
+}
+
+#draw-area circle.extended {
+  stroke: #c2c;
+}
+
+#draw-area ellipse {
+  stroke: #f4f;
+}
+
 #draw-area polygon.isosceles {
   stroke: #06d;
 }
@@ -48,36 +60,28 @@
   stroke: #8df;
 }
 
-#draw-area circle {
-  stroke: #808;
-}
-
-#draw-area circle.extended {
-  stroke: #c2c;
-}
-
-#draw-area circle:hover,
 #draw-area rect:hover,
+#draw-area circle:hover,
+#draw-area ellipse:hover,
 #draw-area polygon:hover/*,
-#draw-area polygon.extended:hover,
-#draw-area ellipse:hover*/ {
+#draw-area polygon.extended:hover*/ {
   fill: rgba(255,255,255,0.4);
 }
 
-#draw-area circle.selected,
 #draw-area rect.selected,
+#draw-area circle.selected,
+#draw-area ellipse.selected,
 #draw-area polygon.selected/*,
-#draw-area polygon.extended.selected,
-#draw-area ellipse.selected*/ {
+#draw-area polygon.extended.selected*/ {
   stroke-width: 3px;
   fill: rgba(200,200,255,0.4);
 }
 
-#draw-area circle.selected:hover,
 #draw-area rect.selected:hover,
+#draw-area circle.selected:hover,
+#draw-area ellipse.selected:hover,
 #draw-area polygon.selected:hover/*,
-#draw-area polygon.extended.selected:hover,
-#draw-area ellipse.selected:hover*/ {
+#draw-area polygon.extended.selected:hover*/ {
   cursor: move;
 }
 

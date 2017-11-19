@@ -49,85 +49,6 @@ var bitgen = (function() {
   }
 
   /*
-   * CIRCLE (from CENTER) GENERATOR
-   */
-
-  class Circle extends Figure {
-
-    constructor(parent, noGroup, alt) {
-      super();
-      this.org = { x : 0, y : 0 };
-      this.figure = null;
-      this.createFigure(parent, noGroup, alt);
-    }
-
-    createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Circle(parent, noGroup);
-    }
-
-    start(point) {
-      let coords = this.figure.getCoords();
-      this.org.x = coords.x = point.x;
-      this.org.y = coords.y = point.y;
-      this.figure.setCoords(coords);
-      this.figure.redraw();
-    }
-
-    progress(point) {
-      this.figure.redraw(this.computeCoords(point));
-    }
-
-    end(point) {
-      let coords = this.computeCoords(point);
-      if (0 >= coords.r) {
-        this.cancel();
-        return 'error';
-      }
-
-      this.figure.setCoords(coords);
-      this.figure.redraw();
-      return 'done';
-    }
-
-    computeCoords(point) {
-      let dx = point.x - this.org.x,
-          dy = point.y - this.org.y; 
-      return {
-        x : this.org.x,
-        y : this.org.y,
-        r : Math.round(Math.sqrt(dx*dx + dy*dy))
-      };
-    }
-
-  } // CIRCLE (from CENTER) GENERATOR
-
-  /*
-   * CIRCLE (from DIAMETER) GENERATOR
-   */
-
-  class CircleEx extends Circle {
-
-    constructor(parent, noGroup, alt) {
-      super(parent, noGroup, alt);
-    }
-
-    createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.CircleEx(parent, noGroup);
-    }
-
-    computeCoords(point) {
-      let dx = point.x - this.org.x,
-          dy = point.y - this.org.y; 
-      return {
-        x : this.org.x + Math.round(dx/2),
-        y : this.org.y + Math.round(dy/2),
-        r : Math.round(Math.sqrt(dx*dx + dy*dy)/2)
-      };
-    }
-
-  } // CIRCLE (from DIAMETER) GENERATOR
-
-  /*
    * RECTANGLE GENERATOR
    */
 
@@ -285,6 +206,130 @@ var bitgen = (function() {
   } // RHOMBUS GENERATOR
 
   /*
+   * CIRCLE (from CENTER) GENERATOR
+   */
+
+  class Circle extends Figure {
+
+    constructor(parent, noGroup, alt) {
+      super();
+      this.org = { x : 0, y : 0 };
+      this.figure = null;
+      this.createFigure(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Circle(parent, noGroup);
+    }
+
+    start(point) {
+      let coords = this.figure.getCoords();
+      this.org.x = coords.x = point.x;
+      this.org.y = coords.y = point.y;
+      this.figure.setCoords(coords);
+      this.figure.redraw();
+    }
+
+    progress(point) {
+      this.figure.redraw(this.computeCoords(point));
+    }
+
+    end(point) {
+      let coords = this.computeCoords(point);
+      if (0 >= coords.r) {
+        this.cancel();
+        return 'error';
+      }
+
+      this.figure.setCoords(coords);
+      this.figure.redraw();
+      return 'done';
+    }
+
+    computeCoords(point) {
+      let dx = point.x - this.org.x,
+          dy = point.y - this.org.y; 
+      return {
+        x : this.org.x,
+        y : this.org.y,
+        r : Math.round(Math.sqrt(dx*dx + dy*dy))
+      };
+    }
+
+  } // CIRCLE (from CENTER) GENERATOR
+
+  /*
+   * CIRCLE (from DIAMETER) GENERATOR
+   */
+
+  class CircleEx extends Circle {
+
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.CircleEx(parent, noGroup);
+    }
+
+    computeCoords(point) {
+      let dx = point.x - this.org.x,
+          dy = point.y - this.org.y; 
+      return {
+        x : this.org.x + Math.round(dx/2),
+        y : this.org.y + Math.round(dy/2),
+        r : Math.round(Math.sqrt(dx*dx + dy*dy)/2)
+      };
+    }
+
+  } // CIRCLE (from DIAMETER) GENERATOR
+
+  /*
+   * ELLIPSE GENERATOR
+   */
+
+  class Ellipse extends Rectangle {
+    
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+      this.tracker = new Tracker(parent);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Ellipse(parent, noGroup);
+    }
+
+    start(point) {
+      super.start(point);
+      this.tracker.start(point);
+    }
+
+    progress(point) {
+      super.progress(point);
+      if (this.tracker) {
+        this.tracker.progress(point);
+      }
+    }
+
+    end(point) {
+      let rtn = super.end(point);
+      if ('continue' !== rtn) { 
+        this.tracker.cancel();
+        this.tracker = null;
+      }
+      return rtn;
+    }
+
+    cancel() {
+      super.cancel();
+      if (this.tracker) {
+        this.tracker.cancel();
+      }
+    }
+
+  } // ELLIPSE GENERATOR
+
+  /*
    * ISOSCELES TRIANGLE GENERATOR
    */
 
@@ -431,8 +476,8 @@ var bitgen = (function() {
   } // RECTANGLE TRIANGLE GENERATOR
 
   return {
-    Circle, CircleEx,
     Rectangle, Square, Rhombus,
+    Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Tracker
   }

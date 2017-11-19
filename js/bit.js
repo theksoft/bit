@@ -1403,11 +1403,12 @@ var bit = (function() {
     var draw = (function() {
 
       var factory = {
-        'circleCtr'   : bitgen.Circle,
-        'circleDtr'   : bitgen.CircleEx,
         'rectangle'   : bitgen.Rectangle,
         'square'      : bitgen.Square,
         'rhombus'     : bitgen.Rhombus,
+        'circleCtr'   : bitgen.Circle,
+        'circleDtr'   : bitgen.CircleEx,
+        'ellipse'     : bitgen.Ellipse,
         'triangleIsc' : bitgen.IsoscelesTriangle,
         'triangleEql' : bitgen.EquilateralTriangle,
         'triangleRct' : bitgen.RectangleTriangle
