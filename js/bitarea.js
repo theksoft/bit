@@ -18,7 +18,8 @@ var bitarea = (function() {
     TRIANGLEISC   : 'triangleIsc',
     TRIANGLEEQL   : 'triangleEql',
     TRIANGLERCT   : 'triangleRct',
-    HEXRCT        : 'hexRct'
+    HEXRCT        : 'hexRct',
+    HEXDTR        : 'hexDtr'
   };
 
   const clsQualifiers = {
@@ -550,12 +551,30 @@ var bitarea = (function() {
 
   } // HEX (from RECTANGLE)
 
+  /*
+   * HEX (from DIAMETER) 
+   */
+
+  class HexEx extends Hex {
+    
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
+      this.type = types.HEXDTR;
+    }
+
+    createSVGElt() {
+      super.createSVGElt();
+      this.dom.classList.add(clsQualifiers.EXTENDED);
+    }
+
+  }
+    
   return {
     tilts,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
-    Hex
+    Hex, HexEx
   }
 
 })(); /* bitarea */

@@ -538,11 +538,127 @@ var bitgen = (function() {
 
   } // HEX (from RECTANGLE) GENERATOR
 
+  /*
+   * HEX (from DIAMETER) GENERATOR
+   */
+
+  class HexEx extends Rectangle {
+    
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.HexEx(parent, noGroup);
+    }
+
+    computeCoords(point, wmax, hmax) {
+
+      const tan60 = Math.tan(Math.PI/3);
+      const tan30 = Math.tan(Math.PI/6);
+      const L1 = tan30 / 2;
+      const L2 = tan30 + (tan60 - tan30) / 2;
+      const L3 = Math.tan(70/180 * Math.PI);
+
+      const F = Math.sqrt(3);
+      const R = F/2;
+
+      function coordsTiltNorm(dx, dy, r) {
+        let dxx = Math.abs(dx), dyy = Math.abs(dy);
+        dxx = Math.min(dxx, Math.round(dyy/r));
+        dyy = Math.round(dxx*r);
+        return [(dx > 0) ? dxx : -dxx, (dy > 0) ? dyy : -dyy ]
+      }
+
+      function coordsTiltCeil(ss, ds, db, sm) {
+        let dbb = 0;
+        if (ds >= 0) { dbb = Math.round(Math.min(Math.abs(db), 4*R*ss, (sm-ss)/R)); }
+        else         { dbb = Math.round(Math.min(Math.abs(db), ss/R, (sm-ss)*4*R)); }
+        let dss = Math.round(dbb/F);
+        dbb = Math.round(dbb);
+        return [(ds > 0) ? dss : -dss, (db > 0) ? dbb : -dbb];
+      }
+
+      function coordsOrthCeil(ds, bs, bm) {
+        let dss = Math.min(Math.abs(ds), 2*bs/R, 2*bm/R)
+        return (ds > 0) ? dss : -dss;
+      }
+
+      function fixTilt(xs, ys, xp, yp, wmax, hmax) {
+        let dx = 0, dy = yp - ys, type = 0;
+        if (Math.round(xp - xs) !== 0) {
+          dx = xp - xs;
+          dy = yp - ys;
+          let tan = dy / dx;
+          if (tan > L3)       { dx = 0; dy = coordsOrthCeil(dy, xs, wmax); }
+          else if (tan > L2)  { type = 1; [dx, dy] = coordsTiltNorm(dx, dy, tan60); [dx, dy] = coordsTiltCeil(xs, dx, dy, wmax); }
+          else if (tan > L1)  { type = 2; [dx, dy] = coordsTiltNorm(dx, dy, tan30); [dy, dx] = coordsTiltCeil(ys, dy, dx, hmax); }
+          else if (tan > -L1) { type = 3; dy = 0; dx = coordsOrthCeil(dx, ys, hmax); }
+          else if (tan > -L2) { type = 4; [dx, dy] = coordsTiltNorm(dx, dy, tan30); [dy, dx] = coordsTiltCeil(ys, dy, dx, hmax); }
+          else if (tan > -L3) { type = 5; [dx, dy] = coordsTiltNorm(dx, dy, tan60); [dx, dy] = coordsTiltCeil(xs, dx, dy, wmax); }
+          else                { dx = 0; dy = coordsOrthCeil(dy, xs, wmax); }
+        } else {
+          dy = coordsOrthCeil(dy, ys, hmax);
+        }
+        return [ dx, dy, type ];
+      }
+
+      function computeCoordsOrth(s, b, ds, db) {
+        let ls = Math.abs(ds), lb = ls*R;
+        return [(ds > 0) ? s : s+ds, b - Math.round(lb/2), ls, Math.round(lb)];
+      }
+
+      function computeCoordsTilt(s, b, ds, db) {
+        let lb = Math.abs(db), ls = lb/R;
+        return [(ds > 0) ? s - Math.round(ls/4) : s - Math.round(3*ls/4), (db > 0) ? b : b+db, Math.round(ls), lb];
+      }
+
+      let dx = 0, dy = 0, type = 0;
+      let coords = Object.create(this.figure.coords);
+      [dx, dy, type] = fixTilt(this.org.x, this.org.y, point.x, point.y, wmax, hmax);
+      switch(type) {
+      case 0:
+        [coords.y, coords.x, coords.height, coords.width] = computeCoordsOrth(this.org.y, this.org.x, dy, dx);
+        break;
+      case 1:
+      case 5:
+        [coords.x, coords.y, coords.width, coords.height] = computeCoordsTilt(this.org.x, this.org.y, dx, dy);
+        break;
+      case 2:
+      case 4:
+        [coords.y, coords.x, coords.height, coords.width] = computeCoordsTilt(this.org.y, this.org.x, dy, dx);
+        break;
+      case 3:
+        [coords.x, coords.y, coords.width, coords.height] = computeCoordsOrth(this.org.x, this.org.y, dx, dy);
+        break;
+      default:
+      }
+      return coords;
+    }
+
+    progress(point, wmax, hmax) {
+      this.figure.redraw(this.computeCoords(point, wmax, hmax));
+    }
+
+    end(point, wmax, hmax) {
+      let coords = this.computeCoords(point, wmax, hmax);
+      if (0 == coords.width || 0 == coords.height) {
+        this.cancel();
+        return 'error';
+      }
+
+      this.figure.setCoords(coords);
+      this.figure.redraw();
+      return 'done';
+    }
+
+  }
+
   return {
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
-    Hex,
+    Hex, HexEx,
     Tracker
   }
 

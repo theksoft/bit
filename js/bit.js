@@ -424,13 +424,13 @@ var bit = (function() {
 
       function onDrawProgress(e) {
         e.preventDefault();
-        context.aDrw.onProgress(viewport.computeCoords(e.pageX, e.pageY));
+        context.aDrw.onProgress(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY));
       }
 
       function onDrawEnd(e) {
         e.preventDefault();
         if (!utils.leftButton(e)) return;
-        if (context.aDrw.onEnd(viewport.computeCoords(e.pageX, e.pageY))) {
+        if (context.aDrw.onEnd(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY))) {
           exit();
         }
       }
@@ -1412,7 +1412,8 @@ var bit = (function() {
         'triangleIsc' : bitgen.IsoscelesTriangle,
         'triangleEql' : bitgen.EquilateralTriangle,
         'triangleRct' : bitgen.RectangleTriangle,
-        'hexRct'      : bitgen.Hex
+        'hexRct'      : bitgen.Hex,
+        'hexDtr'      : bitgen.HexEx
       };
 
       var generator = null;
@@ -1448,21 +1449,17 @@ var bit = (function() {
           return true;
         },
 
-        onProgress : function(pt) {
-/*
-            let width = doms.drawarea.getAttribute('width');
-            let height = doms.drawarea.getAttribute('height');
-            context.gen.drawMove(pt, width, height);
- */
-          generator.progress(pt);
+        onProgress : function(parent, pt) {
+          let width = parent.getAttribute('width');
+          let height = parent.getAttribute('height');
+          generator.progress(pt, width, height);
         },
 
-        onEnd : function(pt) {
+        onEnd : function(parent, pt) {
           let complete = true;
-//          let width = doms.drawarea.getAttribute('width');
-//          let height = doms.drawarea.getAttribute('height');
-//          switch(context.gen.drawEnd(pt, width, height)) {
-          switch(generator.end(pt)) {
+          let width = parent.getAttribute('width');
+          let height = parent.getAttribute('height');
+          switch(generator.end(pt, width, height)) {
           case 'done':
             let fig = generator.getFigure();
             mdl.addArea(fig);

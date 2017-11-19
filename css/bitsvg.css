@@ -64,19 +64,23 @@
   stroke: #080;
 }
 
+#draw-area polygon.hex.extended {
+  stroke: #0a0;
+}
+
 #draw-area rect:hover,
 #draw-area circle:hover,
 #draw-area ellipse:hover,
-#draw-area polygon:hover/*,
-#draw-area polygon.extended:hover*/ {
+#draw-area polygon:hover,
+#draw-area polygon.extended:hover {
   fill: rgba(255,255,255,0.4);
 }
 
 #draw-area rect.selected,
 #draw-area circle.selected,
 #draw-area ellipse.selected,
-#draw-area polygon.selected/*,
-#draw-area polygon.extended.selected*/ {
+#draw-area polygon.selected,
+#draw-area polygon.extended.selected {
   stroke-width: 3px;
   fill: rgba(200,200,255,0.4);
 }
@@ -84,8 +88,8 @@
 #draw-area rect.selected:hover,
 #draw-area circle.selected:hover,
 #draw-area ellipse.selected:hover,
-#draw-area polygon.selected:hover/*,
-#draw-area polygon.extended.selected:hover*/ {
+#draw-area polygon.selected:hover,
+#draw-area polygon.extended.selected:hover {
   cursor: move;
 }
 

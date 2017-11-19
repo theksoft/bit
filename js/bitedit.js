@@ -1584,7 +1584,8 @@ var fEquilateralTriangle = (function() {
     'triangleIsc' : IsoscelesTriangle,
     'triangleEql' : EquilateralTriangle,
     'triangleRct' : RectangleTriangle,
-    'hexRct'      : Hex
+    'hexRct'      : Hex,
+    'hexDtr'      : Hex
   };
 
   function create(fig) {
