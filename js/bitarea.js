@@ -9,6 +9,7 @@ var bitarea = (function() {
   const NSSVG = 'http://www.w3.org/2000/svg';
 
   const types = {
+    CIRCLECTR     : 'circleCtr',
     RECTANGLE     : 'rectangle',
     SQUARE        : 'square',
     RHOMBUS       : 'rhombus',
@@ -117,6 +118,57 @@ var bitarea = (function() {
     }
 
   } // FIGURE
+
+  /*
+   * CIRCLE CLASS (from CENTER)
+   */
+
+  class Circle extends Figure {
+
+    constructor(parent, noGroup) {
+      super(types.CIRCLECTR, parent, noGroup);
+      this.coords = { x : 0, y : 0, r : 0 };
+    }
+
+    createSVGElt() {
+      this.dom = document.createElementNS(NSSVG, 'circle');
+      this.domParent.appendChild(this.dom);
+    }
+
+    equalCoords(coords) {
+      return (this.coords.x === coords.x &&
+              this.coords.y === coords.y &&
+              this.coords.r === coords.r) ? true : false;
+    }
+
+    getCoords() {
+      return Object.create(this.coords);
+    }
+
+    setCoords(coords) {
+      this.coords.x = coords.x;
+      this.coords.y = coords.y;
+      this.coords.r = coords.r;
+    }
+
+    draw(coords) {
+      let c = coords || this.coords;
+      if (this.dom) {
+        this.dom.setAttribute('cx', c.x);
+        this.dom.setAttribute('cy', c.y);
+        this.dom.setAttribute('r', c.r);
+      }
+    }
+
+    within(coords) {
+      if (this.coords.x - this.coords.r < coords.x) return false;
+      if (this.coords.x + this.coords.r > coords.x + coords.width) return false;
+      if (this.coords.y - this.coords.r < coords.y) return false;
+      if (this.coords.y + this.coords.r > coords.y + coords.height) return false;
+      return true;
+    }
+
+  } // CIRCLE CLASS (from CENTER)
 
   /*
    * RECTANGLE CLASS
@@ -400,6 +452,7 @@ var bitarea = (function() {
 
   return {
     tilts,
+    Circle,
     Rectangle, Square, Rhombus,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle
   }

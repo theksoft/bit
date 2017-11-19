@@ -49,6 +49,59 @@ var bitgen = (function() {
   }
 
   /*
+   * CIRCLE (from CENTER) GENERATOR
+   */
+
+  class Circle extends Figure {
+
+    constructor(parent, noGroup, alt) {
+      super();
+      this.org = { x : 0, y : 0 };
+      this.figure = null;
+      this.createFigure(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Circle(parent, noGroup);
+    }
+
+    start(point) {
+      let coords = this.figure.getCoords();
+      this.org.x = coords.x = point.x;
+      this.org.y = coords.y = point.y;
+      this.figure.setCoords(coords);
+      this.figure.redraw();
+    }
+
+    progress(point) {
+      this.figure.redraw(this.computeCoords(point));
+    }
+
+    end(point) {
+      let coords = this.computeCoords(point);
+      if (0 >= coords.r) {
+        this.cancel();
+        return 'error';
+      }
+
+      this.figure.setCoords(coords);
+      this.figure.redraw();
+      return 'done';
+    }
+
+    computeCoords(point) {
+      let dx = point.x - this.org.x,
+          dy = point.y - this.org.y; 
+      return {
+        x : this.org.x,
+        y : this.org.y,
+        r : Math.round(Math.sqrt(dx*dx + dy*dy))
+      };
+    }
+
+  } // CIRCLE (from CENTER) GENERATOR
+
+  /*
    * RECTANGLE GENERATOR
    */
 
@@ -352,6 +405,7 @@ var bitgen = (function() {
   } // RECTANGLE TRIANGLE GENERATOR
 
   return {
+    Circle,
     Rectangle, Square, Rhombus,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Tracker
