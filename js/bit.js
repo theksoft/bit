@@ -1407,7 +1407,8 @@ var bit = (function() {
         'square'      : bitgen.Square,
         'rhombus'     : bitgen.Rhombus,
         'triangleIsc' : bitgen.IsoscelesTriangle,
-        'triangleEql' : bitgen.EquilateralTriangle
+        'triangleEql' : bitgen.EquilateralTriangle,
+        'triangleRct' : bitgen.RectangleTriangle
       };
 
       var generator = null;

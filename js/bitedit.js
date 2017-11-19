@@ -608,13 +608,13 @@ var bitedit = (function() {
 
     gripCoords(id, coords) {
       const gripPosition = {
-        't' : fRectangle.tPos, 'b' : fRectangle.bPos, 'l' : fRectangle.lPos, 'r' : fRectangle.rPos,  
         'bbl' : fRectangle.blPos, 'bbr' : fRectangle.brPos,
         'ttl' : fRectangle.tlPos, 'ttr' : fRectangle.trPos,
         'ltl' : fRectangle.tlPos, 'lbl' : fRectangle.blPos,
         'rtr' : fRectangle.trPos, 'rbr' : fRectangle.brPos
       };
-      return gripPosition[id](coords || this.figure.getCoords());
+      let f = gripPosition[id];
+      return (f) ? f(coords || this.figure.getCoords()) : super.gripCoords(id, coords);
     }
 
     createGrips() {
@@ -664,24 +664,27 @@ var bitedit = (function() {
 
     computeEditDLims(id, wmax, hmax) {
       const constraints = {
-        't' : fRectangle.tEditCns, 'b' : fRectangle.bEditCns, 'l' : fRectangle.lEditCns, 'r' : fRectangle.rEditCns,  
         'bbl' : fIsoscelesTriangle.bblEditCns, 'bbr' : fIsoscelesTriangle.bbrEditCns,
         'ttl' : fIsoscelesTriangle.ttlEditCns, 'ttr' : fIsoscelesTriangle.ttrEditCns,
         'ltl' : fIsoscelesTriangle.ltlEditCns, 'lbl' : fIsoscelesTriangle.lblEditCns,
         'rtr' : fIsoscelesTriangle.rtrEditCns, 'rbr' : fIsoscelesTriangle.rbrEditCns
       };
-      return constraints[id].bind(this)(this.figure, wmax, hmax);
+      let f = constraints[id];
+      return (f) ? f.bind(this)(this.figure, wmax, hmax) : super.computeEditDLims(id, wmax, hmax);
     }
 
     computeEditCoords(id, dx, dy) {
       const editCoords = {
-        't' : fRectangle.tEdit, 'b' : fRectangle.bEdit, 'l' : fRectangle.lEdit, 'r' : fRectangle.rEdit,  
         'bbl' : fIsoscelesTriangle.bblEdit, 'bbr' : fIsoscelesTriangle.bbrEdit,
         'ttl' : fIsoscelesTriangle.ttlEdit, 'ttr' : fIsoscelesTriangle.ttrEdit,
         'ltl' : fIsoscelesTriangle.ltlEdit, 'lbl' : fIsoscelesTriangle.lblEdit,
         'rtr' : fIsoscelesTriangle.rtrEdit, 'rbr' : fIsoscelesTriangle.rbrEdit
       };
-      return (this.enabled) ? editCoords[id](this.figure, dx, dy) : this.figure.getCoords();
+      if (!this.enabled) {
+        return this.figure.getCoords();
+      }
+      let f = editCoords[id];
+      return (f) ? f(this.figure, dx, dy) : super.computeEditCoords(id, dx, dy);
     }
 
   } // ISOSCELES TRIANGLE EDITOR
@@ -950,6 +953,196 @@ var fEquilateralTriangle = (function() {
   } // EQUILATERAL TRIANGLE GENERATOR
 
   /*
+   * RECTANGLE TRIANGLE EDITOR
+   */
+  
+  var fRectangleTriangle = (function() {
+
+    function delta( w, h, dx, dy) {
+      let r = w / h;  // h & w <> 0 for a visble rectangle
+      return [Math.round(dy*r), Math.round(dx/r)];
+    }
+
+    function ceil(x1, y1, x2, y2, x3, y3, dx, dy, sgn) {
+      let a = (y2-y1)/(x2-x1), b = (y1*x2 - y2*x1)/(x2-x1);
+      let x = x3 + dx, y = y3 + dy;
+      if ((y - (a*x + b)) * sgn < 0) {
+        let bp = y + x / a;
+        x = (a / (a*a - 1)) * (bp - b);
+        y = a*x + b;
+      }
+      return [Math.round(x - x3), Math.round(y - y3)];
+    }
+
+    function ttlEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [dx, dy] = ceil(rtn.x, rtn.y + rtn.height, rtn.x + rtn.width, rtn.y, rtn.x, rtn.y, dx, dy, -1);
+      let [dw, dh] = delta(rtn.width, rtn.height, dx, dy);
+      rtn.width -= dw + dx;
+      rtn.height -= dh + dy;
+      rtn.x += dx;
+      rtn.y += dy;
+      return rtn;
+    }
+
+    function bbrEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [dx, dy] = ceil(rtn.x, rtn.y + rtn.height, rtn.x + rtn.width, rtn.y, rtn.x + rtn.width, rtn.y + rtn.height, dx, dy, 1);
+      let [dw, dh] = delta(rtn.width, rtn.height, dx, dy);
+      rtn.width += dw + dx;
+      rtn.height += dh + dy;
+      rtn.x -= dw;
+      rtn.y -= dh;
+      return rtn;
+    }
+
+    function lblEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [dx, dy] = ceil(rtn.x, rtn.y, rtn.x + rtn.width, rtn.y + rtn.height, rtn.x, rtn.y + rtn.height, dx, dy, 1);
+      let [dw, dh] = delta(rtn.width, rtn.height, dx, dy);
+      rtn.width -= dx - dw;
+      rtn.height -= dh - dy;
+      rtn.x += dx;
+      rtn.y += dh;
+      return rtn;
+    }
+
+    function rtrEdit(obj, dx, dy) {
+      let rtn = Object.create(obj.coords);
+      [dx, dy] = ceil(rtn.x, rtn.y, rtn.x + rtn.width, rtn.y + rtn.height, rtn.x + rtn.width, rtn.y, dx, dy, -1);
+      let [dw, dh] = delta(rtn.width, rtn.height, dx, dy);
+      rtn.width += dx - dw;
+      rtn.height += dh - dy;
+      rtn.x += dw;
+      rtn.y += dy;
+      return rtn;
+    }
+
+    function pEditCns(obj, wmax, hmax, x, y) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
+      let x1 = obj.coords.x, y1 = obj.coords.y, x2 = obj.coords.x + obj.coords.width, y2 = obj.coords.y + obj.coords.height;
+      let a = (y2-y1)/(x2-x1), b = (y1*x2 - y2*x1)/(x2-x1);
+      let my1 = Math.max(b, 0), mx1 = (my1-b)/a, my2 = Math.min(hmax, a*wmax+b), mx2 = (my2-b)/a;
+      rtn.dxmin = Math.round(mx1-x);
+      rtn.dxmax = Math.round(mx2-x);
+      rtn.dymin = Math.round(my1-y);
+      rtn.dymax = Math.round(my2-y);
+      return rtn;
+    }
+
+    function nEditCns(obj, wmax, hmax, x, y) {
+      let rtn = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
+      let x1 = obj.coords.x, y1 = obj.coords.y + obj.coords.height, x2 = obj.coords.x + obj.coords.width, y2 = obj.coords.y;
+      let a = (y2-y1)/(x2-x1), b = (y1*x2 - y2*x1)/(x2-x1);
+      let my1 = Math.min(b, hmax), mx1 = (my1-b)/a, mx2 = Math.min(-b/a, wmax), my2 = a*mx2+b;
+      rtn.dxmin = Math.round(mx1-x);
+      rtn.dxmax = Math.round(mx2-x);
+      rtn.dymin = Math.round(my2-y);
+      rtn.dymax = Math.round(my1-y);
+      return rtn;
+    }
+
+    function ttlEditCns(obj, wmax, hmax) { return nEditCns(obj, wmax, hmax, obj.coords.x, obj.coords.y); }
+    function bbrEditCns(obj, wmax, hmax) { return nEditCns(obj, wmax, hmax, obj.coords.x + obj.coords.width, obj.coords.y + obj.coords.height); }
+    function lblEditCns(obj, wmax, hmax) { return pEditCns(obj, wmax, hmax, obj.coords.x, obj.coords.y + obj.coords.height); }
+    function rtrEditCns(obj, wmax, hmax) { return pEditCns(obj, wmax, hmax, obj.coords.x + obj.coords.width, obj.coords.y); }
+
+    return {
+
+      ttlEdit, bbrEdit, lblEdit, rtrEdit,
+      ttlEditCns, bbrEditCns, lblEditCns, rtrEditCns
+
+    }
+
+  })(); // fRectangleTriangle
+
+  class RectangleTriangle extends IsoscelesTriangle {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    gripCursor(id) {
+      const gripCursors = {
+        'bbr' : cursors.NWSE,
+        'ttl' : cursors.NWSE,  
+        'lbl' : cursors.NESW,
+        'rtr' : cursors.NESW
+      };
+      return gripCursors[id] || super.gripCursor(id);
+    }
+
+    createGrips() {
+      switch (this.figure.coords.tilt) {
+      case bitarea.tilts.BOTTOM:
+        this.grips.push(new Grip('bl', this.figure.getDomParent(), this.gripCoords('bl'), this.gripCursor('bl')));
+        this.grips.push(new Grip('bbr', this.figure.getDomParent(), this.gripCoords('bbr'), this.gripCursor('bbr')));
+        this.grips.push(new Grip('tr', this.figure.getDomParent(), this.gripCoords('tr'), this.gripCursor('tr')));
+        break;
+      case bitarea.tilts.TOP:
+        this.grips.push(new Grip('tr', this.figure.getDomParent(), this.gripCoords('tr'), this.gripCursor('tr')));
+        this.grips.push(new Grip('ttl', this.figure.getDomParent(), this.gripCoords('ttl'), this.gripCursor('ttl')));
+        this.grips.push(new Grip('bl', this.figure.getDomParent(), this.gripCoords('bl'), this.gripCursor('bl')));
+        break;
+      case bitarea.tilts.LEFT:
+        this.grips.push(new Grip('tl', this.figure.getDomParent(), this.gripCoords('tl'), this.gripCursor('tl')));
+        this.grips.push(new Grip('lbl', this.figure.getDomParent(), this.gripCoords('lbl'), this.gripCursor('lbl')));
+        this.grips.push(new Grip('br', this.figure.getDomParent(), this.gripCoords('br'), this.gripCursor('br')));
+        break;
+      case bitarea.tilts.RIGHT:
+        this.grips.push(new Grip('br', this.figure.getDomParent(), this.gripCoords('br'), this.gripCursor('br')));
+        this.grips.push(new Grip('rtr', this.figure.getDomParent(), this.gripCoords('rtr'), this.gripCursor('rtr')));
+        this.grips.push(new Grip('tl', this.figure.getDomParent(), this.gripCoords('tl'), this.gripCursor('tl')));
+        break;
+      default:
+      }
+    }
+
+    rotateGrips(direction) {
+      const rclkNext = {
+        'bl' : 'tl', 'tl' : 'tr', 'tr' : 'br', 'br' : 'bl',
+        'bbr' : 'lbl', 'lbl' : 'ttl', 'ttl' : 'rtr', 'rtr' : 'bbr'
+      };
+      const raclkNext = {
+        'bl' : 'br', 'br' : 'tr', 'tr' : 'tl', 'tl' : 'bl',
+        'bbr' : 'rtr', 'rtr' : 'ttl', 'ttl' : 'lbl', 'lbl' : 'bbr'
+      };
+      let newCursor = this.gripCursor.bind(this);
+      this.grips.forEach(function f(e) {
+        let newId = (direction === directions.RCLK) ? rclkNext[e.getID()] : raclkNext[e.getID()];
+        e.setID(newId);
+        e.setCursor(newCursor(newId));
+      });
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      const constraints = {
+        'bbr' : fRectangleTriangle.bbrEditCns,
+        'ttl' : fRectangleTriangle.ttlEditCns,
+        'lbl' : fRectangleTriangle.lblEditCns,
+        'rtr' : fRectangleTriangle.rtrEditCns
+      };
+      let f = constraints[id];
+      return (f) ? f.bind(this)(this.figure, wmax, hmax) : super.computeEditDLims(id, wmax, hmax);
+    }
+
+    computeEditCoords(id, dx, dy) {
+      const editCoords = {
+        'bbr' : fRectangleTriangle.bbrEdit,
+        'ttl' : fRectangleTriangle.ttlEdit,
+        'lbl' : fRectangleTriangle.lblEdit,
+        'rtr' : fRectangleTriangle.rtrEdit
+      };
+      if (!this.enabled) {
+        return this.figure.getCoords();
+      }
+      let f = editCoords[id];
+      return (f) ? f(this.figure, dx, dy) : super.computeEditCoords(id, dx, dy);
+    }
+
+  } // RECTANGLE TRIANGLE GENERATOR
+
+  /*
    * EDITOR FACTORY
    */
 
@@ -958,7 +1151,8 @@ var fEquilateralTriangle = (function() {
     'square'      : Square,
     'rhombus'     : Rhombus,
     'triangleIsc' : IsoscelesTriangle,
-    'triangleEql': EquilateralTriangle
+    'triangleEql' : EquilateralTriangle,
+    'triangleRct' : RectangleTriangle
   };
 
   function create(fig) {

@@ -44,6 +44,10 @@
   stroke: #4ae;
 }
 
+#draw-area polygon.right-angle {
+  stroke: #8df;
+}
+
 #draw-area rect:hover,
 #draw-area polygon:hover/*,
 #draw-area polygon.extended:hover,

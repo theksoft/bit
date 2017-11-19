@@ -13,14 +13,16 @@ var bitarea = (function() {
     SQUARE        : 'square',
     RHOMBUS       : 'rhombus',
     TRIANGLEISC   : 'triangleIsc',
-    TRIANGLEEQL   : 'triangleEql'
+    TRIANGLEEQL   : 'triangleEql',
+    TRIANGLERCT   : 'triangleRct'
   };
 
   const clsQualifiers = {
     SQUARE        : 'square',
     RHOMBUS       : 'rhombus',
     ISOSCELES     : 'isosceles',
-    EQUILATERAL   : 'equilateral'
+    EQUILATERAL   : 'equilateral',
+    RIGHTANGLE    : 'right-angle'
   };
 
   const tilts = {
@@ -343,10 +345,63 @@ var bitarea = (function() {
 
   }
 
+  /*
+   * RIGHT-ANGLE TRIANGLE
+   */
+
+  class RectangleTriangle extends IsoscelesTriangle {
+
+    constructor(parent, noGroup, tilt) {
+      super(parent, noGroup, tilt);
+      this.type = types.TRIANGLERCT;
+    }
+
+    createSVGElt() {
+      super.createSVGElt();
+      this.dom.classList.remove(clsQualifiers.ISOSCELES);
+      this.dom.classList.add(clsQualifiers.RIGHTANGLE);
+    }
+
+    draw(coords) {
+      let c = coords || this.coords;
+      let lx = c.x, rx = c.x + c.width,  
+          ty = c.y, by = c.y + c.height;
+      let points = [];
+      switch(c.tilt) {
+      case tilts.BOTTOM:
+        points.push({ x : lx, y : by });
+        points.push({ x : rx, y : by });
+        points.push({ x : rx, y : ty });
+        break;
+      case tilts.TOP:
+        points.push({ x : rx, y : ty });
+        points.push({ x : lx, y : ty });
+        points.push({ x : lx, y : by });
+        break;
+      case tilts.LEFT:
+        points.push({ x : lx, y : ty });
+        points.push({ x : lx, y : by });
+        points.push({ x : rx, y : by });
+        break;
+      case tilts.RIGHT:
+        points.push({ x : rx, y : by });
+        points.push({ x : rx, y : ty });
+        points.push({ x : lx, y : ty });
+        break;
+      default:
+      }
+      let attrVal = points.reduce(function(r, e) {
+        return r + e.x + ' ' + e.y + ' ';
+      }, '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+  } // RIGHT-ANGLE TRIANGLE
+
   return {
     tilts,
     Rectangle, Square, Rhombus,
-    IsoscelesTriangle, EquilateralTriangle
+    IsoscelesTriangle, EquilateralTriangle, RectangleTriangle
   }
 
 })(); /* bitarea */

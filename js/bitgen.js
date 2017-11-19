@@ -321,9 +321,39 @@ var bitgen = (function() {
 
   } // EQUILATERAL TRIANGLE GENERATOR
 
+  /*
+   * RECTANGLE TRIANGLE GENERATOR
+   */
+
+  class RectangleTriangle extends IsoscelesTriangle {
+    
+    constructor(parent, noGroup, alt) {
+      super(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.RectangleTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
+    }
+
+    computeCoords(point) {
+      let coords = super.computeCoords(point);
+      if (point.x <= this.org.x && point.y <= this.org.y) {
+        coords.tilt = bitarea.tilts.RIGHT;
+      } else if (point.x <= this.org.x && point.y > this.org.y) {
+        coords.tilt = bitarea.tilts.BOTTOM;
+      } else if (point.x > this.org.x && point.y <= this.org.y) {
+        coords.tilt = bitarea.tilts.TOP;
+      } else {
+        coords.tilt = bitarea.tilts.LEFT;
+      }
+      return coords;
+    }
+
+  } // RECTANGLE TRIANGLE GENERATOR
+
   return {
     Rectangle, Square, Rhombus,
-    IsoscelesTriangle, EquilateralTriangle,
+    IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Tracker
   }
 
