@@ -652,13 +652,86 @@ var bitgen = (function() {
       return 'done';
     }
 
-  }
+  } // HEX (from DIAMETER) GENERATOR
+
+  /*
+   * POLYGON GENERATOR
+   */
+
+  class Polygon extends Figure {
+    
+    constructor(parent, noGroup, alt) {
+      super();
+      this.org = { x : 0, y : 0 };
+      this.closeGap = 3;
+      this.context = { 'parent' : parent, 'noGroup' : noGroup };
+      this.figure = null;
+      this.createFigure(parent, noGroup, alt);
+    }
+
+    createFigure(parent, noGroup, alt) {
+      this.figure = new bitarea.Polyline(parent, noGroup);
+    }
+
+    closure(point) {
+      let d = point.x - this.org.x;
+      if (d < -this.closeGap || d > this.closeGap) {
+        return false;
+      }
+      d = point.y - this.org.y;
+      if (d < -this.closeGap || d > this.closeGap) {
+        return false;
+      }
+      return true;
+    }
+
+    start(point) {
+      let coords = this.figure.getCoords();
+      coords[0].x = this.org.x = point.x;
+      coords[0].y = this.org.y = point.y;
+      coords.push({ x : point.x, y : point.y });
+      this.figure.setCoords(coords);
+      this.figure.redraw();
+    }
+
+    progress(point) {
+      this.figure.redraw(this.computeCoords(point));
+    }
+
+    end(point) {
+      let coords = this.computeCoords(point);
+      if (this.closure(point)) {
+        coords.pop();
+        if (3 > coords.length) {
+          this.cancel();
+          return 'error';
+        }
+        this.cancel();
+        this.figure = new bitarea.Polygon(this.context.parent, this.context.noGroup);
+        this.figure.setCoords(coords);
+        this.figure.redraw();
+        return 'done';
+      }
+      coords.push({ x : point.x, y : point.y });
+      this.figure.setCoords(coords);
+      return 'continue';
+    }
+
+    computeCoords(point) {
+      let coords = this.figure.copyCoords(this.figure.coords);
+      let last = coords.length - 1;
+      coords[last].x = point.x;
+      coords[last].y = point.y;
+      return coords;
+    }
+
+  } // POLYGON GENERATOR
 
   return {
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
-    Hex, HexEx,
+    Hex, HexEx, Polygon,
     Tracker
   }
 

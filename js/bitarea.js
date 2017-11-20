@@ -19,7 +19,9 @@ var bitarea = (function() {
     TRIANGLEEQL   : 'triangleEql',
     TRIANGLERCT   : 'triangleRct',
     HEXRCT        : 'hexRct',
-    HEXDTR        : 'hexDtr'
+    HEXDTR        : 'hexDtr',
+    POLYLINE      : 'polyline',
+    POLYGON       : 'polygon'
   };
 
   const clsQualifiers = {
@@ -567,14 +569,87 @@ var bitarea = (function() {
       this.dom.classList.add(clsQualifiers.EXTENDED);
     }
 
-  }
+  } // HEX (from DIAMETER)
+
+  /*
+   * POLYGON
+   */
+
+  class Polygon extends Figure {
     
+    constructor(parent, noGroup) {
+      super(types.POLYGON, parent, noGroup);
+      this.coords = [{ x : 0, y : 0}];
+      this.type = types.POLYGON;
+    }
+
+    createSVGElt() {
+      this.dom = document.createElementNS(NSSVG, 'polygon');
+      this.domParent.appendChild(this.dom);
+    }
+
+    copyCoords(coords) {
+      let rtn = [];
+      coords.forEach(function(e) {
+        rtn.push({ x : e.x, y : e.y })
+      });
+      return rtn;
+    }
+
+    getCoords() {
+      return this.copyCoords(this.coords);
+    }
+
+    setCoords(coords) {
+      this.coords.splice(0, this.coords.length);
+      this.coords = this.copyCoords(coords);
+    }
+
+    draw(coords) {
+      let c = coords || this.coords;
+      let attrVal = c.reduce(function(r, e) {
+        return r + e.x + ' ' + e.y + ' ';
+      }, '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+    within(coords) {
+      return this.coords.reduce(function(r, e) {
+        return r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height);
+      }, true);
+    }
+
+  } // POLYGON
+
+  /*
+   * POLYLINE
+   */
+
+  class Polyline extends Polygon  {
+    
+    constructor(parent, noGroup) {
+      super(parent, noGroup);
+      this.type = types.POLYLINE;
+    }
+
+    createSVGElt() {
+      this.dom = document.createElementNS(NSSVG, 'polyline');
+      this.domParent.appendChild(this.dom);
+    }
+
+    add(point)  {
+      this.coords.push({ x : point.x, y : point.y });
+    }
+
+  }
+
   return {
     tilts,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
-    Hex, HexEx
+    Hex, HexEx,
+    Polygon, Polyline
   }
 
 })(); /* bitarea */

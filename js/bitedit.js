@@ -1568,6 +1568,77 @@ var fEquilateralTriangle = (function() {
       return (f) ? f(this.figure, dx, dy) : super.computeEditCoords(id, dx, dy);
     }
 
+  } // HEX EDITOR
+
+  /*
+   * POLYGON EDITOR 
+   */
+
+  class Polygon extends Figure {
+    
+    constructor(fig) {
+      super(fig);
+    }
+
+    computeMoveDLims(wmax, hmax) {
+      let c = this.figure.getCoords();
+      let lims = c.reduce(function(r, e) {
+        if (r.xmin > e.x) r.xmin = e.x;
+        if (r.xmax < e.x) r.xmax = e.x;
+        if (r.ymin > e.y) r.ymin = e.y;
+        if (r.ymax < e.y) r.ymax = e.y;
+        return r;
+      }, { xmin : 1000000, xmax : -1000000, ymin : 1000000, ymax : -1000000 });
+      return {
+        dxmin : -lims.xmin,
+        dxmax : wmax - lims.xmax,
+        dymin : -lims.ymin,
+        dymax : hmax - lims.ymax
+      };
+    }
+
+    computeMoveCoords(dx, dy) {
+      let rtn = this.figure.getCoords();
+      rtn.forEach(function(e) {
+        e.x += dx;
+        e.y += dy;
+      });
+      return rtn;
+    }
+
+    computeRotateCoords(direction, wmax, hmax) {
+      return this.figure.getCoords();
+    }
+
+    gripCoords(id, coords) {
+      let c = coords || this.figure.getCoords();
+      return { x : c[id].x, y : c[id].y };
+    }
+
+    createGrips() {
+      for (let i = 0; i < this.figure.coords.length; i++) {
+        this.grips.push(new Grip(i, this.figure.getDomParent(), this.gripCoords(i), this.gripCursor(i)));
+      }
+    }
+
+    computeEditDLims(id, wmax, hmax) {
+      return {  dxmin : -this.figure.coords[id].x, dxmax : wmax - this.figure.coords[id].x,
+                dymin : -this.figure.coords[id].y, dymax : hmax - this.figure.coords[id].y };
+    }
+
+    computeEditCoords(id, dx, dy) {
+      let coords = this.figure.getCoords();
+      if (this.enabled) {
+        coords[id].x += dx;
+        coords[id].y += dy;
+      }
+      return coords;
+    }
+
+    checkCoords(coords) {
+      return (2 < coords.length) ? true : false;
+    }
+
   }
 
   /*
@@ -1585,7 +1656,8 @@ var fEquilateralTriangle = (function() {
     'triangleEql' : EquilateralTriangle,
     'triangleRct' : RectangleTriangle,
     'hexRct'      : Hex,
-    'hexDtr'      : Hex
+    'hexDtr'      : Hex,
+    'polygon'     : Polygon
   };
 
   function create(fig) {

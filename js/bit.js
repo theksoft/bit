@@ -1413,7 +1413,8 @@ var bit = (function() {
         'triangleEql' : bitgen.EquilateralTriangle,
         'triangleRct' : bitgen.RectangleTriangle,
         'hexRct'      : bitgen.Hex,
-        'hexDtr'      : bitgen.HexEx
+        'hexDtr'      : bitgen.HexEx,
+        'polygon'     : bitgen.Polygon
       };
 
       var generator = null;
@@ -1615,101 +1616,101 @@ var bit = (function() {
 
       var handlers = {
 
-          prevent : function(e) {
-            if (!mdl.findArea(e.target)) return true;
-            if (!isAreaSelected(e.target)) return true;
-            return false;
-          },
+        prevent : function(e) {
+          if (!mdl.findArea(e.target)) return true;
+          if (!isAreaSelected(e.target)) return true;
+          return false;
+        },
 
-          onStart : function(parent, pt) {
-            let width = parent.getAttribute('width');
-            let height = parent.getAttribute('height');
-            context.mover.start(context.selected, pt, width, height);
-            tls.freeze();
-          },
+        onStart : function(parent, pt) {
+          let width = parent.getAttribute('width');
+          let height = parent.getAttribute('height');
+          context.mover.start(context.selected, pt, width, height);
+          tls.freeze();
+        },
 
-          onProgress : function(pt) {
-            context.mover.progress(pt);
-          },
+        onProgress : function(pt) {
+          context.mover.progress(pt);
+        },
 
-          onEnd : function(pt) {
-            context.mover.end(pt);
-          },
+        onEnd : function(pt) {
+          context.mover.end(pt);
+        },
 
-          onCancel : function() {
-            context.mover.cancel();
-            tls.release();
-          },
+        onCancel : function() {
+          context.mover.cancel();
+          tls.release();
+        },
           
           onExit : function(e) {
             tls.release();
           },
-
+ 
           onStep : function(parent, dx, dy) {
             let width = parent.getAttribute('width');
-            let height = parent.getAttribute('height');
-            context.mover.step(context.selected, dx, dy, width, height);
-          },
+          let height = parent.getAttribute('height');
+          context.mover.step(context.selected, dx, dy, width, height);
+        },
 
-          onRotate : function(parent, direction) {
-            if (1 < context.selected.length()) {
-              alert('Rotation is supported for a single selected area!');
-              return;
-            }
-            let width = parent.getAttribute('width');
-            let height = parent.getAttribute('height');
-            if (!context.selected.get(0).rotate(direction, width, height)) {
-              alert('ERROR - Rotation possibly makes area go beyond limits!');
-            }
+        onRotate : function(parent, direction) {
+          if (1 < context.selected.length()) {
+            alert('Rotation is supported for a single selected area!');
+            return;
           }
-
-        };
-
-        return {
-          handlers
-        };
-
-      })();
-
-      var editor = (function() {
-
-        var handlers = {
-
-          prevent : function(e) {
-            if (0 === context.selected.length()) return true;
-            if (!context.selected.get(0).isEditable(e.target)) return true;
-            return false;
-          },
-
-          onStart : function(parent, target, pt) {
-            let width = parent.getAttribute('width');
-            let height = parent.getAttribute('height');
-            context.editor.start(context.selected.get(0), target, pt, width, height);
-            tls.freeze();
-          },
-
-          onProgress : function(pt) {
-            context.editor.progress(pt);
-          },
-
-          onEnd : function(pt) {
-            context.editor.end(pt);
-          },
-
-          onCancel : function() {
-            context.editor.cancel();
-            tls.release();
-          },
-          
-          onExit : function(e) {
-            tls.release();
+          let width = parent.getAttribute('width');
+          let height = parent.getAttribute('height');
+          if (!context.selected.get(0).rotate(direction, width, height)) {
+            alert('ERROR - Rotation possibly makes area go beyond limits!');
           }
+        }
 
-        };
+      };
 
-        return {
-          handlers
-        };
+      return {
+        handlers
+      };
+
+    })();
+
+    var editor = (function() {
+
+      var handlers = {
+
+        prevent : function(e) {
+          if (0 === context.selected.length()) return true;
+          if (!context.selected.get(0).isEditable(e.target)) return true;
+          return false;
+        },
+
+        onStart : function(parent, target, pt) {
+          let width = parent.getAttribute('width');
+          let height = parent.getAttribute('height');
+          context.editor.start(context.selected.get(0), target, pt, width, height);
+          tls.freeze();
+        },
+
+        onProgress : function(pt) {
+          context.editor.progress(pt);
+        },
+
+        onEnd : function(pt) {
+          context.editor.end(pt);
+        },
+
+        onCancel : function() {
+          context.editor.cancel();
+          tls.release();
+        },
+        
+        onExit : function(e) {
+          tls.release();
+        }
+
+      };
+
+      return {
+        handlers
+      };
 
     })();
 
