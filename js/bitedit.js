@@ -1,5 +1,5 @@
 /**
- * Boardgame image tool (BIT)
+ * Boardgame image tool (BIT) Area Editors
  * Copyright 2017 Herve Retaureau
  */
 
@@ -251,10 +251,7 @@ var bitedit = (function() {
 
     repositionGrips(coords) {
       let c = coords || this.figure.getCoords();
-      let getCoords = this.gripCoords.bind(this);
-      this.grips.forEach(function(e) {
-        e.reposition(getCoords(e.getID(), c));
-      });
+      this.grips.forEach(e => e.reposition(this.gripCoords(e.getID(), c)));
     }
 
     // EDIT SECTION
@@ -774,7 +771,7 @@ var bitedit = (function() {
       fAdjust(rtn, obj.coords, lims);
       return rtn;
     }
-
+    
     function ttlEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.tlEditCns, leftCns); }
     function ttrEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.trEditCns, rightCns); }
     function bblEditCns(obj, wmax, hmax) { return editCns.bind(this)(obj, wmax, hmax, fRectangle.blEditCns, leftCns); }
@@ -890,11 +887,10 @@ var bitedit = (function() {
         'bbl' : 'rbr', 'rbr' : 'ttr', 'ttr' : 'ltl', 'ltl' : 'bbl',
         'bbr' : 'rtr', 'rtr' : 'ttl', 'ttl' : 'lbl', 'lbl' : 'bbr'
       };
-      let newCursor = this.gripCursor.bind(this);
-      this.grips.forEach(function f(e) {
+      this.grips.forEach(e => {
         let newId = (direction === directions.RCLK) ? rclkNext[e.getID()] : raclkNext[e.getID()];
         e.setID(newId);
-        e.setCursor(newCursor(newId));
+        e.setCursor(this.gripCursor(newId));
       });
     }
 
@@ -1343,11 +1339,10 @@ var fEquilateralTriangle = (function() {
         'bl' : 'br', 'br' : 'tr', 'tr' : 'tl', 'tl' : 'bl',
         'bbr' : 'rtr', 'rtr' : 'ttl', 'ttl' : 'lbl', 'lbl' : 'bbr'
       };
-      let newCursor = this.gripCursor.bind(this);
-      this.grips.forEach(function f(e) {
+      this.grips.forEach(e => {
         let newId = (direction === directions.RCLK) ? rclkNext[e.getID()] : raclkNext[e.getID()];
         e.setID(newId);
-        e.setCursor(newCursor(newId));
+        e.setCursor(this.gripCursor(newId));
       });
     }
 
@@ -1539,11 +1534,10 @@ var fEquilateralTriangle = (function() {
           'hl' : 'vl', 'hr' : 'vr', 'ht' : 'vt', 'hb' : 'vb',  
           'vl' : 'hl', 'vr' : 'hr', 'vt' : 'ht', 'vb' : 'hb'  
       };
-      let newCursor = this.gripCursor.bind(this);
-      this.grips.forEach(function f(e) {
+      this.grips.forEach(e => {
         let newId = rNext[e.getID()];
         e.setID(newId);
-        e.setCursor(newCursor(newId));
+        e.setCursor(this.gripCursor(newId));
       });
     }
 
@@ -1936,4 +1930,4 @@ var fEquilateralTriangle = (function() {
     MultiSelector, Mover, Editor
   };
   
-})(); /* bitedit */
+})(); /* BIT Area Editors */

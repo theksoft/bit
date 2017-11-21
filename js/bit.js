@@ -157,7 +157,7 @@ var bit = (function() {
 
     };
 
-  })(); /* mdl */
+  })(); /* DATA MODEL MANAGEMENT */
 
   /*
    * WORKAREA MANAGEMENT
@@ -878,7 +878,7 @@ var bit = (function() {
 
     };
 
-  })(); /* wks */
+  })(); /* WORKSPACE MANAGEMENT */
 
   /*
    * TOOLS PALETTE MANAGEMENT 
@@ -1182,7 +1182,7 @@ var bit = (function() {
 
     };
 
-  })(); /* tools */
+  })(); /* TOOLS PALAETTE MANAGEMENT */
 
   /*
    * FOOTER DISPLAY MANAGEMENT
@@ -1257,7 +1257,7 @@ var bit = (function() {
 
     };
 
-  })(); /* ftr */
+  })(); /* FOOTER DISPLAY MANAGEMENT */
   
   /*
    * MENU MANAGEMENT
@@ -1342,7 +1342,7 @@ var bit = (function() {
 
     };
 
-  })(); /* mnu */
+  })(); /* MENU MANAGEMENT */
 
   /*
    * APPLICATION
@@ -1734,6 +1734,6 @@ var bit = (function() {
     wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init();
 
-  })(); /* app */
+  })(); /* APPLICATION MANAGEMENT */
 
-})(); /* bit */
+})(); /* BIT */

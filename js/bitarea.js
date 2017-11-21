@@ -1,5 +1,5 @@
 /**
- * Boardgame image tool (BIT)
+ * Boardgame image tool (BIT) Area Definition
  * Copyright 2017 Herve Retaureau
  */
 
@@ -652,4 +652,4 @@ var bitarea = (function() {
     Polygon, Polyline
   }
 
-})(); /* bitarea */
+})(); /* BIT Area Definitions */

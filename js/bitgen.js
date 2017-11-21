@@ -1,5 +1,5 @@
 /**
- * Boardgame image tool (BIT)
+ * Boardgame image tool (BIT) Area Generators
  * Copyright 2017 Herve Retaureau
  */
 
@@ -735,4 +735,4 @@ var bitgen = (function() {
     Tracker
   }
 
-})(); /* bitgen */
+})(); /* BIT Area Generators */
