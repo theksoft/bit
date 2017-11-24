@@ -33,8 +33,8 @@ var bit = (function() {
       CIRCLEDTR     : 'circleDtr',
       CIRCLECTR     : 'circleCtr',
       POLYGON       : 'polygon',
+      GRIDRECTANGLE : 'gridRectangle',
       HEXDTRGRID    : 'hexDtrGrid',
-      RECTANGLEGRID : 'rectangleGrid',
       CIRCLEDTRGRID : 'circleDtrGrid'
     };
 
@@ -126,18 +126,19 @@ var bit = (function() {
 
       removeArea : function(area) {
         if(-1 != context.areas.indexOf(area)) {
-//          let bonds = [];
-//          if (!area.isGrid() &&
-//              area.hasBonds() &&
-//              (true == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?"))) {
-//            bonds = area.getBonds();
-//            bonds.forEach(function(e) {
-//              let j = context.areas.indexOf(e);
-//              e.remove();
-//              context.areas.splice(j, 1);
-//            });
-//            bonds.splice(0, bonds.length);
-//          }
+          let bonds = [];
+          if (!area.grid && area.hasBonds() &&
+            (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?"))) {
+            return;
+          } else {
+            bonds = area.getBonds();
+            bonds.forEach(e => {
+              let j = context.areas.indexOf(e);
+              e.remove();
+              context.areas.splice(j, 1);
+            });
+            bonds.splice(0, bonds.length);
+          }
           let i = context.areas.indexOf(area);
           area.remove();
           context.areas.splice(i, 1);
@@ -901,7 +902,7 @@ var bit = (function() {
         btnPolygon        : $('polygon'),
 
         btnHexDtrGrid     : $('hex-d-grid'),
-        btnRectangleGrid  : $('rectangle-grid'),
+        btnGridRectangle  : $('rectangle-grid'),
         btnCircleDtrGrid  : $('circle-d-grid'),
 
         btnInnerGridScope : $('grid-scope-inner'),
@@ -957,12 +958,12 @@ var bit = (function() {
       case doms.btnPolygon:
         context.mode = modes.POLYGON;
         break;
+      case doms.btnGridRectangle:
+        context.mode = modes.GRIDRECTANGLE;
+        break;
 // TODO: Change this!
       case doms.btnHexDtrGrid:
         context.mode = modes.HEXDTRGRID;
-        break;
-      case doms.btnRectangleGrid:
-        context.mode = modes.RECTANGLEGRID;
         break;
       case doms.btnCircleDtrGrid:
         context.mode = modes.CIRCLEDTRGRID;
@@ -976,8 +977,8 @@ var bit = (function() {
     function isGridDrawingModeSelected() {
       let rtn = false;
       switch(context.selected) {
+      case doms.btnGridRectangle:
       case doms.btnHexDtrGrid:
-      case doms.btnRectangleGrid:
       case doms.btnCircleDtrGrid:
         rtn = true;
         break;
@@ -1051,8 +1052,8 @@ var bit = (function() {
       let rtn = true;
       switch(obj.type) {
       case utils.fgTypes.NONE:
+      case utils.fgTypes.GRIDRECTANGLE:
       case utils.fgTypes.HEXDTRGRID:
-      case utils.fgTypes.RECTANGLEGRID:
       case utils.fgTypes.CIRCLEDTRGRID:
       case utils.fgTypes.POLYGON:
         rtn = false;
@@ -1064,7 +1065,7 @@ var bit = (function() {
 
     function gridEnable() {
       doms.btnHexDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnRectangleGrid.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnGridRectangle.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnCircleDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnInnerGridScope.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnOuterGridScope.classList.remove(bitedit.clsStatus.DISABLED);
@@ -1074,7 +1075,7 @@ var bit = (function() {
 
     function gridDisable() {
       doms.btnHexDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnRectangleGrid.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnGridRectangle.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnCircleDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnInnerGridScope.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnOuterGridScope.classList.add(bitedit.clsStatus.DISABLED);
@@ -1118,7 +1119,7 @@ var bit = (function() {
         doms.btnCircleCtr.removeEventListener('click', onDrawModeSelect, false);
         doms.btnPolygon.removeEventListener('click', onDrawModeSelect, false);
         doms.btnHexDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
-        doms.btnRectangleGrid.removeEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridRectangle.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnCircleDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
         doms.btnOuterGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
@@ -1142,7 +1143,7 @@ var bit = (function() {
         doms.btnCircleCtr.addEventListener('click', onDrawModeSelect, false);
         doms.btnPolygon.addEventListener('click', onDrawModeSelect, false);
         doms.btnHexDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
-        doms.btnRectangleGrid.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridRectangle.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnCircleDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.addEventListener('click', onDrawGridScopeSelect, false);
         doms.btnOuterGridScope.addEventListener('click', onDrawGridScopeSelect, false);
@@ -1420,6 +1421,10 @@ var bit = (function() {
         'polygon'     : bitgen.Polygon
       };
 
+      var gridFactory = {
+        'gridRectangle' : bitgen.GridRectangle
+      };
+
       var generator = null;
 
       function create(parent, alt) {
@@ -1429,6 +1434,15 @@ var bit = (function() {
           return null;
          }
         return new figGen(parent, false, alt);
+      }
+
+      function createGrid(parent, bond) {
+        let figGen = gridFactory[tls.getDrawingMode()];
+        if (!figGen) {
+          console.log('ERROR - Grid drawing mode not handled');
+          return null;
+         }
+        return new figGen(parent, bond);
       }
 
       var handlers = {
@@ -1441,13 +1455,16 @@ var bit = (function() {
         },
 
         onStart : function(parent, pt, alt) {
-//          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0) : null; 
+          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).getFigure() : null; 
           context.selected.empty();
-          generator = create(parent, alt);
-//          context.gen = create(alt, bondElt);
+          if (null === bondElt) {
+            generator = create(parent, alt);
+          } else {
+            generator = createGrid(parent, bondElt);
+          }
           if (null == generator) {
             alert('Unable to draw selected area!');
-//            tls.disableGridMode();
+            tls.disableGridMode();
             return false;
           }
           tls.freeze();
@@ -1471,7 +1488,7 @@ var bit = (function() {
             mdl.addArea(fig);
             context.selected.set(fig);
             tls.release();
-//            tls.enableGridMode(context.gen);
+            tls.enableGridMode(fig);
             generator = null;
             break;
           case 'error':
@@ -1489,7 +1506,7 @@ var bit = (function() {
           generator.cancel();
           generator = null;
           tls.release();
-//          tls.disableGridMode();
+          tls.disableGridMode();
         }
 
       };
@@ -1506,16 +1523,16 @@ var bit = (function() {
 
       function areaSelect(area) {
         context.selected.set(mdl.findArea(area));
-//        tls.enableGridMode(context.selected.get(0));
+        tls.enableGridMode(context.selected.get(0).getFigure());
       }
 
       function areaMultiSelect(area) {
         context.selected.toggle(mdl.findArea(area));
-//        if (context.selected.length() === 1) {
-//          tls.enableGridMode(context.selected.get(0));
-//        } else {
-//          tls.disableGridMode();
-//        }
+        if (context.selected.length() === 1) {
+          tls.enableGridMode(context.selected.get(0).getFigure());
+        } else {
+          tls.disableGridMode();
+        }
       }
 
       function computeSelection(coords) {
@@ -1528,16 +1545,16 @@ var bit = (function() {
             context.selected.toggle(e);
           }
         });
-//        if (context.selected.length() === 1) {
-//          tls.enableGridMode(context.selected.get(0));
-//        } else {
-//          tls.disableGridMode();
-//        }
+        if (context.selected.length() === 1) {
+          tls.enableGridMode(context.selected.get(0).getFigure());
+        } else {
+          tls.disableGridMode();
+        }
       }
 
       function areaUnselectAll() {
         context.selected.empty();
-//        tls.disableGridMode();
+        tls.disableGridMode();
       }
 
       var handlers = {
@@ -1597,15 +1614,10 @@ var bit = (function() {
         },
 
         onDeleteAll : function() {
-//          context.selected.sort(function(a,b) {
-//            // in order to delete grid before non-grid elements => avoid prompting when grid and bond are selected
-//            return (a.isGrid() ? -1 : 1);
-//          });
-          context.selected.forEach(function(e) {
-            mdl.removeArea(e.getFigure());
-          });
+          context.selected.sort((a,b) => { return ((a.getFigure().grid) ? -1 : 1); });
+          context.selected.forEach(e => { mdl.removeArea(e.getFigure()); });
           context.selected.empty();
-//          tls.disableGridMode();
+          tls.disableGridMode();
         }
 
       };

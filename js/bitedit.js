@@ -124,18 +124,18 @@ var bitedit = (function() {
     markSelected() {
       if (this.figure) {
         this.figure.addClass(clsStatus.SELECTED);
-//        this.bonds.forEach(function(e) {
-//          e.dom.classList.add(utils.clsNames.HIGHLIGHTED);
-//        });
+        this.figure.bonds.forEach(e => {
+          e.addClass(clsStatus.HIGHLIGHTED);
+        });
       }
     }
 
     markUnselected() {
       if (this.figure) {
         this.figure.removeClass(clsStatus.SELECTED);
-//        this.bonds.forEach(function(e) {
-//          e.dom.classList.remove(utils.clsNames.HIGHLIGHTED);
-//        });
+        this.figure.bonds.forEach(e => {
+          e.removeClass(clsStatus.HIGHLIGHTED);
+        });
       }
     }
 
@@ -1640,18 +1640,19 @@ var fEquilateralTriangle = (function() {
    */
 
   var factory = {
-    'rectangle'   : Rectangle,
-    'square'      : Square,
-    'rhombus'     : Rhombus,
-    'circleCtr'   : Circle,
-    'circleDtr'   : CircleEx,
-    'ellipse'     : Ellipse,
-    'triangleIsc' : IsoscelesTriangle,
-    'triangleEql' : EquilateralTriangle,
-    'triangleRct' : RectangleTriangle,
-    'hexRct'      : Hex,
-    'hexDtr'      : Hex,
-    'polygon'     : Polygon
+    'rectangle'     : Rectangle,
+    'square'        : Square,
+    'rhombus'       : Rhombus,
+    'circleCtr'     : Circle,
+    'circleDtr'     : CircleEx,
+    'ellipse'       : Ellipse,
+    'triangleIsc'   : IsoscelesTriangle,
+    'triangleEql'   : EquilateralTriangle,
+    'triangleRct'   : RectangleTriangle,
+    'hexRct'        : Hex,
+    'hexDtr'        : Hex,
+    'polygon'       : Polygon,
+    'gridRectangle' : Rectangle
   };
 
   function create(fig) {
@@ -1766,11 +1767,10 @@ var fEquilateralTriangle = (function() {
       return this.selection.forEach(f);
     }
 
-/*
     sort(f) {
       return this.selection.sort(f);
     }
-*/
+
 
     reduce(f, i) {
       return this.selection.reduce(f, i);

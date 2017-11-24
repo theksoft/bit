@@ -727,11 +727,31 @@ var bitgen = (function() {
 
   } // POLYGON GENERATOR
 
+  /*
+   * GRID RECTANGLE 
+   */
+
+  class GridRectangle extends Rectangle {
+    
+    constructor(parent, bond) {
+      super(parent, false, false);
+      this.createFigure(parent, bond);
+    }
+
+    createFigure(parent, bond) {
+      if (bond) {
+        this.figure = new bitgrid.GridRectangle(parent, bond);
+      }
+    }
+
+  } // GRID RECTANGLE
+
   return {
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Hex, HexEx, Polygon,
+    GridRectangle,
     Tracker
   }
 

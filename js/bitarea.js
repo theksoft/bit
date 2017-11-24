@@ -31,7 +31,8 @@ var bitarea = (function() {
     EQUILATERAL   : 'equilateral',
     RIGHTANGLE    : 'right-angle',
     HEX           : 'hex',
-    EXTENDED      : 'extended'
+    EXTENDED      : 'extended',
+    BOND          : 'bond'
   };
 
   const tilts = {
@@ -55,6 +56,7 @@ var bitarea = (function() {
       this.type = type;
       this.parent = this.domParent = parent;
       this.dom = null;
+      this.bonds = [];
       if (!noGroup) {
         this.domParent = document.createElementNS(NSSVG, 'g');
         this.parent.appendChild(this.domParent);
@@ -93,6 +95,7 @@ var bitarea = (function() {
     }
 
     remove() {
+      this.unbindAll();
       this.parent.removeChild((this.parent === this.domParent) ? this.dom : this.domParent);
       this.parent = this.domParent = this.dom = null;
     }
@@ -123,6 +126,30 @@ var bitarea = (function() {
         return this.dom.classList.contains(clsName);
       }
       return false;
+    }
+
+    bindTo(bond, clsQualifier) {
+      this.bonds.push(bond);
+      this.dom.classList.add(clsQualifier);
+    }
+
+    unbindFrom(bond, clsQualifier) {
+      this.bonds.splice(this.bonds.indexOf(bond), 1);
+      if (0 === this.bonds.length) {
+        this.dom.classList.remove(clsQualifier);
+      }
+    }
+
+    unbindAll() {
+      this.bonds.forEach(e => { e.unbindFrom(this); });
+    }
+
+    hasBonds() {
+      return (this.bonds.length > 0) ? true : false;
+    }
+
+    getBonds() {
+      return this.bonds.slice();
     }
 
   } // FIGURE
