@@ -31,9 +31,7 @@ var bitedit = (function() {
 
   // EDITION GRIP
 
-  function isGrip(dom) {
-    return dom.classList.contains(clsQualifiers.GRIP) ? true : false;
-  }
+  var isGrip = (dom) => dom.classList.contains(clsQualifiers.GRIP) ? true : false;
 
   class Grip extends bitarea.Rectangle {
     
@@ -124,18 +122,14 @@ var bitedit = (function() {
     markSelected() {
       if (this.figure) {
         this.figure.addClass(clsStatus.SELECTED);
-        this.figure.bonds.forEach(e => {
-          e.addClass(clsStatus.HIGHLIGHTED);
-        });
+        this.figure.bonds.forEach(e => e.addClass(clsStatus.HIGHLIGHTED));
       }
     }
 
     markUnselected() {
       if (this.figure) {
         this.figure.removeClass(clsStatus.SELECTED);
-        this.figure.bonds.forEach(e => {
-          e.removeClass(clsStatus.HIGHLIGHTED);
-        });
+        this.figure.bonds.forEach(e => e.removeClass(clsStatus.HIGHLIGHTED));
       }
     }
 
@@ -152,18 +146,14 @@ var bitedit = (function() {
 
     enableEdition() {
       if(!this.enabled) {
-        this.grips.forEach(function(e) {
-          e.enable();
-        });
+        this.grips.forEach(e => e.enable());
         this.enabled = true;
       }
     }
 
     disableEdition() {
       if (this.enabled) {
-        this.grips.forEach(function(e) {
-          e.disable();
-        });
+        this.grips.forEach(e => e.disable());
         this.enabled = false;
       }
     }
@@ -228,16 +218,12 @@ var bitedit = (function() {
     }
 
     destroyGrips() {
-      this.grips.forEach(function(e) {
-        e.remove();
-      });
+      this.grips.forEach(e => e.remove());
       this.grips.splice(0, this.grips.length);
     }
 
     getGrip(dom) {
-      return this.grips.find(function(e) {
-        return e.is(dom);
-      });
+      return this.grips.find(e => e.is(dom));
     }
 
     gripCoords(id, coords) {
@@ -1140,6 +1126,7 @@ var fEquilateralTriangle = (function() {
       ltlEditCns, lblEditCns, rtrEditCns, rbrEditCns, ttlEditCns, ttrEditCns, bblEditCns, bbrEditCns,
       lEdit, rEdit, tEdit, bEdit,
       ltlEdit, lblEdit, rtrEdit, rbrEdit, ttlEdit, ttrEdit, bblEdit, bbrEdit
+
     };
 
   })(); // treqEd
@@ -1725,7 +1712,7 @@ var fEquilateralTriangle = (function() {
 */
 
     empty() {
-      this.selection.forEach(function(e) { 
+      this.selection.forEach(e => { 
         e.markUnselected();
         e.remove();
       });
@@ -1738,9 +1725,7 @@ var fEquilateralTriangle = (function() {
     }
 
     find(fig) {
-      return this.selection.find(function(e) {
-        return e.is(fig);
-      });
+      return this.selection.find(e => e.is(fig));
     }
 
     get(id) {
@@ -1799,23 +1784,17 @@ var fEquilateralTriangle = (function() {
 
     progress(pt) {
       let d = this.constrain(pt.x - this.org.x, pt.y - this.org.y);
-      this.selector.forEach(function(e) {
-        e.drawToOffset(d.dx, d.dy);
-      });
+      this.selector.forEach(e => e.drawToOffset(d.dx, d.dy));
     }
 
     end(pt) {
       let d = this.constrain(pt.x - this.org.x, pt.y - this.org.y);
-      this.selector.forEach(function(e) {
-        e.moveToOffset(d.dx, d.dy);
-      });
+      this.selector.forEach(e => e.moveToOffset(d.dx, d.dy));
       this.reset();
     }
 
     cancel() {
-      this.selector.forEach(function(e) {
-        e.drawToOffset(0, 0);
-      });
+      this.selector.forEach(e => e.drawToOffset(0, 0));
       this.reset();
     }
 
@@ -1823,9 +1802,7 @@ var fEquilateralTriangle = (function() {
       this.selector = selector;
       this.setLims(wmax, hmax);
       let d = this.constrain(dx, dy);
-      this.selector.forEach(function(e) {
-        e.moveToOffset(d.dx, d.dy);
-      });
+      this.selector.forEach(e => e.moveToOffset(d.dx, d.dy));
       this.reset();
     }
 
@@ -1835,7 +1812,7 @@ var fEquilateralTriangle = (function() {
     }
 
     setLims(width, height) {
-      let dlims = this.selector.reduce(function(r, e) {
+      let dlims = this.selector.reduce((r, e) => {
         let l = e.computeMoveDLims(width, height);
         if (r.dxmin < l.dxmin) r.dxmin = l.dxmin;
         if (r.dxmax > l.dxmax) r.dxmax = l.dxmax;

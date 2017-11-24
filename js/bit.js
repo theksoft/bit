@@ -48,22 +48,10 @@ var bit = (function() {
 
     return {
 
-      leftButton : function(e) {
-        return (0 === e.button) ? true : false;
-      },
-
-      leftButtonHeld : function(e) {
-        return Math.floor(e.buttons/2)*2 !== e.buttons ? true : false;
-      },
-
-      noMetaKey : function(e) {
-        return (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false;
-      },
-
-      ctrlKey : function(e) {
-        return (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false;
-      },
-
+      leftButton : e => (0 === e.button) ? true : false,
+      leftButtonHeld : e => Math.floor(e.buttons/2)*2 !== e.buttons ? true : false,
+      noMetaKey : e => (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
+      ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       keyCodes, fgTypes,
       clsActions
 
@@ -96,9 +84,7 @@ var bit = (function() {
 
     return {
 
-      isModified : function() {
-        return context.modified;
-      },
+      isModified : () => context.modified,
 
       reset : function() {
         context.filename = '';
@@ -152,9 +138,7 @@ var bit = (function() {
         });
       },
 
-      forEachArea(f) {
-        context.areas.forEach(f);
-      }
+      forEachArea : f => context.areas.forEach(f)
 
     };
 
@@ -196,17 +180,9 @@ var bit = (function() {
       iDrg : null, aDrw : null, aSel : null, aMov : null, aEdt : null
     };
 
-    function addWel(t, f) {
-      doms.workarea.addEventListener(t, f, false);
-    }
-
-    function rmWel(t, f) {
-      doms.workarea.removeEventListener(t, f, false);
-    }
-
-    function ready() {
-      return states.READY === context.state ? true : false;
-    }
+    var addWel = (t, f) => doms.workarea.addEventListener(t, f, false);
+    var rmWel = (t, f) => doms.workarea.removeEventListener(t, f, false);
+    var ready = () => states.READY === context.state ? true : false;
 
     // VIEWPORT COMPUTATION 
     // Workarea elements size and coordinate offsets.
@@ -821,13 +797,8 @@ var bit = (function() {
 
     })(); // AREA EDITOR
  
-    function hide(obj) {
-      obj.style.display = 'none';
-    }
-
-    function show(obj) {
-      obj.style.display = 'block';
-    }
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
 
     function onLoadImage() {
       ftr.loading.hide();
@@ -1096,13 +1067,9 @@ var bit = (function() {
         this.release();
       },
 
-      getDrawingMode : function() {
-        return context.mode;
-      },
+      getDrawingMode : () => context.mode,
       
-      none : function() {
-        return modes.NONE === context.mode ? true : false;
-      },
+      none : () => modes.NONE === context.mode ? true : false,
 
       freeze : function() {
         if (context.freezed) return;
@@ -1199,15 +1166,15 @@ var bit = (function() {
 
     var coords = (function() {
       return {
-        set : function(ci) { doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y; },
-        clear : function() { doms.cursor.innerHTML = ''; }
+        set : (ci) => doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y,
+        clear : () => doms.cursor.innerHTML = ''
       };
     })();
 
     var loading = (function() {
       return {
-        show : function() { doms.load.style.display = 'inline'; },
-        hide : function() { doms.load.style.display = 'none'; }
+        show : () => doms.load.style.display = 'inline',
+        hide : () => doms.load.style.display = 'none'
       };
     })();
 
@@ -1276,13 +1243,8 @@ var bit = (function() {
       handlers : null
     };
 
-    function hide(obj) {
-      obj.style.display = 'none';
-    }
-
-    function show(obj) {
-      obj.style.display = 'inline';
-    }
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'inline';
 
     function onNewProjectBtnClick(e) {
       e.preventDefault();
@@ -1638,27 +1600,17 @@ var bit = (function() {
           return false;
         },
 
-        onStart : function(parent, pt) {
+        onStart : (parent, pt) => {
           let width = parent.getAttribute('width');
           let height = parent.getAttribute('height');
           context.mover.start(context.selected, pt, width, height);
           tls.freeze();
         },
-
-        onProgress : function(pt) {
-          context.mover.progress(pt);
-        },
-
-        onEnd : function(pt) {
-          context.mover.end(pt);
-        },
-
-        onCancel : function() {
+        onProgress : pt => context.mover.progress(pt),
+        onEnd : pt => context.mover.end(pt),
+        onExit : e => tls.release(),
+        onCancel : ()  => {
           context.mover.cancel();
-          tls.release();
-        },
-          
-        onExit : function(e) {
           tls.release();
         },
  
@@ -1705,20 +1657,11 @@ var bit = (function() {
           tls.freeze();
         },
 
-        onProgress : function(pt) {
-          context.editor.progress(pt);
-        },
-
-        onEnd : function(pt) {
-          context.editor.end(pt);
-        },
-
-        onCancel : function() {
+        onProgress : pt => context.editor.progress(pt),
+        onEnd : pt => context.editor.end(pt),
+        onExit : e => tls.release(),
+        onCancel : () => {
           context.editor.cancel();
-          tls.release();
-        },
-        
-        onExit : function(e) {
           tls.release();
         }
 

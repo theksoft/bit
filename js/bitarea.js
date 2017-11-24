@@ -268,9 +268,7 @@ var bitarea = (function() {
       points.push({ x : cx, y : ty });
       points.push({ x : rx, y : cy });
       points.push({ x : cx, y : by });
-      let attrVal = points.reduce(function(r, e) {
-        return r + e.x + ' ' + e.y + ' ';
-      }, '');
+      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
       this.dom.setAttribute('points', attrVal);
     }
 
@@ -419,9 +417,7 @@ var bitarea = (function() {
         break;
       default:
       }
-      let attrVal = points.reduce(function(r, e) {
-        return r + e.x + ' ' + e.y + ' ';
-      }, '');
+      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
       this.dom.setAttribute('points', attrVal);
     }
 
@@ -523,9 +519,7 @@ var bitarea = (function() {
         break;
       default:
       }
-      let attrVal = points.reduce(function(r, e) {
-        return r + e.x + ' ' + e.y + ' ';
-      }, '');
+      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
       this.dom.setAttribute('points', attrVal);
     }
 
@@ -572,9 +566,7 @@ var bitarea = (function() {
           pts[4].y, pts[4].x,
           pts[5].y, pts[5].x ] = this.getSBPt(c.y, c.x, c.height, c.width);
       }
-      let attrVal = pts.reduce(function(r, e) {
-        return r + e.x + ' ' + e.y + ' ';
-      }, '');
+      let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
       this.dom.setAttribute('points', attrVal);
     }
 
@@ -617,9 +609,7 @@ var bitarea = (function() {
 
     copyCoords(coords) {
       let rtn = [];
-      coords.forEach(function(e) {
-        rtn.push({ x : e.x, y : e.y })
-      });
+      coords.forEach(e => rtn.push({ x : e.x, y : e.y }));
       return rtn;
     }
 
@@ -634,16 +624,12 @@ var bitarea = (function() {
 
     draw(coords) {
       let c = coords || this.coords;
-      let attrVal = c.reduce(function(r, e) {
-        return r + e.x + ' ' + e.y + ' ';
-      }, '');
+      let attrVal = c.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
       this.dom.setAttribute('points', attrVal);
     }
 
     within(coords) {
-      return this.coords.reduce(function(r, e) {
-        return r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height);
-      }, true);
+      return this.coords.reduce((r, e) => r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height), true);
     }
 
   } // POLYGON
