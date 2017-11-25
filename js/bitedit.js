@@ -1700,6 +1700,17 @@ var fEquilateralTriangle = (function() {
       }
     }
 
+    add(fig) {
+      let editor = this.find(fig) || create(fig);
+      let id = this.selection.indexOf(editor);
+      if (-1 === id) {
+        this.disableEdition();
+        editor.markSelected();
+        this.selection.push(editor);
+        this.enableEdition();
+      }
+    }
+
 /*
     remove(obj) {
       let id = this.selection.indexOf(obj);

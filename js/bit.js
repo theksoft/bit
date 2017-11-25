@@ -16,7 +16,8 @@ var bit = (function() {
       LEFT  : 37,
       UP    : 38,
       RIGHT : 39,
-      DOWN  : 40
+      DOWN  : 40,
+      a     : 65
     };
       
     const fgTypes = {
@@ -531,6 +532,11 @@ var bit = (function() {
         case utils.keyCodes.DEL:
           if (ready() && utils.noMetaKey(e)) {
             context.aSel.onDeleteAll();
+          }
+          break;
+        case utils.keyCodes.a:
+          if (ready() && utils.ctrlKey(e)) {
+            context.aSel.onSelectAll();
           }
           break;
         default:
@@ -1482,6 +1488,14 @@ var bit = (function() {
 
       var tracker = null;
 
+      function updateGridMode() {
+        if (context.selected.length() === 1) {
+          tls.enableGridMode(context.selected.get(0).getFigure());
+        } else {
+          tls.disableGridMode();
+        }
+      }
+
       function areaSelect(area) {
         context.selected.set(mdl.findArea(area));
         tls.enableGridMode(context.selected.get(0).getFigure());
@@ -1489,11 +1503,7 @@ var bit = (function() {
 
       function areaMultiSelect(area) {
         context.selected.toggle(mdl.findArea(area));
-        if (context.selected.length() === 1) {
-          tls.enableGridMode(context.selected.get(0).getFigure());
-        } else {
-          tls.disableGridMode();
-        }
+        updateGridMode();
       }
 
       function computeSelection(coords) {
@@ -1506,11 +1516,12 @@ var bit = (function() {
             context.selected.toggle(e);
           }
         });
-        if (context.selected.length() === 1) {
-          tls.enableGridMode(context.selected.get(0).getFigure());
-        } else {
-          tls.disableGridMode();
-        }
+        updateGridMode();
+      }
+
+      function areaSelectAll() {
+        mdl.forEachArea(e => context.selected.add(e));
+        updateGridMode();
       }
 
       function areaUnselectAll() {
@@ -1568,6 +1579,10 @@ var bit = (function() {
           tracker.cancel();
           tracker = null;
           tls.release();
+        },
+
+        onSelectAll : function() {
+          areaSelectAll();
         },
 
         onUnselectAll : function() {
