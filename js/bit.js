@@ -112,12 +112,11 @@ var bit = (function() {
 
       removeArea : function(area) {
         if(-1 != context.areas.indexOf(area)) {
-          let bonds = [];
-          if (!area.grid && area.hasBonds() &&
-            (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?"))) {
-            return;
-          } else {
-            bonds = area.getBonds();
+          if (!area.grid && area.hasBonds()) {
+            if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
+              return;
+            }
+            let bonds = area.getBonds();
             bonds.forEach(e => {
               let j = context.areas.indexOf(e);
               e.remove();
@@ -1576,8 +1575,8 @@ var bit = (function() {
         },
 
         onDeleteAll : function() {
-          context.selected.sort((a,b) => { return ((a.getFigure().grid) ? -1 : 1); });
-          context.selected.forEach(e => { mdl.removeArea(e.getFigure()); });
+          context.selected.sort((a,b) => a.getFigure().grid ? -1 : 1);
+          context.selected.forEach(e => mdl.removeArea(e.getFigure()));
           context.selected.empty();
           tls.disableGridMode();
         }
