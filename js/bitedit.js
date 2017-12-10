@@ -1639,7 +1639,8 @@ var fEquilateralTriangle = (function() {
     'hexRct'        : Hex,
     'hexDtr'        : Hex,
     'polygon'       : Polygon,
-    'gridRectangle' : Rectangle
+    'gridRectangle' : Rectangle,
+    'gridCircle'    : CircleEx
   };
 
   function create(fig) {

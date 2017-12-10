@@ -35,8 +35,8 @@ var bit = (function() {
       CIRCLECTR     : 'circleCtr',
       POLYGON       : 'polygon',
       GRIDRECTANGLE : 'gridRectangle',
+      GRIDCIRCLE    : 'gridCircle',
       HEXDTRGRID    : 'hexDtrGrid',
-      CIRCLEDTRGRID : 'circleDtrGrid'
     };
 
     const clsActions = {
@@ -882,7 +882,7 @@ var bit = (function() {
 
         btnHexDtrGrid     : $('hex-d-grid'),
         btnGridRectangle  : $('rectangle-grid'),
-        btnCircleDtrGrid  : $('circle-d-grid'),
+        btnGridCircle     : $('circle-grid'),
 
         btnInnerGridScope : $('grid-scope-inner'),
         btnOuterGridScope : $('grid-scope-outer'),
@@ -940,12 +940,12 @@ var bit = (function() {
       case doms.btnGridRectangle:
         context.mode = modes.GRIDRECTANGLE;
         break;
+      case doms.btnGridCircle:
+        context.mode = modes.GRIDCIRCLE;
+        break;
 // TODO: Change this!
       case doms.btnHexDtrGrid:
         context.mode = modes.HEXDTRGRID;
-        break;
-      case doms.btnCircleDtrGrid:
-        context.mode = modes.CIRCLEDTRGRID;
         break;
 
       default:
@@ -958,7 +958,7 @@ var bit = (function() {
       switch(context.selected) {
       case doms.btnGridRectangle:
       case doms.btnHexDtrGrid:
-      case doms.btnCircleDtrGrid:
+      case doms.btnGridCircle:
         rtn = true;
         break;
       default:
@@ -1033,7 +1033,7 @@ var bit = (function() {
       case utils.fgTypes.NONE:
       case utils.fgTypes.GRIDRECTANGLE:
       case utils.fgTypes.HEXDTRGRID:
-      case utils.fgTypes.CIRCLEDTRGRID:
+      case utils.fgTypes.GRIDCIRCLE:
       case utils.fgTypes.POLYGON:
         rtn = false;
         break;
@@ -1045,7 +1045,7 @@ var bit = (function() {
     function gridEnable() {
       doms.btnHexDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnGridRectangle.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnCircleDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnGridCircle.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnInnerGridScope.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnOuterGridScope.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnStdGridAlign.classList.remove(bitedit.clsStatus.DISABLED);
@@ -1055,7 +1055,7 @@ var bit = (function() {
     function gridDisable() {
       doms.btnHexDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnGridRectangle.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnCircleDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnGridCircle.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnInnerGridScope.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnOuterGridScope.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnStdGridAlign.classList.add(bitedit.clsStatus.DISABLED);
@@ -1095,7 +1095,7 @@ var bit = (function() {
         doms.btnPolygon.removeEventListener('click', onDrawModeSelect, false);
         doms.btnHexDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridRectangle.removeEventListener('click', onDrawGridModeSelect, false);
-        doms.btnCircleDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridCircle.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
         doms.btnOuterGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
         doms.btnStdGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
@@ -1119,7 +1119,7 @@ var bit = (function() {
         doms.btnPolygon.addEventListener('click', onDrawModeSelect, false);
         doms.btnHexDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridRectangle.addEventListener('click', onDrawGridModeSelect, false);
-        doms.btnCircleDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridCircle.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.addEventListener('click', onDrawGridScopeSelect, false);
         doms.btnOuterGridScope.addEventListener('click', onDrawGridScopeSelect, false);
         doms.btnStdGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
@@ -1392,7 +1392,8 @@ var bit = (function() {
       };
 
       var gridFactory = {
-        'gridRectangle' : bitgen.GridRectangle
+        'gridRectangle' : bitgen.GridRectangle,
+        'gridCircle'    : bitgen.GridCircle
       };
 
       var generator = null;

@@ -158,6 +158,11 @@ var bitarea = (function() {
       return null;
     }
 
+    getPoints() {
+      console.log('getPoints() not defined');
+      return [];
+    }
+
   } // FIGURE
 
   /*
@@ -214,6 +219,15 @@ var bitarea = (function() {
       return true;
     }
 
+    getPoints(c) {
+      return [
+        { x : c.x, y : c.y },
+        { x : c.x, y : c.y + c.height },
+        { x : c.x + c.width, y : c.y + c.height },
+        { x : c.x + c.width, y : c.y }
+      ];
+    }
+
   } // RECTANGLE
 
   /*
@@ -266,16 +280,20 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
-          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
-      let points = [];
-      points.push({ x : lx, y : cy });
-      points.push({ x : cx, y : ty });
-      points.push({ x : rx, y : cy });
-      points.push({ x : cx, y : by });
+      let points = this.getPoints(coords || this.coords);
       let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
       this.dom.setAttribute('points', attrVal);
+    }
+
+    getPoints(c) {
+      let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
+      return [
+        { x : lx, y : cy },
+        { x : cx, y : ty },
+        { x : rx, y : cy },
+        { x : cx, y : by }
+      ];
     }
 
   } // RHOMBUS
@@ -375,6 +393,17 @@ var bitarea = (function() {
       this.dom.setAttribute('ry', ry);
     }
 
+    getPoints(c) {
+      let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
+      return [
+        { x : lx, y : cy },
+        { x : cx, y : ty },
+        { x : rx, y : cy },
+        { x : cx, y : by }
+      ];
+    }
+
   } // ELLIPSE
 
   /*
@@ -396,7 +425,12 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let c = coords || this.coords;
+      let points = this.getPoints(coords || this.coords);
+      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+    getPoints(c) {
       let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
           ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
       let points = [];
@@ -423,8 +457,7 @@ var bitarea = (function() {
         break;
       default:
       }
-      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      return points;
     }
 
   } // ISOSCELES TRIANGLE
@@ -497,8 +530,7 @@ var bitarea = (function() {
       this.dom.classList.add(clsQualifiers.RIGHTANGLE);
     }
 
-    draw(coords) {
-      let c = coords || this.coords;
+    getPoints(c) {
       let lx = c.x, rx = c.x + c.width,  
           ty = c.y, by = c.y + c.height;
       let points = [];
@@ -525,8 +557,7 @@ var bitarea = (function() {
         break;
       default:
       }
-      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      return points;
     }
 
   } // RIGHT-ANGLE TRIANGLE
@@ -555,7 +586,12 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let c = coords || this.coords;
+      let pts = this.getPoints(coords || this.coords);
+      let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
+      this.dom.setAttribute('points', attrVal);
+    }
+
+    getPoints(c) {
       let pts = [{x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}];
       if (c.width > c.height) {
         [ pts[0].x, pts[0].y,
@@ -572,8 +608,7 @@ var bitarea = (function() {
           pts[4].y, pts[4].x,
           pts[5].y, pts[5].x ] = this.getSBPt(c.y, c.x, c.height, c.width);
       }
-      let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      return pts;
     }
 
   } // HEX (from RECTANGLE)
