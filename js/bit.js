@@ -113,7 +113,7 @@ var bit = (function() {
 
       removeArea : function(area) {
         if(-1 != context.areas.indexOf(area)) {
-          if (!area.grid && area.hasBonds()) {
+          if (!area.isGrid && area.hasBonds()) {
             if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
               return;
             }
@@ -157,7 +157,8 @@ var bit = (function() {
       workarea  : $('workarea'),
       container : $('container'),
       image     : $('img-display'),
-      drawarea  : $('draw-area')
+      drawarea  : $('draw-area'),
+      gridarea  : $('grid-area')
     };
 
     const states = {
@@ -194,6 +195,8 @@ var bit = (function() {
         setWorkingDims : function(w,h) {
           doms.drawarea.setAttribute('width', w);
           doms.drawarea.setAttribute('height', h);
+          doms.gridarea.setAttribute('width', w);
+          doms.gridarea.setAttribute('height', h);
           doms.container.style.width = w + 'px';
           doms.container.style.height = h + 'px';
           return this;
@@ -393,7 +396,7 @@ var bit = (function() {
         e.preventDefault();
         if (!ready() || context.aDrw.prevent(e)) return;
         if (utils.leftButton(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
-          if (context.aDrw.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), e.altKey)) {
+          if (context.aDrw.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), e.altKey, doms.gridarea)) {
             enter();
           }
         }
@@ -1403,13 +1406,13 @@ var bit = (function() {
         return new figGen(parent, false, alt);
       }
 
-      function createGrid(parent, bond) {
+      function createGrid(parent, bond, gridParent) {
         let figGen = gridFactory[tls.getDrawingMode()];
         if (!figGen) {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
          }
-        return new figGen(parent, bond);
+        return new figGen(parent, bond, gridParent);
       }
 
       var handlers = {
@@ -1421,13 +1424,13 @@ var bit = (function() {
           return false;
         },
 
-        onStart : function(parent, pt, alt) {
+        onStart : function(parent, pt, alt, gridParent) {
           let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).getFigure() : null; 
           context.selected.empty();
           if (null === bondElt) {
             generator = create(parent, alt);
           } else {
-            generator = createGrid(parent, bondElt);
+            generator = createGrid(parent, bondElt, gridParent);
           }
           if (null == generator) {
             alert('Unable to draw selected area!');
@@ -1590,7 +1593,7 @@ var bit = (function() {
         },
 
         onDeleteAll : function() {
-          context.selected.sort((a,b) => a.getFigure().grid ? -1 : 1);
+          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
           context.selected.forEach(e => mdl.removeArea(e.getFigure()));
           context.selected.empty();
           tls.disableGridMode();

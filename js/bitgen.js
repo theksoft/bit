@@ -733,14 +733,14 @@ var bitgen = (function() {
 
   class GridRectangle extends Rectangle {
     
-    constructor(parent, bond) {
+    constructor(parent, bond, gridParent) {
       super(parent, false, false);
-      this.createFigure(parent, bond);
+      this.createFigure(parent, bond, gridParent);
     }
 
-    createFigure(parent, bond) {
+    createFigure(parent, bond, gridParent) {
       if (bond) {
-        this.figure = new bitgrid.GridRectangle(parent, bond);
+        this.figure = new bitgrid.Rectangle(parent, bond, gridParent);
       }
     }
 

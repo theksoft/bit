@@ -88,6 +88,7 @@ var bitarea = (function() {
     redraw(coords) {
       let c = coords || this.getCoords();
       this.draw(c);
+      this.bonds.forEach(e => e.draw(e.getCoords(), c));
     }
 
     is(dom) {
@@ -150,6 +151,11 @@ var bitarea = (function() {
 
     getBonds() {
       return this.bonds.slice();
+    }
+
+    clone(parent, pt) {
+      console.log('clone() not defined');
+      return null;
     }
 
   } // FIGURE
@@ -657,7 +663,7 @@ var bitarea = (function() {
   }
 
   return {
-    tilts,
+    NSSVG, types, tilts,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,

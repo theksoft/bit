@@ -205,6 +205,14 @@ ul, ol {
   display: block;
 }
 
+#grid-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: block;
+}
+
 /* TOOLS ELEMENTS */
 
 #tools {
