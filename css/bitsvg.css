@@ -1,0 +1,232 @@
+/**
+ * Boardgame image tool (BIT)
+ * Copyright 2017 Herve Retaureau
+ */
+
+.drawing#draw-area {
+  cursor: crosshair;
+}
+
+.moving#draw-area {
+  cursor: move;
+}
+
+.editing#draw-area {
+  cursor: crosshair;
+}
+
+.tracking#draw-area {
+  cursor: crosshair;
+}
+
+#draw-area {
+  stroke-width: 1px;
+  fill: rgba(255,255,255,0.3);
+}
+
+/*
+ * Figures
+ */
+
+#draw-area polyline,
+#draw-area polygon {
+  stroke: #ff0;
+}
+
+#draw-area rect {
+  stroke: #f00;
+}
+
+#draw-area rect.square {
+  stroke: #f80;
+}
+
+#draw-area polygon.rhombus {
+  stroke: #f64;
+}
+
+#draw-area circle {
+  stroke: #808;
+}
+
+#draw-area circle.extended {
+  stroke: #c2c;
+}
+
+#draw-area ellipse {
+  stroke: #f4f;
+}
+
+#draw-area polygon.isosceles {
+  stroke: #06d;
+}
+
+#draw-area polygon.equilateral {
+  stroke: #4ae;
+}
+
+#draw-area polygon.right-angle {
+  stroke: #8df;
+}
+
+#draw-area polygon.hex {
+  stroke: #080;
+}
+
+#draw-area polygon.hex.extended {
+  stroke: #0a0;
+}
+
+#draw-area rect:hover,
+#draw-area circle:hover,
+#draw-area ellipse:hover,
+#draw-area polygon:hover,
+#draw-area polygon.extended:hover {
+  fill: rgba(255,255,255,0.4);
+}
+
+#draw-area rect.selected,
+#draw-area circle.selected,
+#draw-area ellipse.selected,
+#draw-area polygon.selected,
+#draw-area polygon.extended.selected {
+  stroke-width: 3px;
+  fill: rgba(200,200,255,0.4);
+}
+
+#draw-area rect.selected:hover,
+#draw-area circle.selected:hover,
+#draw-area ellipse.selected:hover,
+#draw-area polygon.selected:hover,
+#draw-area polygon.extended.selected:hover {
+  cursor: move;
+}
+
+/*
+ * Grids
+ */
+
+#draw-area rect.scope,
+#draw-area polygon.scope,
+#draw-area circle.scope {
+  stroke-width: 3px;
+  stroke-dasharray: 8;
+  stroke-opacity: 0.3;
+  fill: rgba(200,255,200,0.2);
+} 
+
+#draw-area rect.scope:hover,
+#draw-area polygon.scope:hover,
+#draw-area circle.scope:hover {
+  fill: rgba(200,255,200,0.3);
+} 
+
+#draw-area rect.scope.selected,
+#draw-area polygon.scope.selected,
+#draw-area circle.scope.selected {
+  stroke-width: 5px;
+  stroke-opacity: 0.6;
+  fill: rgba(140,255,140,0.2);
+} 
+
+#draw-area rect.bond,
+#draw-area polygon.bond,
+#draw-area circle.bond {
+  fill: rgba(255,200,200,0.3);
+} 
+
+#draw-area rect.bond:hover,
+#draw-area polygon.bond:hover,
+#draw-area circle.bond:hover {
+  fill: rgba(255,200,200,0.5);
+} 
+
+#draw-area rect.bond.selected,
+#draw-area polygon.bond.selected,
+#draw-area circle.bond.selected {
+  fill: rgba(255,140,140,0.5);
+} 
+
+@keyframes scope {
+  0%   {fill-opacity: 0.4}
+  40%  {fill-opacity: 0.8}
+  80%  {fill-opacity: 0.4}
+}
+
+#draw-area rect.scope.highlighted,
+#draw-area polygon.scope.highlighted,
+#draw-area circle.scope.highlighted {
+  fill: #ff8c8c;
+  fill-opacity: 0.4;
+  animation: scope 1s linear infinite;
+} 
+
+@keyframes bond {
+  0%   {fill-opacity: 0.4}
+  40%  {fill-opacity: 0.8}
+  80%  {fill-opacity: 0.4}
+}
+
+#draw-area rect.bond.highlighted,
+#draw-area polygon.bond.highlighted,
+#draw-area circle.bond.highlighted {
+  fill: #72d88b;
+  fill-opacity: 0.4;
+  animation: bond 1s linear infinite;
+} 
+
+/*
+ * Grid elements
+ */
+
+#grid-area {
+  stroke-width: 1px;
+  fill: rgba(200,200,200,0.2);
+  stroke: #111;
+}
+
+/*
+ * Other elements
+ */
+
+#draw-area rect.tracker {
+  stroke-width: 1px;
+  stroke: #222;
+  stroke-dasharray: 2, 5;
+  fill: none;
+}
+
+#draw-area rect.grip {
+  stroke-width: 1px;
+  stroke: #000;
+  fill: #fff;
+}
+
+#draw-area rect.grip.disabled {
+	stroke: #333;
+	fill: #555;
+}
+
+#draw-area rect.grip:hover {
+  fill: #000; 
+}
+
+#draw-area rect.grip.ew-resize {
+  cursor : ew-resize;
+}
+
+#draw-area rect.grip.ns-resize {
+  cursor : ns-resize;
+}
+
+#draw-area rect.grip.nesw-resize {
+  cursor : nesw-resize;
+}
+
+#draw-area rect.grip.nwse-resize {
+  cursor : nwse-resize;
+}
+
+#draw-area rect.grip.move {
+  cursor : move;
+}

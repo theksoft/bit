@@ -1,0 +1,308 @@
+/**
+ * Boardgame image tool (BIT)
+ * Copyright 2017 Herve Retaureau
+ */
+
+@charset "UTF-8";
+
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font-style: inherit;
+  font-size: 100%;
+  font-family: inherit;
+  vertical-align: baseline;
+  background: transparent;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  min-height: 100%;
+  font-family: Arial, Tahoma, sans-serif;
+  color: #000;
+  height: 100%;
+  min-height: 100%;
+  background-color: #ddd;
+  line-height: 1;
+}
+
+img {
+  border: 0;
+}
+
+ul, ol {
+  list-style-type: none;
+}
+
+#main-wrap {
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-flow: column;
+}
+
+/* MAIN AREA POSITIONING */
+
+#wks-wrap {
+  display: flex;
+  flex-flow: row;
+  order: 1;
+  align-self: stretch;
+  margin-bottom: auto;
+}
+
+#wks-wrap section {
+  margin: auto;
+}
+
+#tools {
+  order: 1;
+  align-self: stretch;
+}
+
+#footer {
+  display: inline-flex;
+  flex-flow: row;
+  order: 2;
+  align-self: flex-start;
+  align-items: center;
+}
+
+#load-indicator {
+  order : 1;
+  align-self: center;
+}
+
+#coordinates {
+  order : 2;
+  margin-left: auto;
+}
+
+/* HEADER ELEMENTS */
+
+#header {
+  background-color: black;
+  padding: 15px 0px 17px;
+  width: 100%;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  margin-bottom: 5px;
+}
+
+#header a:link,
+#header a:visited {
+  outline: none;
+  text-decoration: none;
+  color: #ccc;
+}
+
+#header nav,
+#header nav ul,
+#header nav label,
+#header nav button,
+#header nav li,
+#header nav a,
+#header nav div {
+  display: inline;
+}
+
+#header nav ul {
+  padding: 0px;
+  margin: 0px;
+}
+
+#header nav label,
+#header nav button,
+#header nav li {
+  font-size: 12px;
+  color: #ccc;
+  vertical-align: middle;
+}
+
+#header nav label,
+#header nav button,
+#header nav a:link,
+#header nav a:visited,
+#header nav a:hover,
+#header nav a:active {
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+  margin-left: 5px;
+}
+
+#header nav label,
+#header nav button,
+#header nav a:link,
+#header nav a:visited {
+  background-color: #004;
+}
+
+#header nav label:hover,
+#header nav button:hover,
+#header nav a:hover {
+  background-color: #226;
+}
+
+#header nav label:active,
+#header nav button:active,
+#header nav a:active {
+  background-color: #337;
+}
+
+#file-drop-zone {
+  border: 2px dashed #999;
+  border-radius: 5px;
+  padding: 12px 10px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAiCAYAAADCp/A1AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAApjAAAKYwGDMomsAAAAB3RJTUUH3AkYCxg3B2a5QgAAAKtJREFUWMPt17sNgDAMRdE8tsj+w2UM6CiQEv9jIvm1COl0uUZbbIxxt03rvWP27WoHrJCFLGQhC1nIQr7DzohQI3fXjqaOkJFl0nxDVj9K+hKZocsNYGQXOafQ8YfTgTohcMKNA+rnHdAVkIWMhlJANjIKygGKkN5QLlCM9IJKgCqkFSoFqpFaqAZoQkqhWqAZyYVagC5ICmoFuiFnUA+gK/IL9QKGLOJlegBB2VeWydvIHgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+  font-size: 12px;
+  color: #558;
+  vertical-align: middle;
+  margin-left: 5px
+}
+
+#load-file {
+  position: fixed;
+  top: -100em;
+  opacity: 0;
+}
+
+/* WORKAREA ELEMENTS */
+
+#wks-wrap section {
+}
+
+#workarea {
+  display: none;
+  overflow: scroll;
+}
+
+.dragging#workarea {
+  cursor: all-scroll;
+}
+
+#container {
+  position: relative;
+}
+
+#img-display {
+  position: relative;
+  z-index: 1;
+}
+
+#draw-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: block;
+}
+
+#grid-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: block;
+}
+
+/* TOOLS ELEMENTS */
+
+#tools {
+  display: none;
+  background-color: #000;
+  color: #ccc;
+}
+
+#tools div {
+  margin: 5px;
+}
+
+#tools img {
+  background-color: #ccc;
+  border: 2px solid #fff;
+  border-radius: 3px;
+  padding: 0px 3px;
+  margin: 4px 4px 1px;
+}
+
+#tools img.selected {
+  background-color: #e8ffdd;
+  border: 2px solid #008000;
+}
+
+#tools img.disabled,
+#tools img.on.disabled,
+#tools img.off.disabled {
+  background-color: #222;
+  border: 2px solid #888;
+}
+
+#tools img.on {
+  background-color: #eaeaff;
+  border: 2px solid #9999ff;
+}
+
+#tools img.off {
+  background-color: #fff1ea;
+  border: 2px solid #ffba99;
+}
+
+/* FOOTER ELEMENTS */
+
+#footer {
+  background-color: black;
+  padding: 5px 0px;
+  width: 100%;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  margin-top: 5px;
+}
+
+#selected-file {
+  color: #ccc;
+}
+
+.error#selected-file {
+  color: #f44;
+}
+
+#footer p {
+  background-color: black;
+  font-size: 12px;
+  vertical-align: middle;
+  padding: 5px 10px;
+  display: inline;
+}
+
+#footer img {
+  height: 64px;
+  margin: 5px 10px 3px;
+  display: inline;
+  vertical-align: middle;
+}
+
+.loading {
+  background-color: #bfb;
+  color: #000;
+  border-radius: 3px;
+}
+
+#load-indicator {
+  display : none;
+}
+
+#coordinates {
+  background-color: black;
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
