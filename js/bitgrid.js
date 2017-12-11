@@ -8,7 +8,8 @@ var bitgrid = (function() {
 
   const types = {
     GRIDRECTANGLE : 'gridRectangle',
-    GRIDCIRCLE    : 'gridCircle'
+    GRIDCIRCLE    : 'gridCircle',
+    GRIDHEX       : 'gridHex'
   };
 
   const clsQualifiers = {
@@ -29,10 +30,6 @@ var bitgrid = (function() {
     'hexRct'      : bitarea.Hex,
     'hexDtr'      : bitarea.HexEx
   };
-
-  /*
-   * FIGUREGRID 
-   */
 
   function getPatternProperties(type, coords) {
     let props = {
@@ -154,9 +151,45 @@ var bitgrid = (function() {
     return gp;
   }
 
+  var lineAttr = (p1, p2) => [(p1.y - p2.y) / (p1.x - p2.x), (p2.y*p1.x - p1.y*p2.x) / (p1.x - p2.x)];
+
+  function computeLineValue(p1, p2, p) {
+    let rtn, a, b;
+    rtn = 0;
+    if (p1.x === p2.x) {
+      rtn = p.x - p1.x;
+    } else {
+      [a,b] = lineAttr(p1, p2);
+      rtn = p.y - (a*p.x + b);
+    }
+    return rtn;
+  }
+
+  function circleIntersectLine(p1, p2, c) {
+    let rtn, a, b, A, B, C, delta;
+    rtn = 0;
+    if (p1.x === p2.x) {
+      delta =  c.r * c.r - (p1.x - c.x) * (p1.x - c.x);
+    } else {
+      [a,b] = lineAttr(p1, p2);
+      A = 1 + a*a;
+      B = 2 * (a * (b - c.y) - c.x);
+      C = (b - c.y) * (b- c.y) + c.x * c.x - c.r * c.r;
+      delta = B*B - 4*A*C;
+    }
+    if (delta >= 0) {
+      rtn = (delta > 0) ? 2 : 1;
+    }
+    return rtn;
+  }
+
+  /*
+   * FIGURE GRID
+   */
+
   class FigureGrid {
 
-    constructor(parent, pattern) {
+    constructor(parent, pattern, scope) {
       if (this.constructor == FigureGrid.constructor) {
         throw new Error('Invalid Figure grid constructor call: abstract class');
       }
@@ -165,6 +198,7 @@ var bitgrid = (function() {
       this.group = document.createElementNS(bitarea.NSSVG, 'g');
       this.parent = parent;
       this.parent.appendChild(this.group);
+      this.scope = scope;
     }
 
     clonePattern(coords) {
@@ -183,7 +217,7 @@ var bitgrid = (function() {
       this.elts.forEach(e => e.remove());
       this.elts.splice(0, this.elts.length);
       this.parent.removeChild(this.group);
-      this.parent = this.group = null;
+      this.parent = this.group = this.scope = null;
     }
 
     drawRaw(coords) {
@@ -196,10 +230,10 @@ var bitgrid = (function() {
    * RECTANGLE GRID 
    */
 
-  class RectangleGrid extends FigureGrid{
+  class RectangleGrid extends FigureGrid {
 
-    constructor(parent, pattern) {
-      super(parent, pattern);
+    constructor(parent, pattern, scope) {
+      super(parent, pattern, scope);
     }
 
     draw(coords, patternCoords) {
@@ -268,7 +302,7 @@ var bitgrid = (function() {
       this.bindTo(bond);
       this.type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond);
+      this.grid = new RectangleGrid(gridParent, bond, this);
     }
 
     bindTo(bond) {
@@ -306,10 +340,10 @@ var bitgrid = (function() {
    * CIRCLE GRID 
    */
 
-  class CircleGrid extends FigureGrid{
+  class CircleGrid extends FigureGrid {
 
-    constructor(parent, pattern) {
-      super(parent, pattern);
+    constructor(parent, pattern, scope) {
+      super(parent, pattern, scope);
     }
 
     draw(coords, patternCoords) {
@@ -407,7 +441,7 @@ var bitgrid = (function() {
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond);
+      this.grid = new CircleGrid(gridParent, bond, this);
     }
 
     bindTo(bond) {
@@ -441,8 +475,163 @@ var bitgrid = (function() {
 
   } // CIRCLE GRID
 
+  /*
+   * HEX GRID 
+   */
+
+  class HexGrid extends FigureGrid {
+
+    constructor(parent, pattern, scope) {
+      super(parent, pattern, scope);
+    }
+
+    draw(coords, patternCoords) {
+      let elts = [];
+      if (0 < coords.width && 0 < coords.height) {
+        let pcoords, pprops, gprops, is, ix;
+        pcoords = patternCoords || this.pattern.getCoords();
+        pprops = getPatternProperties(this.pattern.getType(), pcoords);
+        if (pprops.raw.overlap !== -pprops.area.width) {
+          gprops = computeGridProperties(coords, pprops);
+          pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
+          for (is = gprops.is; is < gprops.ny; is += 2) {
+            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
+            pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
+          }
+          pcoords.y = gprops.ys + gprops.ix * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
+          for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
+            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2);
+            pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
+          }
+        } else {
+          gprops = computeGridPropertiesEx(coords, pprops);
+          pcoords.y = gprops.ys + pprops.offset.y;
+          for (is = 0; is < gprops.ny; is++) {
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
+            pcoords.y += pprops.area.height;
+          }
+        }
+      }
+      this.elts.forEach(e => e.remove());
+      this.elts.splice(0, this.elts.length);
+      elts.forEach(e => this.elts.push(e));
+      elts.splice(0, this.elts.length);
+    }
+
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+      c.x = start + offset;
+      for (let i = 0; i < n; i++) {
+        c.tilt = (i%2 === 0) ? tilt1 : tilt2;
+        if (this.isContained(coords, c)) {
+          let elt = this.clonePattern(c);
+          if (null !== elt) {
+            elts.push(elt);
+          }
+        }
+        c.x += dim + overlap;
+      }
+    }
+
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+      c.x = start + offset;
+      for (let i = 0; i < n; i++) {
+        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        if (this.isContained(coords, c)) {
+          let elt = this.clonePattern(c);
+          if (null !== elt) {
+            elts.push(elt);
+          }
+        }
+        c.x += (i%2 === 0) ? 0 : dim;
+      }
+    }
+
+    isContained(gc, pc) {
+      let rtn, type;
+      type = this.pattern.getType();
+      if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
+        rtn = this.isPointWithin(gc, pc.x, pc.y, pc.r) ? true : false;
+      } else {
+        let pts = this.pattern.getPoints(pc);
+        rtn = pts.reduce((a, e) => a && this.isPointWithin(gc, e.x, e.y), pts.length === 0 ? false : true);
+      }
+      return rtn;
+    }
+
+    isPointWithin(coords, x, y, off) {
+      let rtn, points, v0, v1, v2, v3, v4, v5, p;
+      rtn = false;
+      off = off || 0;
+      p = { x : x, y : y, r : off };
+      points = this.scope.getPoints(coords);
+      v0 = computeLineValue(points[0], points[1], p);
+      v1 = computeLineValue(points[1], points[2], p);
+      v2 = computeLineValue(points[2], points[3], p);
+      v3 = computeLineValue(points[3], points[4], p);
+      v4 = computeLineValue(points[4], points[5], p);
+      v5 = computeLineValue(points[5], points[0], p);
+      if (coords.width > coords.height){
+        rtn = (v0 >= 0 && v1 >= 0 && v2 <= 0 && v3 <= 0 && v4 <= 0 && v5 >= 0) ? true : false;
+      } else {
+        rtn = (v0 >= 0 && v1 <= 0 && v2 <= 0 && v3 <= 0 && v4 >= 0 && v5 >= 0) ? true : false;
+      }
+      if (off > 0) {
+        v0 = circleIntersectLine(points[0], points[1], p);
+        v1 = circleIntersectLine(points[1], points[2], p);
+        v2 = circleIntersectLine(points[2], points[3], p);
+        v3 = circleIntersectLine(points[3], points[4], p);
+        v4 = circleIntersectLine(points[4], points[5], p);
+        v5 = circleIntersectLine(points[5], points[0], p);
+        rtn = rtn && v0 < 2 && v1 < 2 && v2 < 2 && v3 < 2 && v4 < 2 && v5 < 2;
+      }
+      return rtn;
+    }
+
+  }
+
+  class Hex extends bitarea.HexEx {
+    
+    constructor(parent, bond, gridParent) {
+      super(parent, false);
+      this.bindTo(bond);
+      this.type = types.GRIDHEX;
+      this.isGrid = true;
+      this.grid = new HexGrid(gridParent, bond, this);
+    }
+
+    bindTo(bond) {
+      super.bindTo(bond, clsQualifiers.GRIDSCOPE);
+      bond.bindTo(this, clsQualifiers.GRIDBOND);
+    }
+
+    unbindFrom(bond) {
+      bond = bond || this.bonds[0];
+      if (bond !== this.bonds[0]) {
+        throw new Error('Error managing bound element(s)');
+      }
+      super.unbindFrom(bond, clsQualifiers.GRIDSCOPE)
+      bond.unbindFrom(this, clsQualifiers.GRIDBOND);
+    }
+
+    unbindAll() {
+      this.unbindFrom();
+    }
+
+    remove() {
+      super.remove();
+      this.grid.remove();
+      this.grid = null;
+    }
+
+    draw(coords, patternCoords) {
+      super.draw(coords);
+      this.grid.draw(coords, patternCoords);
+    }
+
+  } // HEX GRID
+
   return {
-    Rectangle, Circle
+    Rectangle, Circle, Hex
   };
 
 })(); /* BIT Grid Area Definition */

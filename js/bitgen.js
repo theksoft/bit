@@ -765,12 +765,31 @@ var bitgen = (function() {
 
   } // GRID CIRCLE
 
+  /*
+   * GRID HEX 
+   */
+
+  class GridHex extends HexEx {
+    
+    constructor(parent, bond, gridParent) {
+      super(parent, false, false);
+      this.createFigure(parent, bond, gridParent);
+    }
+
+    createFigure(parent, bond, gridParent) {
+      if (bond) {
+        this.figure = new bitgrid.Hex(parent, bond, gridParent);
+      }
+    }
+
+  } // GRID HEX
+
   return {
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Hex, HexEx, Polygon,
-    GridRectangle, GridCircle,
+    GridRectangle, GridCircle, GridHex,
     Tracker
   }
 

@@ -36,7 +36,7 @@ var bit = (function() {
       POLYGON       : 'polygon',
       GRIDRECTANGLE : 'gridRectangle',
       GRIDCIRCLE    : 'gridCircle',
-      HEXDTRGRID    : 'hexDtrGrid',
+      GRIDHEX       : 'gridHex'
     };
 
     const clsActions = {
@@ -880,7 +880,7 @@ var bit = (function() {
         btnCircleCtr      : $('circle-c'),
         btnPolygon        : $('polygon'),
 
-        btnHexDtrGrid     : $('hex-d-grid'),
+        btnGridHex        : $('hex-grid'),
         btnGridRectangle  : $('rectangle-grid'),
         btnGridCircle     : $('circle-grid'),
 
@@ -943,21 +943,20 @@ var bit = (function() {
       case doms.btnGridCircle:
         context.mode = modes.GRIDCIRCLE;
         break;
-// TODO: Change this!
-      case doms.btnHexDtrGrid:
-        context.mode = modes.HEXDTRGRID;
+      case doms.btnGridHex:
+        context.mode = modes.GRIDHEX;
         break;
 
       default:
         context.mode = modes.NONE;
       }
     }
-// TODO: Change this!
+
     function isGridDrawingModeSelected() {
       let rtn = false;
       switch(context.selected) {
       case doms.btnGridRectangle:
-      case doms.btnHexDtrGrid:
+      case doms.btnGridHex:
       case doms.btnGridCircle:
         rtn = true;
         break;
@@ -1032,7 +1031,7 @@ var bit = (function() {
       switch(obj.type) {
       case utils.fgTypes.NONE:
       case utils.fgTypes.GRIDRECTANGLE:
-      case utils.fgTypes.HEXDTRGRID:
+      case utils.fgTypes.GRIDHEX:
       case utils.fgTypes.GRIDCIRCLE:
       case utils.fgTypes.POLYGON:
         rtn = false;
@@ -1043,7 +1042,7 @@ var bit = (function() {
     }
 
     function gridEnable() {
-      doms.btnHexDtrGrid.classList.remove(bitedit.clsStatus.DISABLED);
+      doms.btnGridHex.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnGridRectangle.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnGridCircle.classList.remove(bitedit.clsStatus.DISABLED);
       doms.btnInnerGridScope.classList.remove(bitedit.clsStatus.DISABLED);
@@ -1053,7 +1052,7 @@ var bit = (function() {
     }
 
     function gridDisable() {
-      doms.btnHexDtrGrid.classList.add(bitedit.clsStatus.DISABLED);
+      doms.btnGridHex.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnGridRectangle.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnGridCircle.classList.add(bitedit.clsStatus.DISABLED);
       doms.btnInnerGridScope.classList.add(bitedit.clsStatus.DISABLED);
@@ -1093,7 +1092,7 @@ var bit = (function() {
         doms.btnCircleDtr.removeEventListener('click', onDrawModeSelect, false);
         doms.btnCircleCtr.removeEventListener('click', onDrawModeSelect, false);
         doms.btnPolygon.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnHexDtrGrid.removeEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridHex.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridRectangle.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridCircle.removeEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
@@ -1117,7 +1116,7 @@ var bit = (function() {
         doms.btnCircleDtr.addEventListener('click', onDrawModeSelect, false);
         doms.btnCircleCtr.addEventListener('click', onDrawModeSelect, false);
         doms.btnPolygon.addEventListener('click', onDrawModeSelect, false);
-        doms.btnHexDtrGrid.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridHex.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridRectangle.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridCircle.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.addEventListener('click', onDrawGridScopeSelect, false);
@@ -1393,7 +1392,8 @@ var bit = (function() {
 
       var gridFactory = {
         'gridRectangle' : bitgen.GridRectangle,
-        'gridCircle'    : bitgen.GridCircle
+        'gridCircle'    : bitgen.GridCircle,
+        'gridHex'       : bitgen.GridHex
       };
 
       var generator = null;
