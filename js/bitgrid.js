@@ -6,6 +6,11 @@
 var bitgrid = (function() {
   'use strict';
 
+  const scopes = {
+    INNER         : 'inner',
+    OUTER         : 'outer'
+  };
+
   const types = {
     GRIDRECTANGLE : 'gridRectangle',
     GRIDCIRCLE    : 'gridCircle',
@@ -189,7 +194,7 @@ var bitgrid = (function() {
 
   class FigureGrid {
 
-    constructor(parent, pattern, scope) {
+    constructor(parent, pattern, scope, drawScope) {
       if (this.constructor == FigureGrid.constructor) {
         throw new Error('Invalid Figure grid constructor call: abstract class');
       }
@@ -199,6 +204,7 @@ var bitgrid = (function() {
       this.parent = parent;
       this.parent.appendChild(this.group);
       this.scope = scope;
+      this.drawScope = drawScope;
     }
 
     clonePattern(coords) {
@@ -232,8 +238,8 @@ var bitgrid = (function() {
 
   class RectangleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope) {
-      super(parent, pattern, scope);
+    constructor(parent, pattern, scope, drawScope) {
+      super(parent, pattern, scope, drawScope);
     }
 
     draw(coords, patternCoords) {
@@ -297,12 +303,12 @@ var bitgrid = (function() {
 
   class Rectangle extends bitarea.Rectangle {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, drawScope) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond, this);
+      this.grid = new RectangleGrid(gridParent, bond, this, drawScope);
     }
 
     bindTo(bond) {
@@ -342,8 +348,8 @@ var bitgrid = (function() {
 
   class CircleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope) {
-      super(parent, pattern, scope);
+    constructor(parent, pattern, scope, drawScope) {
+      super(parent, pattern, scope, drawScope);
     }
 
     draw(coords, patternCoords) {
@@ -436,12 +442,12 @@ var bitgrid = (function() {
 
   class Circle extends bitarea.CircleEx {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, drawScope) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond, this);
+      this.grid = new CircleGrid(gridParent, bond, this, drawScope);
     }
 
     bindTo(bond) {
@@ -481,8 +487,8 @@ var bitgrid = (function() {
 
   class HexGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope) {
-      super(parent, pattern, scope);
+    constructor(parent, pattern, scope, drawScope) {
+      super(parent, pattern, scope, drawScope);
     }
 
     draw(coords, patternCoords) {
@@ -591,12 +597,12 @@ var bitgrid = (function() {
 
   class Hex extends bitarea.HexEx {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, drawScope) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDHEX;
       this.isGrid = true;
-      this.grid = new HexGrid(gridParent, bond, this);
+      this.grid = new HexGrid(gridParent, bond, this, drawScope);
     }
 
     bindTo(bond) {
@@ -631,6 +637,7 @@ var bitgrid = (function() {
   } // HEX GRID
 
   return {
+    scopes,
     Rectangle, Circle, Hex
   };
 
