@@ -581,23 +581,16 @@ var bitgrid = (function() {
     }
 
     isPointWithin(coords, x, y, off) {
-      let i, f, rtn, points, v, p;
+      let f, rtn, points, p;
       const fw = [1, 1, -1, -1, -1, 1], fh = [1, -1, -1, -1, 1, 1];
       rtn = false;
       off = off || 0;
       p = { x : x, y : y, r : off };
       f = (coords.width > coords.height) ? fw : fh;
-      v = [];
       points = this.scope.getPoints(coords);
-      for (i = 0; i < points.length; i++) {
-        v[i] = computeLineValue(points[i], points[(i+1)%points.length], p) * f[i];
-      }
-      rtn = v.reduce( (a,e) => a && e >= 0, true);
+      rtn = points.reduce((a,e,i,t) => a && (computeLineValue(e, t[(i+1)%t.length], p) * f[i] >= 0), true);
       if (off > 0) {
-        for (i = 0; i < points.length; i++) {
-          v[i] = circleIntersectLine(points[i], points[(i+1)%points.length], p);
-        }
-        rtn = v.reduce( (a,e) => a && e < 2, true);
+        rtn = points.reduce((a,e,i,t) => a && (circleIntersectLine(e, t[(i+1)%t.length], p) < 2), rtn);
       }
       return rtn;
     }
