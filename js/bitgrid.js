@@ -581,9 +581,8 @@ var bitgrid = (function() {
     }
 
     isPointWithin(coords, x, y, off) {
-      let f, rtn, points, p;
       const fw = [1, 1, -1, -1, -1, 1], fh = [1, -1, -1, -1, 1, 1];
-      rtn = false;
+      let f, rtn, points, p;
       off = off || 0;
       p = { x : x, y : y, r : off };
       f = (coords.width > coords.height) ? fw : fh;
