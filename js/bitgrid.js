@@ -412,7 +412,7 @@ var bitgrid = (function() {
         rcoords.width = rcoords.height = 2*rcoords.r;
         rcoords.x -= rcoords.r;
         rcoords.y -= rcoords.r;
-        pcoords = patternCoords || this.pattern.getCoords();
+        pcoords = this.pattern.copyCoords(patternCoords);
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
         if (pprops.raw.overlap !== -pprops.area.width) {
           gprops = computeInnerGridProperties(rcoords, pprops);
@@ -547,7 +547,7 @@ var bitgrid = (function() {
       let elts = [];
       if (0 < coords.width && 0 < coords.height) {
         let pcoords, pprops, gprops, is, ix;
-        pcoords = patternCoords || this.pattern.getCoords();
+        pcoords = this.pattern.copyCoords(patternCoords);
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
         if (pprops.raw.overlap !== -pprops.area.width) {
           gprops = computeInnerGridProperties(coords, pprops);
