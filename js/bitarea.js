@@ -85,6 +85,11 @@ var bitarea = (function() {
       console.log('setCoords() not defined');
     }
 
+    copyCoords(coords) {
+      console.log('copyCoords() not defined');
+      return null;
+    }
+
     redraw(coords) {
       let c = coords || this.getCoords();
       this.draw(c);
@@ -199,6 +204,17 @@ var bitarea = (function() {
       this.coords.width = coords.width;
       this.coords.height = coords.height;
       this.coords.tilt = coords.tilt;
+    }
+
+    copyCoords(coords) {
+      let c = {};
+      coords = coords || this.coords;
+      c.x = coords.x;
+      c.y = coords.y;
+      c.width = coords.width;
+      c.height = coords.height;
+      c.tilt = coords.tilt;
+      return c;
     }
 
     draw(coords) {
@@ -328,6 +344,15 @@ var bitarea = (function() {
       this.coords.x = coords.x;
       this.coords.y = coords.y;
       this.coords.r = coords.r;
+    }
+
+    copyCoords(coords) {
+      let c = {};
+      coords = coords || this.coords;
+      c.x = coords.x;
+      c.y = coords.y;
+      c.r = coords.r;
+      return c;
     }
 
     draw(coords) {
@@ -648,12 +673,6 @@ var bitarea = (function() {
       this.domParent.appendChild(this.dom);
     }
 
-    copyCoords(coords) {
-      let rtn = [];
-      coords.forEach(e => rtn.push({ x : e.x, y : e.y }));
-      return rtn;
-    }
-
     getCoords() {
       return this.copyCoords(this.coords);
     }
@@ -661,6 +680,12 @@ var bitarea = (function() {
     setCoords(coords) {
       this.coords.splice(0, this.coords.length);
       this.coords = this.copyCoords(coords);
+    }
+
+    copyCoords(coords) {
+      let rtn = [];
+      coords.forEach(e => rtn.push({ x : e.x, y : e.y }));
+      return rtn;
     }
 
     draw(coords) {

@@ -105,7 +105,7 @@ var bitgrid = (function() {
     return props;
   }
 
-  function computeGridProperties(rectCoords, patternProps) {
+  function computeInnerGridProperties(rectCoords, patternProps) {
 
     var index = (g, p, fdim, fov) => Math.ceil((g-p)/(fdim+fov));
     var start = (p, i, fdim, fov) => p + i*(fdim+fov);
@@ -137,8 +137,58 @@ var bitgrid = (function() {
     return props;
   }
 
-  function computeGridPropertiesEx(rectCoords, patternProps) {
+  function computeOuterGridProperties(rectCoords, patternProps, maxWidth, maxHeight) {
+
+    var index = (g, p, fdim, fov) => Math.ceil((g-(p+fdim))/(fdim+fov));
+    var start = (p, i, fdim, fov) => p + i*(fdim+fov);
+    var extra = (p, fdim, fov) => p - (fdim+fov);
+//    var count = (g, dim, s, fdim, fov) => Math.ceil(((g + dim - (s + fdim)) / (fdim + fov)) + 1);
+    var count = (g, dim, s, fdim, fov) => Math.floor(((g + dim - s) / (fdim + fov)) + 1);
+    var last = (s, n, fdim, fov) => s + (n-1)*(fdim+fov);
+
+    let tmp, props = {};
+    tmp = index(rectCoords.x, patternProps.start.x, patternProps.area.width, patternProps.raw.overlap);
+    props.xs = start(patternProps.start.x, tmp, patternProps.area.width, patternProps.raw.overlap);
+    if (props.xs < 0) {
+      props.xs += patternProps.area.width + patternProps.raw.overlap;
+      tmp++;
+    }
+    [props.ts1, props.ts2] = (tmp%2 === 0) ? [patternProps.start.tilt, patternProps.raw.tilt] : [patternProps.raw.tilt, patternProps.start.tilt];
+    props.xx = props.xs + patternProps.column.offset;
+    props.tx1 = props.ts1;
+    props.tx2 = props.ts2;
+    tmp = extra(props.xx, patternProps.area.width, patternProps.raw.overlap);
+    if (tmp > 0 && tmp + patternProps.area.width >= rectCoords.x) {
+      props.xx = tmp;
+      props.tx1 = props.ts2;
+      props.tx2 = props.ts1;
+    }
+
+    tmp = index(rectCoords.y, patternProps.start.y, patternProps.area.height, patternProps.column.overlap);
+    props.ys = start(patternProps.start.y, tmp, patternProps.area.height, patternProps.column.overlap);
+    if (props.ys < 0) {
+      props.ys += patternProps.area.height + patternProps.column.overlap;
+      tmp++;
+    }
+    props.is = Math.abs(tmp % 2);
+    props.ix = Math.abs((tmp + 1) % 2);
+
+    props.nx = count(rectCoords.x, rectCoords.width, props.xs, patternProps.area.width, patternProps.raw.overlap);
+    props.nxx = count(rectCoords.x, rectCoords.width, props.xx, patternProps.area.width, patternProps.raw.overlap);
+    props.ny = count(rectCoords.y, rectCoords.height, props.ys, patternProps.area.height, patternProps.column.overlap);
+
+    tmp = last(props.xs, props.nx, patternProps.area.width, patternProps.raw.overlap);
+    if (tmp >= rectCoords.x + rectCoords.width || tmp + patternProps.area.width > maxWidth ) props.nx--;
+    tmp = last(props.xx, props.nxx, patternProps.area.width, patternProps.raw.overlap);
+    if (tmp >= rectCoords.x + rectCoords.width || tmp + patternProps.area.width > maxWidth ) props.nxx--;
+    tmp = last(props.ys, props.ny, patternProps.area.height, patternProps.column.overlap);
+    if (tmp >= rectCoords.y + rectCoords.height || tmp + patternProps.area.height > maxHeight ) props.ny--;
+    return props;
+  }
+
+  function computeGridPropertiesEx(rectCoords, patternProps, fCompute, maxWidth, maxHeight) {
     let gp, pp;
+    fCompute = fCompute || computeInnerGridProperties;
     pp = Object.create(patternProps);
     pp.raw = Object.create(patternProps.raw);
     if (pp.column.overlap !== 0) {
@@ -146,7 +196,7 @@ var bitgrid = (function() {
     }
     pp.raw.overlap = 0;
     pp.raw.tilt = pp.start.tilt;
-    gp = computeGridProperties(rectCoords, pp);
+    gp = fCompute(rectCoords, pp, maxWidth, maxHeight);
     if (gp.nx !== gp.nxx || gp.xs !== gp.xx) {
       throw new Error('Error when computing figure overlap by full width! => xs: ' + gp.xs + ' xx: ' + gp.xx + 'nx: ' + gp.nx + ' nxx: ' + gp.nxx);
     }
@@ -245,11 +295,13 @@ var bitgrid = (function() {
     draw(coords, patternCoords) {
       let elts = [];
       if (0 < coords.width && 0 < coords.height) {
-        let pcoords, pprops, gprops, is, ix;
-        pcoords = patternCoords || this.pattern.getCoords();
+        let pcoords, pprops, gprops, is, ix, mw, mh;
+        pcoords = this.pattern.copyCoords(patternCoords);
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
+        mw = this.parent.getAttribute('width');
+        mh = this.parent.getAttribute('height');
         if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(coords, pprops);
+          gprops = (this.drawScope !== 'inner') ? computeOuterGridProperties(coords, pprops,  mw, mh) : computeInnerGridProperties(coords, pprops);
           pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
             this.drawRaw(elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
@@ -261,7 +313,7 @@ var bitgrid = (function() {
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
         } else {
-          gprops = computeGridPropertiesEx(coords, pprops);
+          gprops = computeGridPropertiesEx(coords, pprops, (this.drawScope !== 'inner') ? computeOuterGridProperties : computeInnerGridProperties, mw, mh);
           pcoords.y = gprops.ys + pprops.offset.y;
           for (is = 0; is < gprops.ny; is++) {
             this.drawRawEx(elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
@@ -363,7 +415,7 @@ var bitgrid = (function() {
         pcoords = patternCoords || this.pattern.getCoords();
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
         if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(rcoords, pprops);
+          gprops = computeInnerGridProperties(rcoords, pprops);
           pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
             this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
@@ -375,7 +427,7 @@ var bitgrid = (function() {
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
         } else {
-          gprops = computeGridPropertiesEx(rcoords, pprops);
+          gprops = computeInnerGridPropertiesEx(rcoords, pprops);
           pcoords.y = gprops.ys + pprops.offset.y;
           for (is = 0; is < gprops.ny; is++) {
             this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
@@ -498,7 +550,7 @@ var bitgrid = (function() {
         pcoords = patternCoords || this.pattern.getCoords();
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
         if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(coords, pprops);
+          gprops = computeInnerGridProperties(coords, pprops);
           pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
             this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
@@ -510,7 +562,7 @@ var bitgrid = (function() {
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
         } else {
-          gprops = computeGridPropertiesEx(coords, pprops);
+          gprops = computeInnerGridPropertiesEx(coords, pprops);
           pcoords.y = gprops.ys + pprops.offset.y;
           for (is = 0; is < gprops.ny; is++) {
             this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
