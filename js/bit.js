@@ -1629,6 +1629,7 @@ var bit = (function() {
         onStart : (parent, pt) => {
           let width = parent.getAttribute('width');
           let height = parent.getAttribute('height');
+          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
           context.mover.start(context.selected, pt, width, height);
           tls.freeze();
         },

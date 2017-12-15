@@ -90,10 +90,19 @@ var bitarea = (function() {
       return null;
     }
 
+    setSVGCoords(coords) {
+      console.log('setSVGCoords() not defined');
+    }
+
+    getSVGCoords() {
+      console.log('getSVGCoords() not defined');
+      return this.getCoords();
+    }
+
     redraw(coords) {
       let c = coords || this.getCoords();
       this.draw(c);
-      this.bonds.forEach(e => e.draw(e.getCoords(), c));
+      this.bonds.forEach(e => e.draw(e.getSVGCoords(), c));
     }
 
     is(dom) {
@@ -179,6 +188,7 @@ var bitarea = (function() {
     constructor(parent, noGroup) {
       super(types.RECTANGLE, parent, noGroup);
       this.coords = { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT };
+      this.svgCoords = { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT };
     }
 
     createSVGElt() {
@@ -220,11 +230,24 @@ var bitarea = (function() {
     draw(coords) {
       let c = coords || this.coords;
       if (this.dom) {
+        this.setSVGCoords(c);
         this.dom.setAttribute('x', c.x);
         this.dom.setAttribute('y', c.y);
         this.dom.setAttribute('width', c.width);
         this.dom.setAttribute('height', c.height);
       }
+    }
+
+    setSVGCoords(coords) {
+      this.svgCoords.x = coords.x;
+      this.svgCoords.y = coords.y;
+      this.svgCoords.width = coords.width;
+      this.svgCoords.height = coords.height;
+      this.svgCoords.tilt = coords.tilt;
+    }
+
+    getSVGCoords() {
+      return this.svgCoords;
     }
 
     within(coords) {
@@ -296,9 +319,13 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let points = this.getPoints(coords || this.coords);
-      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      let c = coords || this.coords;
+      if (this.dom) {
+        let points = this.getPoints(c);
+        let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
+        this.setSVGCoords(c);
+        this.dom.setAttribute('points', attrVal);
+      }
     }
 
     getPoints(c) {
@@ -323,6 +350,7 @@ var bitarea = (function() {
     constructor(parent, noGroup) {
       super(types.CIRCLECTR, parent, noGroup);
       this.coords = { x : 0, y : 0, r : 0 };
+      this.svgCoords = { x : 0, y : 0, r : 0 };
     }
 
     createSVGElt() {
@@ -355,9 +383,20 @@ var bitarea = (function() {
       return c;
     }
 
+    setSVGCoords(coords) {
+      this.svgCoords.x = coords.x;
+      this.svgCoords.y = coords.y;
+      this.svgCoords.r = coords.r;
+    }
+
+    getSVGCoords() {
+      return this.svgCoords;
+    }
+
     draw(coords) {
       let c = coords || this.coords;
       if (this.dom) {
+        this.setSVGCoords(c);
         this.dom.setAttribute('cx', c.x);
         this.dom.setAttribute('cy', c.y);
         this.dom.setAttribute('r', c.r);
@@ -412,10 +451,13 @@ var bitarea = (function() {
       let c = coords || this.coords;
       let rx = Math.round(c.width/2),
           ry = Math.round(c.height/2);
-      this.dom.setAttribute('cx', c.x + rx);
-      this.dom.setAttribute('cy', c.y + ry);
-      this.dom.setAttribute('rx', rx);
-      this.dom.setAttribute('ry', ry);
+      if (this.dom) {
+        this.setSVGCoords(c);
+        this.dom.setAttribute('cx', c.x + rx);
+        this.dom.setAttribute('cy', c.y + ry);
+        this.dom.setAttribute('rx', rx);
+        this.dom.setAttribute('ry', ry);
+      }
     }
 
     getPoints(c) {
@@ -450,9 +492,13 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let points = this.getPoints(coords || this.coords);
-      let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      let c = coords || this.coords;
+      if (this.dom) {
+        this.setSVGCoords(c);
+        let points = this.getPoints(c);
+        let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
+        this.dom.setAttribute('points', attrVal);
+      }
     }
 
     getPoints(c) {
@@ -611,9 +657,13 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let pts = this.getPoints(coords || this.coords);
-      let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      let c = coords || this.coords;
+      if (this.dom) {
+        this.setSVGCoords(c);
+        let pts = this.getPoints(c);
+        let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
+        this.dom.setAttribute('points', attrVal);
+      }
     }
 
     getPoints(c) {
@@ -689,9 +739,11 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      let attrVal = c.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-      this.dom.setAttribute('points', attrVal);
+      if (this.dom) {
+        let c = coords || this.coords;
+        let attrVal = c.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
+        this.dom.setAttribute('points', attrVal);
+      }
     }
 
     within(coords) {
