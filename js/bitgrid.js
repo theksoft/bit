@@ -557,7 +557,7 @@ var bitgrid = (function() {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -571,7 +571,7 @@ var bitgrid = (function() {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -593,6 +593,18 @@ var bitgrid = (function() {
       return rtn;
     }
 
+    intersect(gc, pc) {
+      let rtn, type;
+      type = this.pattern.getType();
+      if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
+        rtn = this.isPointWithin(gc, pc.x, pc.y, -pc.r) ? true : false;
+      } else {
+        let pts = this.pattern.getPoints(pc);
+        rtn = pts.reduce((a, e) => a || this.isPointWithin(gc, e.x, e.y), false);
+      }
+      return rtn;
+    }
+
     isPointWithin(coords, x, y, off) {
       const fw = [1, 1, -1, -1, -1, 1], fh = [1, -1, -1, -1, 1, 1];
       let f, rtn, points, p;
@@ -603,6 +615,8 @@ var bitgrid = (function() {
       rtn = points.reduce((a,e,i,t) => a && (computeLineValue(e, t[(i+1)%t.length], p) * f[i] >= 0), true);
       if (off > 0) {
         rtn = points.reduce((a,e,i,t) => a && (circleIntersectLine(e, t[(i+1)%t.length], p) < 2), rtn);
+      } else if (!rtn && off < 0) {
+        rtn = points.reduce((a,e,i,t) => a || (circleIntersectLine(e, t[(i+1)%t.length], p) > 0), false);
       }
       return rtn;
     }
