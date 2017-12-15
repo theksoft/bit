@@ -6,6 +6,11 @@
 var bitgrid = (function() {
   'use strict';
 
+  const scopes = {
+    INNER         : 'inner',
+    OUTER         : 'outer'
+  };
+
   const types = {
     GRIDRECTANGLE : 'gridRectangle',
     GRIDCIRCLE    : 'gridCircle',
@@ -100,7 +105,7 @@ var bitgrid = (function() {
     return props;
   }
 
-  function computeGridProperties(rectCoords, patternProps) {
+  function computeInnerGridProperties(rectCoords, patternProps) {
 
     var index = (g, p, fdim, fov) => Math.ceil((g-p)/(fdim+fov));
     var start = (p, i, fdim, fov) => p + i*(fdim+fov);
@@ -132,8 +137,57 @@ var bitgrid = (function() {
     return props;
   }
 
-  function computeGridPropertiesEx(rectCoords, patternProps) {
+  function computeOuterGridProperties(rectCoords, patternProps, maxWidth, maxHeight) {
+
+    var index = (g, p, fdim, fov) => Math.ceil((g-(p+fdim))/(fdim+fov));
+    var start = (p, i, fdim, fov) => p + i*(fdim+fov);
+    var extra = (p, fdim, fov) => p - (fdim+fov);
+    var count = (g, dim, s, fdim, fov) => Math.floor(((g + dim - s) / (fdim + fov)) + 1);
+    var last = (s, n, fdim, fov) => s + (n-1)*(fdim+fov);
+
+    let tmp, props = {};
+    tmp = index(rectCoords.x, patternProps.start.x, patternProps.area.width, patternProps.raw.overlap);
+    props.xs = start(patternProps.start.x, tmp, patternProps.area.width, patternProps.raw.overlap);
+    if (props.xs < 0) {
+      props.xs += patternProps.area.width + patternProps.raw.overlap;
+      tmp++;
+    }
+    [props.ts1, props.ts2] = (tmp%2 === 0) ? [patternProps.start.tilt, patternProps.raw.tilt] : [patternProps.raw.tilt, patternProps.start.tilt];
+    props.xx = props.xs + patternProps.column.offset;
+    props.tx1 = props.ts1;
+    props.tx2 = props.ts2;
+    tmp = extra(props.xx, patternProps.area.width, patternProps.raw.overlap);
+    if (tmp > 0 && tmp + patternProps.area.width >= rectCoords.x) {
+      props.xx = tmp;
+      props.tx1 = props.ts2;
+      props.tx2 = props.ts1;
+    }
+
+    tmp = index(rectCoords.y, patternProps.start.y, patternProps.area.height, patternProps.column.overlap);
+    props.ys = start(patternProps.start.y, tmp, patternProps.area.height, patternProps.column.overlap);
+    if (props.ys < 0) {
+      props.ys += patternProps.area.height + patternProps.column.overlap;
+      tmp++;
+    }
+    props.is = Math.abs(tmp % 2);
+    props.ix = Math.abs((tmp + 1) % 2);
+
+    props.nx = count(rectCoords.x, rectCoords.width, props.xs, patternProps.area.width, patternProps.raw.overlap);
+    props.nxx = count(rectCoords.x, rectCoords.width, props.xx, patternProps.area.width, patternProps.raw.overlap);
+    props.ny = count(rectCoords.y, rectCoords.height, props.ys, patternProps.area.height, patternProps.column.overlap);
+
+    tmp = last(props.xs, props.nx, patternProps.area.width, patternProps.raw.overlap);
+    if (tmp >= rectCoords.x + rectCoords.width || tmp + patternProps.area.width > maxWidth ) props.nx--;
+    tmp = last(props.xx, props.nxx, patternProps.area.width, patternProps.raw.overlap);
+    if (tmp >= rectCoords.x + rectCoords.width || tmp + patternProps.area.width > maxWidth ) props.nxx--;
+    tmp = last(props.ys, props.ny, patternProps.area.height, patternProps.column.overlap);
+    if (tmp >= rectCoords.y + rectCoords.height || tmp + patternProps.area.height > maxHeight ) props.ny--;
+    return props;
+  }
+
+  function computeGridPropertiesEx(rectCoords, patternProps, fCompute, maxWidth, maxHeight) {
     let gp, pp;
+    fCompute = fCompute || computeInnerGridProperties;
     pp = Object.create(patternProps);
     pp.raw = Object.create(patternProps.raw);
     if (pp.column.overlap !== 0) {
@@ -141,7 +195,7 @@ var bitgrid = (function() {
     }
     pp.raw.overlap = 0;
     pp.raw.tilt = pp.start.tilt;
-    gp = computeGridProperties(rectCoords, pp);
+    gp = fCompute(rectCoords, pp, maxWidth, maxHeight);
     if (gp.nx !== gp.nxx || gp.xs !== gp.xx) {
       throw new Error('Error when computing figure overlap by full width! => xs: ' + gp.xs + ' xx: ' + gp.xx + 'nx: ' + gp.nx + ' nxx: ' + gp.nxx);
     }
@@ -189,7 +243,7 @@ var bitgrid = (function() {
 
   class FigureGrid {
 
-    constructor(parent, pattern, scope) {
+    constructor(parent, pattern, scope, drawScope) {
       if (this.constructor == FigureGrid.constructor) {
         throw new Error('Invalid Figure grid constructor call: abstract class');
       }
@@ -199,6 +253,7 @@ var bitgrid = (function() {
       this.parent = parent;
       this.parent.appendChild(this.group);
       this.scope = scope;
+      this.drawScope = drawScope;
     }
 
     clonePattern(coords) {
@@ -220,45 +275,34 @@ var bitgrid = (function() {
       this.parent = this.group = this.scope = null;
     }
 
-    drawRaw(coords) {
-      console.log('draw() not defined');
-    }
-
-  }
-
-  /*
-   * RECTANGLE GRID 
-   */
-
-  class RectangleGrid extends FigureGrid {
-
-    constructor(parent, pattern, scope) {
-      super(parent, pattern, scope);
-    }
-
     draw(coords, patternCoords) {
       let elts = [];
-      if (0 < coords.width && 0 < coords.height) {
-        let pcoords, pprops, gprops, is, ix;
-        pcoords = patternCoords || this.pattern.getCoords();
+      if (this.areValidCoords(coords)) {
+        let rcoords, pcoords, pprops, gprops, is, ix, bOuter, mw, mh, computeGridProperties;
+        rcoords = this.getBoundingRectCoords(coords);
+        pcoords = this.pattern.copyCoords(patternCoords);
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
+        mw = this.parent.getAttribute('width');
+        mh = this.parent.getAttribute('height');
+        bOuter = (this.drawScope !== 'inner');
+        computeGridProperties = bOuter ? computeOuterGridProperties : computeInnerGridProperties;
         if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(coords, pprops);
+          gprops = computeGridProperties(rcoords, pprops,  mw, mh);
           pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRaw(elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
+            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
           pcoords.y = gprops.ys + gprops.ix * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRaw(elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2);
+            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2, !bOuter);
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
         } else {
-          gprops = computeGridPropertiesEx(coords, pprops);
+          gprops = computeGridPropertiesEx(rcoords, pprops, computeGridProperties, mw, mh);
           pcoords.y = gprops.ys + pprops.offset.y;
           for (is = 0; is < gprops.ny; is++) {
-            this.drawRawEx(elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += pprops.area.height;
           }
         }
@@ -269,7 +313,40 @@ var bitgrid = (function() {
       elts.splice(0, this.elts.length);
     }
 
-    drawRaw(elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+    areValidCoords(coords) {
+      console.log('areValidCoords() not defined');
+      return false;
+    }
+
+    getBoundingRectCoords(coords) {
+      return coords;
+    }
+
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2, bInner) {
+      console.log('drawRaw() not defined');
+    }
+
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
+      console.log('drawRawEx() not defined');
+    }
+
+  }
+
+  /*
+   * RECTANGLE GRID 
+   */
+
+  class RectangleGrid extends FigureGrid {
+
+    constructor(parent, pattern, scope, drawScope) {
+      super(parent, pattern, scope, drawScope);
+    }
+
+    areValidCoords(coords) {
+      return (0 < coords.width && 0 < coords.height);
+    }
+
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
@@ -281,7 +358,7 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
@@ -297,12 +374,12 @@ var bitgrid = (function() {
 
   class Rectangle extends bitarea.Rectangle {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, drawScope) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond, this);
+      this.grid = new RectangleGrid(gridParent, bond, this, drawScope);
     }
 
     bindTo(bond) {
@@ -342,52 +419,27 @@ var bitgrid = (function() {
 
   class CircleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope) {
-      super(parent, pattern, scope);
+    constructor(parent, pattern, scope, drawScope) {
+      super(parent, pattern, scope, drawScope);
     }
 
-    draw(coords, patternCoords) {
-      let elts = [];
-      if (0 < coords.r) {
-        let rcoords, pcoords, pprops, gprops, is, ix;
-        rcoords = Object.create(coords);
-        rcoords.width = rcoords.height = 2*rcoords.r;
-        rcoords.x -= rcoords.r;
-        rcoords.y -= rcoords.r;
-        pcoords = patternCoords || this.pattern.getCoords();
-        pprops = getPatternProperties(this.pattern.getType(), pcoords);
-        if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(rcoords, pprops);
-          pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
-          for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
-            pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
-          }
-          pcoords.y = gprops.ys + gprops.ix * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
-          for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2);
-            pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
-          }
-        } else {
-          gprops = computeGridPropertiesEx(rcoords, pprops);
-          pcoords.y = gprops.ys + pprops.offset.y;
-          for (is = 0; is < gprops.ny; is++) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
-            pcoords.y += pprops.area.height;
-          }
-        }
-      }
-      this.elts.forEach(e => e.remove());
-      this.elts.splice(0, this.elts.length);
-      elts.forEach(e => this.elts.push(e));
-      elts.splice(0, this.elts.length);
+    areValidCoords(coords) {
+      return (0 < coords.r);
     }
 
-    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+    getBoundingRectCoords(coords) {
+      let rtn = this.scope.copyCoords(coords);
+      rtn.width = rtn.height = 2*rtn.r;
+      rtn.x -= rtn.r;
+      rtn.y -= rtn.r;
+      return rtn;
+    }
+
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -397,11 +449,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -423,6 +475,18 @@ var bitgrid = (function() {
       return rtn;
     }
 
+    intersect(gc, pc) {
+      let rtn, type;
+      type = this.pattern.getType();
+      if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
+        rtn = this.isPointWithin(gc, pc.x, pc.y, -pc.r) ? true : false;
+      } else {
+        let pts = this.pattern.getPoints(pc);
+        rtn = pts.reduce((a, e) => a || this.isPointWithin(gc, e.x, e.y), false);
+      }
+      return rtn;
+    }
+
     isPointWithin(coords, x, y, off) {
       let d, dx, dy;
       off = off || 0;
@@ -436,12 +500,12 @@ var bitgrid = (function() {
 
   class Circle extends bitarea.CircleEx {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, drawScope) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond, this);
+      this.grid = new CircleGrid(gridParent, bond, this, drawScope);
     }
 
     bindTo(bond) {
@@ -481,48 +545,19 @@ var bitgrid = (function() {
 
   class HexGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope) {
-      super(parent, pattern, scope);
+    constructor(parent, pattern, scope, drawScope) {
+      super(parent, pattern, scope, drawScope);
     }
 
-    draw(coords, patternCoords) {
-      let elts = [];
-      if (0 < coords.width && 0 < coords.height) {
-        let pcoords, pprops, gprops, is, ix;
-        pcoords = patternCoords || this.pattern.getCoords();
-        pprops = getPatternProperties(this.pattern.getType(), pcoords);
-        if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(coords, pprops);
-          pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
-          for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
-            pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
-          }
-          pcoords.y = gprops.ys + gprops.ix * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
-          for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2);
-            pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
-          }
-        } else {
-          gprops = computeGridPropertiesEx(coords, pprops);
-          pcoords.y = gprops.ys + pprops.offset.y;
-          for (is = 0; is < gprops.ny; is++) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
-            pcoords.y += pprops.area.height;
-          }
-        }
-      }
-      this.elts.forEach(e => e.remove());
-      this.elts.splice(0, this.elts.length);
-      elts.forEach(e => this.elts.push(e));
-      elts.splice(0, this.elts.length);
+    areValidCoords(coords) {
+      return (0 < coords.width && 0 < coords.height);
     }
 
-    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -532,11 +567,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -558,31 +593,30 @@ var bitgrid = (function() {
       return rtn;
     }
 
+    intersect(gc, pc) {
+      let rtn, type;
+      type = this.pattern.getType();
+      if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
+        rtn = this.isPointWithin(gc, pc.x, pc.y, -pc.r) ? true : false;
+      } else {
+        let pts = this.pattern.getPoints(pc);
+        rtn = pts.reduce((a, e) => a || this.isPointWithin(gc, e.x, e.y), false);
+      }
+      return rtn;
+    }
+
     isPointWithin(coords, x, y, off) {
-      let rtn, points, v0, v1, v2, v3, v4, v5, p;
-      rtn = false;
+      const fw = [1, 1, -1, -1, -1, 1], fh = [1, -1, -1, -1, 1, 1];
+      let f, rtn, points, p;
       off = off || 0;
       p = { x : x, y : y, r : off };
+      f = (coords.width > coords.height) ? fw : fh;
       points = this.scope.getPoints(coords);
-      v0 = computeLineValue(points[0], points[1], p);
-      v1 = computeLineValue(points[1], points[2], p);
-      v2 = computeLineValue(points[2], points[3], p);
-      v3 = computeLineValue(points[3], points[4], p);
-      v4 = computeLineValue(points[4], points[5], p);
-      v5 = computeLineValue(points[5], points[0], p);
-      if (coords.width > coords.height){
-        rtn = (v0 >= 0 && v1 >= 0 && v2 <= 0 && v3 <= 0 && v4 <= 0 && v5 >= 0) ? true : false;
-      } else {
-        rtn = (v0 >= 0 && v1 <= 0 && v2 <= 0 && v3 <= 0 && v4 >= 0 && v5 >= 0) ? true : false;
-      }
+      rtn = points.reduce((a,e,i,t) => a && (computeLineValue(e, t[(i+1)%t.length], p) * f[i] >= 0), true);
       if (off > 0) {
-        v0 = circleIntersectLine(points[0], points[1], p);
-        v1 = circleIntersectLine(points[1], points[2], p);
-        v2 = circleIntersectLine(points[2], points[3], p);
-        v3 = circleIntersectLine(points[3], points[4], p);
-        v4 = circleIntersectLine(points[4], points[5], p);
-        v5 = circleIntersectLine(points[5], points[0], p);
-        rtn = rtn && v0 < 2 && v1 < 2 && v2 < 2 && v3 < 2 && v4 < 2 && v5 < 2;
+        rtn = points.reduce((a,e,i,t) => a && (circleIntersectLine(e, t[(i+1)%t.length], p) < 2), rtn);
+      } else if (!rtn && off < 0) {
+        rtn = points.reduce((a,e,i,t) => a || (circleIntersectLine(e, t[(i+1)%t.length], p) > 0), false);
       }
       return rtn;
     }
@@ -591,12 +625,12 @@ var bitgrid = (function() {
 
   class Hex extends bitarea.HexEx {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, drawScope) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDHEX;
       this.isGrid = true;
-      this.grid = new HexGrid(gridParent, bond, this);
+      this.grid = new HexGrid(gridParent, bond, this, drawScope);
     }
 
     bindTo(bond) {
@@ -631,6 +665,7 @@ var bitgrid = (function() {
   } // HEX GRID
 
   return {
+    scopes,
     Rectangle, Circle, Hex
   };
 
