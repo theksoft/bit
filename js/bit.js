@@ -891,12 +891,14 @@ var bit = (function() {
     };
 
     const modes = utils.fgTypes;
+    const scopes = bitgrid.scopes;
 
     var context = {
         selected : null,
         mode : modes.NONE,
         allowGrid : false,
-        freezed : true
+        freezed : true,
+        scope : scopes.INNER
     };
 
     function setDrawingMode() {
@@ -1009,8 +1011,10 @@ var bit = (function() {
       if(context.allowGrid) {
         if (evt.target === doms.btnInnerGridScope) {
           toggleState(doms.btnInnerGridScope, doms.btnOuterGridScope);
+          context.scope = scopes.OUTER;
         } else {
           toggleState(doms.btnOuterGridScope, doms.btnInnerGridScope);
+          context.scope = scopes.INNER;
         }
       }
     }
@@ -1069,12 +1073,16 @@ var bit = (function() {
 
       reset : function() {
         toggleSelect(null);
+        toggleState(doms.btnOuterGridScope, doms.btnInnerGridScope);
         gridDisable();
         context.mode = modes.NONE;
+        context.scope = scopes.INNER;
+        context.allowGrid = false;
         this.release();
       },
 
       getDrawingMode : () => context.mode,
+      getScopeMode : () => context.scope,
       
       none : () => modes.NONE === context.mode ? true : false,
 
@@ -1153,7 +1161,7 @@ var bit = (function() {
         }
       },
 
-      modes
+      modes, scopes
 
     };
 
@@ -1413,7 +1421,7 @@ var bit = (function() {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
          }
-        return new figGen(parent, bond, gridParent);
+        return new figGen(parent, bond, gridParent, tls.getScopeMode());
       }
 
       var handlers = {
@@ -1621,6 +1629,7 @@ var bit = (function() {
         onStart : (parent, pt) => {
           let width = parent.getAttribute('width');
           let height = parent.getAttribute('height');
+          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
           context.mover.start(context.selected, pt, width, height);
           tls.freeze();
         },

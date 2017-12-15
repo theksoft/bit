@@ -358,15 +358,16 @@ var bitedit = (function() {
       };
     }
 
+
     computeMoveCoords(dx, dy) {
-      let rtn = Object.create(this.figure.coords);
+      let rtn = this.figure.copyCoords(this.figure.coords);
       rtn.x += dx;
       rtn.y += dy;
       return rtn;
     }
 
     computeRotateCoords(direction, wmax, hmax) {
-      let rtn = Object.create(this.figure.coords);
+      let rtn = this.figure.copyCoords(this.figure.coords);
       let w2 = Math.round(rtn.width / 2), h2 = Math.round(rtn.height / 2)
       rtn.x += w2 - h2;
       rtn.y += h2 - w2;
@@ -467,7 +468,7 @@ var bitedit = (function() {
     }
 
     computeRotateCoords(direction, wmax, hmax) {
-      return Object.create(this.figure.coords);
+      return this.figure.copyCoords(this.figure.coords);
     }
 
     createGrips() {
@@ -552,14 +553,14 @@ var bitedit = (function() {
     }
 
     computeMoveCoords(dx, dy) {
-      let rtn = Object.create(this.figure.coords);
+      let rtn = this.figure.copyCoords(this.figure.coords);
       rtn.x += dx;
       rtn.y += dy;
       return rtn;
     }
 
     computeRotateCoords(direction, wmax, hmax) {
-      return Object.create(this.figure.coords);
+      return this.figure.copyCoords(this.figure.coords);
     }
 
     gripCoords(id, coords) {
@@ -1579,7 +1580,7 @@ var fEquilateralTriangle = (function() {
     }
 
     computeMoveCoords(dx, dy) {
-      let rtn = this.figure.getCoords();
+      let rtn = this.figure.copyCoords(this.figure.coords);
       rtn.forEach(function(e) {
         e.x += dx;
         e.y += dy;
@@ -1608,7 +1609,7 @@ var fEquilateralTriangle = (function() {
     }
 
     computeEditCoords(id, dx, dy) {
-      let coords = this.figure.getCoords();
+      let coords = this.figure.copyCoords(this.figure.coords);
       if (this.enabled) {
         coords[id].x += dx;
         coords[id].y += dy;

@@ -733,14 +733,14 @@ var bitgen = (function() {
 
   class GridRectangle extends Rectangle {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, scope) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent);
+      this.createFigure(parent, bond, gridParent, scope);
     }
 
-    createFigure(parent, bond, gridParent) {
+    createFigure(parent, bond, gridParent, scope) {
       if (bond) {
-        this.figure = new bitgrid.Rectangle(parent, bond, gridParent);
+        this.figure = new bitgrid.Rectangle(parent, bond, gridParent, scope);
       }
     }
 
@@ -752,14 +752,14 @@ var bitgen = (function() {
 
   class GridCircle extends CircleEx {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, scope) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent);
+      this.createFigure(parent, bond, gridParent, scope);
     }
 
-    createFigure(parent, bond, gridParent) {
+    createFigure(parent, bond, gridParent, scope) {
       if (bond) {
-        this.figure = new bitgrid.Circle(parent, bond, gridParent);
+        this.figure = new bitgrid.Circle(parent, bond, gridParent, scope);
       }
     }
 
@@ -771,14 +771,14 @@ var bitgen = (function() {
 
   class GridHex extends HexEx {
     
-    constructor(parent, bond, gridParent) {
+    constructor(parent, bond, gridParent, scope) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent);
+      this.createFigure(parent, bond, gridParent, scope);
     }
 
-    createFigure(parent, bond, gridParent) {
+    createFigure(parent, bond, gridParent, scope) {
       if (bond) {
-        this.figure = new bitgrid.Hex(parent, bond, gridParent);
+        this.figure = new bitgrid.Hex(parent, bond, gridParent, scope);
       }
     }
 

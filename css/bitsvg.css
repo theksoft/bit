@@ -183,6 +183,7 @@
   stroke-width: 1px;
   fill: rgba(200,200,200,0.2);
   stroke: #111;
+  stroke-dasharray: 5;
 }
 
 /*
