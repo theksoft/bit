@@ -278,30 +278,31 @@ var bitgrid = (function() {
     draw(coords, patternCoords) {
       let elts = [];
       if (this.areValidCoords(coords)) {
-        let rcoords, pcoords, pprops, gprops, is, ix, mw, mh, computeGridProperties;
+        let rcoords, pcoords, pprops, gprops, is, ix, bOuter, mw, mh, computeGridProperties;
         rcoords = this.getBoundingRectCoords(coords);
         pcoords = this.pattern.copyCoords(patternCoords);
         pprops = getPatternProperties(this.pattern.getType(), pcoords);
         mw = this.parent.getAttribute('width');
         mh = this.parent.getAttribute('height');
-        computeGridProperties = (this.drawScope !== 'inner') ? computeOuterGridProperties : computeInnerGridProperties;
+        bOuter = (this.drawScope !== 'inner');
+        computeGridProperties = bOuter ? computeOuterGridProperties : computeInnerGridProperties;
         if (pprops.raw.overlap !== -pprops.area.width) {
           gprops = computeGridProperties(rcoords, pprops,  mw, mh);
           pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2);
+            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
           pcoords.y = gprops.ys + gprops.ix * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2);
+            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.tx1, gprops.tx2, !bOuter);
             pcoords.y += 2*(pprops.area.height + pprops.column.overlap);
           }
         } else {
           gprops = computeGridPropertiesEx(rcoords, pprops, computeGridProperties, mw, mh);
           pcoords.y = gprops.ys + pprops.offset.y;
           for (is = 0; is < gprops.ny; is++) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2);
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += pprops.area.height;
           }
         }
@@ -321,11 +322,11 @@ var bitgrid = (function() {
       return coords;
     }
 
-    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2, bInner) {
       console.log('drawRaw() not defined');
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
       console.log('drawRawEx() not defined');
     }
 
@@ -434,11 +435,11 @@ var bitgrid = (function() {
       return rtn;
     }
 
-    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -448,11 +449,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
-        if (this.isContained(coords, c)) {
+        if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
             elts.push(elt);
@@ -470,6 +471,18 @@ var bitgrid = (function() {
       } else {
         let pts = this.pattern.getPoints(pc);
         rtn = pts.reduce((a, e) => a && this.isPointWithin(gc, e.x, e.y), pts.length === 0 ? false : true);
+      }
+      return rtn;
+    }
+
+    intersect(gc, pc) {
+      let rtn, type;
+      type = this.pattern.getType();
+      if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
+        rtn = this.isPointWithin(gc, pc.x, pc.y, -pc.r) ? true : false;
+      } else {
+        let pts = this.pattern.getPoints(pc);
+        rtn = pts.reduce((a, e) => a || this.isPointWithin(gc, e.x, e.y), false);
       }
       return rtn;
     }
@@ -540,7 +553,7 @@ var bitgrid = (function() {
       return (0 < coords.width && 0 < coords.height);
     }
 
-    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2) {
+    drawRaw(coords, elts, c, start, n, dim, overlap, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
@@ -554,7 +567,7 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
