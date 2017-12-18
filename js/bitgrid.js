@@ -103,6 +103,10 @@ var bitgrid = (function() {
       if (aligns.ALT_HORIZONTAL === align) {
         props.column.offset = coords.r;
         props.column.overlap = -Math.round(coords.r * (2 - Math.sqrt(3)));
+      } else if (aligns.ALT_VERTICAL === align) {
+        props.raw.overlap = Math.round(2* coords.r * (Math.sqrt(3) - 1));
+        props.column.overlap = -coords.r;
+        props.column.offset = Math.round(coords.r * Math.sqrt(3));
       }
       break;
     case bitarea.types.RECTANGLE:
