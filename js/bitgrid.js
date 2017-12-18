@@ -103,6 +103,12 @@ var bitgrid = (function() {
       break;
     case bitarea.types.RECTANGLE:
     case bitarea.types.SQUARE:
+      props.area.width = coords.width;
+      props.area.height = coords.height;
+      if (aligns.ALT_HORIZONTAL === align) {
+        props.column.offset = Math.round(coords.width/2);
+      }
+      break;
     case bitarea.types.ELLIPSE:
     default:
       props.area.width = coords.width;
