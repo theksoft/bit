@@ -70,7 +70,7 @@ var bitgrid = (function() {
       props.area.height = coords.height;
       if (coords.tilt === bitarea.tilts.TOP || coords.tilt === bitarea.tilts.BOTTOM) {
         props.raw.overlap = -Math.round(coords.width/2);
-        props.column.offset = Math.round(coords.width/2);
+        props.column.offset = (aligns.STANDARD === align) ? Math.round(coords.width/2) : 0;
         props.raw.tilt = (coords.tilt === bitarea.tilts.TOP) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
       } else {
         props.column.offset = coords.width;
