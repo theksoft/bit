@@ -122,6 +122,13 @@ var bitgrid = (function() {
       }
       break;
     case bitarea.types.ELLIPSE:
+      props.area.width = coords.width;
+      props.area.height = coords.height;
+      if (aligns.ALT_HORIZONTAL === align) {
+        props.column.offset = Math.round(coords.width/2);
+        props.column.overlap = -Math.round(coords.height * (1 - Math.sqrt(3)/2));
+      }
+      break;
     default:
       props.area.width = coords.width;
       props.area.height = coords.height;
