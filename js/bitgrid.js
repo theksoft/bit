@@ -88,8 +88,14 @@ var bitgrid = (function() {
       props.raw.overlap = -coords.width;
       if (coords.tilt === bitarea.tilts.TOP || coords.tilt === bitarea.tilts.BOTTOM) {
         props.raw.tilt = (coords.tilt === bitarea.tilts.TOP) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
+        if (aligns.STANDARD !== align) {
+          props.raw.extraTilts = [bitarea.tilts.LEFT, bitarea.tilts.RIGHT];
+        }
       } else {
         props.raw.tilt = (coords.tilt === bitarea.tilts.LEFT) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+        if (aligns.STANDARD !== align) {
+          props.raw.extraTilts = [bitarea.tilts.TOP, bitarea.tilts.BOTTOM];
+        }
       }
       break;
     case bitarea.types.RHOMBUS:
@@ -229,7 +235,7 @@ var bitgrid = (function() {
   }
 
   function computeGridPropertiesEx(rectCoords, patternProps, fCompute, maxWidth, maxHeight) {
-    let gp, pp;
+    let gp, pp, snc;
     fCompute = fCompute || computeInnerGridProperties;
     pp = Object.create(patternProps);
     pp.raw = Object.create(patternProps.raw);
@@ -237,13 +243,23 @@ var bitgrid = (function() {
       throw new Error('column.overlap = ' + pp.column.overlap + ' => Unsupported figure properties for griding!');
     }
     pp.raw.overlap = 0;
-    pp.raw.tilt = pp.start.tilt;
     gp = fCompute(rectCoords, pp, maxWidth, maxHeight);
     if (gp.nx !== gp.nxx || gp.xs !== gp.xx) {
       throw new Error('Error when computing figure overlap by full width! => xs: ' + gp.xs + ' xx: ' + gp.xx + 'nx: ' + gp.nx + ' nxx: ' + gp.nxx);
     }
     gp.nx *= 2;
-    gp.ts2 = patternProps.raw.tilt;
+    snc = (patternProps.start.tilt === gp.ts1);
+    gp.ts1 = gp.tx1 = patternProps.start.tilt;
+    gp.ts2 = gp.tx2 = patternProps.raw.tilt;
+    if (patternProps.raw.extraTilts) {
+      if (snc) {
+        gp.tx1 = patternProps.raw.extraTilts[0];
+        gp.tx2 = patternProps.raw.extraTilts[1];
+      } else {
+        gp.ts1 = patternProps.raw.extraTilts[0];
+        gp.ts2 = patternProps.raw.extraTilts[1];
+      }
+    }
     pp.raw = null; pp = null;
     return gp;
   }
@@ -344,10 +360,15 @@ var bitgrid = (function() {
           }
         } else {
           gprops = computeGridPropertiesEx(rcoords, pprops, computeGridProperties, mw, mh);
-          pcoords.y = gprops.ys + pprops.offset.y;
-          for (is = 0; is < gprops.ny; is++) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
-            pcoords.y += pprops.area.height;
+          pcoords.y = gprops.ys + gprops.is * pprops.area.height + pprops.offset.y;
+          for (is = gprops.is; is < gprops.ny; is += 2) {
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2, gprops.tx1, gprops.tx2, !bOuter);
+            pcoords.y += 2*pprops.area.height;
+          }
+          pcoords.y = gprops.ys + gprops.ix * pprops.area.height + pprops.offset.y;
+          for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.tx1, gprops.tx2, gprops.ts1, gprops.ts2, !bOuter);
+            pcoords.y += 2*pprops.area.height;
           }
         }
       }
@@ -402,10 +423,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, tilt3, tilt4) {
+      let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
-        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        c.tilt = tilts[i%4];
         let elt = this.clonePattern(c);
         if (null !== elt) {
           elts.push(elt);
@@ -493,10 +515,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, tilt3, tilt4, bInner) {
+      let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
-        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        c.tilt = tilts[i%4];
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
@@ -544,7 +567,7 @@ var bitgrid = (function() {
 
   class Circle extends bitarea.CircleEx {
     
-    constructor(parent, bond, gridParent, drawScope, drawALign) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
@@ -611,10 +634,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, tilt3, tilt4, bInner) {
+      let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
-        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        c.tilt = tilts[i%4];
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
