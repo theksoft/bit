@@ -733,14 +733,14 @@ var bitgen = (function() {
 
   class GridRectangle extends Rectangle {
     
-    constructor(parent, bond, gridParent, scope) {
+    constructor(parent, bond, gridParent, scope, align) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent, scope);
+      this.createFigure(parent, bond, gridParent, scope, align);
     }
 
-    createFigure(parent, bond, gridParent, scope) {
+    createFigure(parent, bond, gridParent, scope, align) {
       if (bond) {
-        this.figure = new bitgrid.Rectangle(parent, bond, gridParent, scope);
+        this.figure = new bitgrid.Rectangle(parent, bond, gridParent, scope, align);
       }
     }
 
@@ -752,14 +752,14 @@ var bitgen = (function() {
 
   class GridCircle extends CircleEx {
     
-    constructor(parent, bond, gridParent, scope) {
+    constructor(parent, bond, gridParent, scope, align) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent, scope);
+      this.createFigure(parent, bond, gridParent, scope, align);
     }
 
-    createFigure(parent, bond, gridParent, scope) {
+    createFigure(parent, bond, gridParent, scope, align) {
       if (bond) {
-        this.figure = new bitgrid.Circle(parent, bond, gridParent, scope);
+        this.figure = new bitgrid.Circle(parent, bond, gridParent, scope, align);
       }
     }
 
@@ -771,14 +771,14 @@ var bitgen = (function() {
 
   class GridHex extends HexEx {
     
-    constructor(parent, bond, gridParent, scope) {
+    constructor(parent, bond, gridParent, scope, align) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent, scope);
+      this.createFigure(parent, bond, gridParent, scope, align);
     }
 
-    createFigure(parent, bond, gridParent, scope) {
+    createFigure(parent, bond, gridParent, scope, align) {
       if (bond) {
-        this.figure = new bitgrid.Hex(parent, bond, gridParent, scope);
+        this.figure = new bitgrid.Hex(parent, bond, gridParent, scope, align);
       }
     }
 
