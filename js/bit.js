@@ -90,9 +90,8 @@ var bit = (function() {
       reset : function() {
         context.filename = '';
         context.modified = false;
-        context.areas.forEach(function(area) {
-          area.remove();
-        });
+        context.areas.sort((a,b) => a.isGrid ? -1 : 1);
+        context.areas.forEach(e => e.remove());
         context.areas.splice(0, context.areas.length);
         return this;
       },
