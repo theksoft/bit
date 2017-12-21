@@ -127,6 +127,10 @@ var bitgrid = (function() {
       if (aligns.ALT_HORIZONTAL === align) {
         props.column.offset = Math.round(coords.width/2);
         props.column.overlap = -Math.round(coords.height * (1 - Math.sqrt(3)/2));
+      } else if (aligns.ALT_VERTICAL === align) {
+        props.raw.overlap = Math.round(coords.width * (Math.sqrt(3) - 1));
+        props.column.overlap = -Math.round(coords.height/2);
+        props.column.offset = Math.round(coords.width * Math.sqrt(3)/2);
       }
       break;
     default:
