@@ -44,10 +44,10 @@ var bitgrid = (function() {
 
   function getPatternProperties(type, coords, align) {
     let props = {
-      start   : { x       : coords.x, y      : coords.y,            tilt : coords.tilt },
+      start   : { x       : coords.x, y      : coords.y,              tilt                : coords.tilt },
       offset  : { x       : 0,        y      : 0 },
       area    : { width   : 0,        height : 0 },
-      raw     : { overlap : 0,        tilt   : bitarea.tilts.DEFAULT },
+      raw     : { overlap : 0,        tilt   : bitarea.tilts.DEFAULT, switchTiltOnNewRaw  : false },
       column  : { overlap : 0,        offset : 0 }
     };
     switch(type) {
@@ -76,6 +76,10 @@ var bitgrid = (function() {
         props.column.offset = coords.width;
         props.column.overlap = -Math.round(coords.height/2);
         props.raw.tilt = (coords.tilt === bitarea.tilts.LEFT) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+        if (aligns.STANDARD !== align) {
+          props.column.offset = 0;
+          props.raw.switchTiltOnNewRaw = true;
+        }
       }
       break;
     case bitarea.types.TRIANGLERCT:
@@ -165,7 +169,11 @@ var bitgrid = (function() {
     props.ys = start(patternProps.start.y, tmp, patternProps.area.height, patternProps.column.overlap);
     props.is = Math.abs(tmp % 2);
     props.ix = Math.abs((tmp + 1) % 2);
-
+    if (patternProps.raw.switchTiltOnNewRaw) {
+      props.ts1 = props.ts2 = patternProps.start.tilt;
+      props.tx1 = props.tx2 = patternProps.raw.tilt;
+    }
+    
     props.nx = count(rectCoords.x, rectCoords.width, props.xs, patternProps.area.width, patternProps.raw.overlap);
     props.nxx = count(rectCoords.x, rectCoords.width, props.xx, patternProps.area.width, patternProps.raw.overlap);
     props.ny = count(rectCoords.y, rectCoords.height, props.ys, patternProps.area.height, patternProps.column.overlap);
