@@ -1084,6 +1084,7 @@ var bit = (function() {
       reset : function() {
         toggleSelect(null);
         toggleState(doms.btnOuterGridScope, doms.btnInnerGridScope);
+        toggleState((aligns.ALT_VERTICAL === context.align) ? doms.btnAlt2GridAlign : doms.btnAltGridAlign, doms.btnStdGridAlign);
         gridDisable();
         context.mode = modes.NONE;
         context.scope = scopes.INNER;
