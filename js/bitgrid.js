@@ -7,41 +7,47 @@ var bitgrid = (function() {
   'use strict';
 
   const scopes = {
-    INNER         : 'inner',
-    OUTER         : 'outer'
+    INNER           : 'inner',
+    OUTER           : 'outer'
+  };
+
+  const aligns = {
+    STANDARD        : 'std',
+    ALT_HORIZONTAL  : 'hAlt',
+    ALT_VERTICAL    : 'vAlt'
   };
 
   const types = {
-    GRIDRECTANGLE : 'gridRectangle',
-    GRIDCIRCLE    : 'gridCircle',
-    GRIDHEX       : 'gridHex'
+    GRIDRECTANGLE   : 'gridRectangle',
+    GRIDCIRCLE      : 'gridCircle',
+    GRIDHEX         : 'gridHex'
   };
 
   const clsQualifiers = {
-    GRIDSCOPE     : 'scope',
-    GRIDBOND      : 'bond'
+    GRIDSCOPE       : 'scope',
+    GRIDBOND        : 'bond'
   }
 
   const factory = {
-    'rectangle'   : bitarea.Rectangle,
-    'square'      : bitarea.Square,
-    'rhombus'     : bitarea.Rhombus,
-    'circleCtr'   : bitarea.Circle,
-    'circleDtr'   : bitarea.CircleEx,
-    'ellipse'     : bitarea.Ellipse,
-    'triangleIsc' : bitarea.IsoscelesTriangle,
-    'triangleEql' : bitarea.EquilateralTriangle,
-    'triangleRct' : bitarea.RectangleTriangle,
-    'hexRct'      : bitarea.Hex,
-    'hexDtr'      : bitarea.HexEx
+    'rectangle'     : bitarea.Rectangle,
+    'square'        : bitarea.Square,
+    'rhombus'       : bitarea.Rhombus,
+    'circleCtr'     : bitarea.Circle,
+    'circleDtr'     : bitarea.CircleEx,
+    'ellipse'       : bitarea.Ellipse,
+    'triangleIsc'   : bitarea.IsoscelesTriangle,
+    'triangleEql'   : bitarea.EquilateralTriangle,
+    'triangleRct'   : bitarea.RectangleTriangle,
+    'hexRct'        : bitarea.Hex,
+    'hexDtr'        : bitarea.HexEx
   };
 
-  function getPatternProperties(type, coords) {
+  function getPatternProperties(type, coords, align) {
     let props = {
-      start   : { x       : coords.x, y      : coords.y,            tilt : coords.tilt },
+      start   : { x       : coords.x, y      : coords.y,              tilt                : coords.tilt },
       offset  : { x       : 0,        y      : 0 },
       area    : { width   : 0,        height : 0 },
-      raw     : { overlap : 0,        tilt   : bitarea.tilts.DEFAULT },
+      raw     : { overlap : 0,        tilt   : bitarea.tilts.DEFAULT, switchTiltOnNewRaw  : false },
       column  : { overlap : 0,        offset : 0 }
     };
     switch(type) {
@@ -64,12 +70,16 @@ var bitgrid = (function() {
       props.area.height = coords.height;
       if (coords.tilt === bitarea.tilts.TOP || coords.tilt === bitarea.tilts.BOTTOM) {
         props.raw.overlap = -Math.round(coords.width/2);
-        props.column.offset = Math.round(coords.width/2);
+        props.column.offset = (aligns.STANDARD === align) ? Math.round(coords.width/2) : 0;
         props.raw.tilt = (coords.tilt === bitarea.tilts.TOP) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
       } else {
         props.column.offset = coords.width;
         props.column.overlap = -Math.round(coords.height/2);
         props.raw.tilt = (coords.tilt === bitarea.tilts.LEFT) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+        if (aligns.STANDARD !== align) {
+          props.column.offset = 0;
+          props.raw.switchTiltOnNewRaw = true;
+        }
       }
       break;
     case bitarea.types.TRIANGLERCT:
@@ -78,8 +88,14 @@ var bitgrid = (function() {
       props.raw.overlap = -coords.width;
       if (coords.tilt === bitarea.tilts.TOP || coords.tilt === bitarea.tilts.BOTTOM) {
         props.raw.tilt = (coords.tilt === bitarea.tilts.TOP) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
+        if (aligns.STANDARD !== align) {
+          props.raw.extraTilts = [bitarea.tilts.LEFT, bitarea.tilts.RIGHT];
+        }
       } else {
         props.raw.tilt = (coords.tilt === bitarea.tilts.LEFT) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+        if (aligns.STANDARD !== align) {
+          props.raw.extraTilts = [bitarea.tilts.TOP, bitarea.tilts.BOTTOM];
+        }
       }
       break;
     case bitarea.types.RHOMBUS:
@@ -94,10 +110,39 @@ var bitgrid = (function() {
       props.start.y -= coords.r;
       props.offset.x = props.offset.y = coords.r;
       props.area.width = props.area.height = coords.r*2;
+      if (aligns.ALT_HORIZONTAL === align) {
+        props.column.offset = coords.r;
+        props.column.overlap = -Math.round(coords.r * (2 - Math.sqrt(3)));
+      } else if (aligns.ALT_VERTICAL === align) {
+        props.raw.overlap = Math.round(2* coords.r * (Math.sqrt(3) - 1));
+        props.column.overlap = -coords.r;
+        props.column.offset = Math.round(coords.r * Math.sqrt(3));
+      }
       break;
     case bitarea.types.RECTANGLE:
     case bitarea.types.SQUARE:
+      props.area.width = coords.width;
+      props.area.height = coords.height;
+      if (aligns.ALT_HORIZONTAL === align) {
+        props.column.offset = Math.round(coords.width/2);
+      } else if (aligns.ALT_VERTICAL === align) {
+        props.raw.overlap = coords.width;
+        props.column.overlap = -Math.round(coords.height/2);
+        props.column.offset = coords.width;
+      }
+      break;
     case bitarea.types.ELLIPSE:
+      props.area.width = coords.width;
+      props.area.height = coords.height;
+      if (aligns.ALT_HORIZONTAL === align) {
+        props.column.offset = Math.round(coords.width/2);
+        props.column.overlap = -Math.round(coords.height * (1 - Math.sqrt(3)/2));
+      } else if (aligns.ALT_VERTICAL === align) {
+        props.raw.overlap = Math.round(coords.width * (Math.sqrt(3) - 1));
+        props.column.overlap = -Math.round(coords.height/2);
+        props.column.offset = Math.round(coords.width * Math.sqrt(3)/2);
+      }
+      break;
     default:
       props.area.width = coords.width;
       props.area.height = coords.height;
@@ -130,7 +175,11 @@ var bitgrid = (function() {
     props.ys = start(patternProps.start.y, tmp, patternProps.area.height, patternProps.column.overlap);
     props.is = Math.abs(tmp % 2);
     props.ix = Math.abs((tmp + 1) % 2);
-
+    if (patternProps.raw.switchTiltOnNewRaw) {
+      props.ts1 = props.ts2 = patternProps.start.tilt;
+      props.tx1 = props.tx2 = patternProps.raw.tilt;
+    }
+    
     props.nx = count(rectCoords.x, rectCoords.width, props.xs, patternProps.area.width, patternProps.raw.overlap);
     props.nxx = count(rectCoords.x, rectCoords.width, props.xx, patternProps.area.width, patternProps.raw.overlap);
     props.ny = count(rectCoords.y, rectCoords.height, props.ys, patternProps.area.height, patternProps.column.overlap);
@@ -186,7 +235,7 @@ var bitgrid = (function() {
   }
 
   function computeGridPropertiesEx(rectCoords, patternProps, fCompute, maxWidth, maxHeight) {
-    let gp, pp;
+    let gp, pp, snc;
     fCompute = fCompute || computeInnerGridProperties;
     pp = Object.create(patternProps);
     pp.raw = Object.create(patternProps.raw);
@@ -194,13 +243,23 @@ var bitgrid = (function() {
       throw new Error('column.overlap = ' + pp.column.overlap + ' => Unsupported figure properties for griding!');
     }
     pp.raw.overlap = 0;
-    pp.raw.tilt = pp.start.tilt;
     gp = fCompute(rectCoords, pp, maxWidth, maxHeight);
     if (gp.nx !== gp.nxx || gp.xs !== gp.xx) {
       throw new Error('Error when computing figure overlap by full width! => xs: ' + gp.xs + ' xx: ' + gp.xx + 'nx: ' + gp.nx + ' nxx: ' + gp.nxx);
     }
     gp.nx *= 2;
-    gp.ts2 = patternProps.raw.tilt;
+    snc = (patternProps.start.tilt === gp.ts1);
+    gp.ts1 = gp.tx1 = patternProps.start.tilt;
+    gp.ts2 = gp.tx2 = patternProps.raw.tilt;
+    if (patternProps.raw.extraTilts) {
+      if (snc) {
+        gp.tx1 = patternProps.raw.extraTilts[0];
+        gp.tx2 = patternProps.raw.extraTilts[1];
+      } else {
+        gp.ts1 = patternProps.raw.extraTilts[0];
+        gp.ts2 = patternProps.raw.extraTilts[1];
+      }
+    }
     pp.raw = null; pp = null;
     return gp;
   }
@@ -243,7 +302,7 @@ var bitgrid = (function() {
 
   class FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope) {
+    constructor(parent, pattern, scope, drawScope, drawAlign) {
       if (this.constructor == FigureGrid.constructor) {
         throw new Error('Invalid Figure grid constructor call: abstract class');
       }
@@ -254,6 +313,7 @@ var bitgrid = (function() {
       this.parent.appendChild(this.group);
       this.scope = scope;
       this.drawScope = drawScope;
+      this.drawAlign = drawAlign;
     }
 
     clonePattern(coords) {
@@ -281,7 +341,7 @@ var bitgrid = (function() {
         let rcoords, pcoords, pprops, gprops, is, ix, bOuter, mw, mh, computeGridProperties;
         rcoords = this.getBoundingRectCoords(coords);
         pcoords = this.pattern.copyCoords(patternCoords);
-        pprops = getPatternProperties(this.pattern.getType(), pcoords);
+        pprops = getPatternProperties(this.pattern.getType(), pcoords, this.drawAlign);
         mw = this.parent.getAttribute('width');
         mh = this.parent.getAttribute('height');
         bOuter = (this.drawScope !== 'inner');
@@ -300,10 +360,15 @@ var bitgrid = (function() {
           }
         } else {
           gprops = computeGridPropertiesEx(rcoords, pprops, computeGridProperties, mw, mh);
-          pcoords.y = gprops.ys + pprops.offset.y;
-          for (is = 0; is < gprops.ny; is++) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
-            pcoords.y += pprops.area.height;
+          pcoords.y = gprops.ys + gprops.is * pprops.area.height + pprops.offset.y;
+          for (is = gprops.is; is < gprops.ny; is += 2) {
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.ts1, gprops.ts2, gprops.tx1, gprops.tx2, !bOuter);
+            pcoords.y += 2*pprops.area.height;
+          }
+          pcoords.y = gprops.ys + gprops.ix * pprops.area.height + pprops.offset.y;
+          for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.offset.x, gprops.tx1, gprops.tx2, gprops.ts1, gprops.ts2, !bOuter);
+            pcoords.y += 2*pprops.area.height;
           }
         }
       }
@@ -338,8 +403,8 @@ var bitgrid = (function() {
 
   class RectangleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope) {
-      super(parent, pattern, scope, drawScope);
+    constructor(parent, pattern, scope, drawScope, drawAlign) {
+      super(parent, pattern, scope, drawScope, drawAlign);
     }
 
     areValidCoords(coords) {
@@ -358,10 +423,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, tilt3, tilt4) {
+      let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
-        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        c.tilt = tilts[i%4];
         let elt = this.clonePattern(c);
         if (null !== elt) {
           elts.push(elt);
@@ -374,12 +440,12 @@ var bitgrid = (function() {
 
   class Rectangle extends bitarea.Rectangle {
     
-    constructor(parent, bond, gridParent, drawScope) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond, this, drawScope);
+      this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign);
     }
 
     bindTo(bond) {
@@ -419,8 +485,8 @@ var bitgrid = (function() {
 
   class CircleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope) {
-      super(parent, pattern, scope, drawScope);
+    constructor(parent, pattern, scope, drawScope, drawAlign) {
+      super(parent, pattern, scope, drawScope, drawAlign);
     }
 
     areValidCoords(coords) {
@@ -449,10 +515,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, tilt3, tilt4, bInner) {
+      let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
-        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        c.tilt = tilts[i%4];
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
@@ -500,12 +567,12 @@ var bitgrid = (function() {
 
   class Circle extends bitarea.CircleEx {
     
-    constructor(parent, bond, gridParent, drawScope) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond, this, drawScope);
+      this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign);
     }
 
     bindTo(bond) {
@@ -545,8 +612,8 @@ var bitgrid = (function() {
 
   class HexGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope) {
-      super(parent, pattern, scope, drawScope);
+    constructor(parent, pattern, scope, drawScope, drawALign) {
+      super(parent, pattern, scope, drawScope, drawALign);
     }
 
     areValidCoords(coords) {
@@ -567,10 +634,11 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, bInner) {
+    drawRawEx(coords, elts, c, start, n, dim, offset, tilt1, tilt2, tilt3, tilt4, bInner) {
+      let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
-        c.tilt = (i%2 === 0 ) ? tilt1 : tilt2;
+        c.tilt = tilts[i%4];
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
@@ -625,12 +693,12 @@ var bitgrid = (function() {
 
   class Hex extends bitarea.HexEx {
     
-    constructor(parent, bond, gridParent, drawScope) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDHEX;
       this.isGrid = true;
-      this.grid = new HexGrid(gridParent, bond, this, drawScope);
+      this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign);
     }
 
     bindTo(bond) {
@@ -665,7 +733,7 @@ var bitgrid = (function() {
   } // HEX GRID
 
   return {
-    scopes,
+    scopes, aligns,
     Rectangle, Circle, Hex
   };
 
