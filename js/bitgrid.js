@@ -302,7 +302,7 @@ var bitgrid = (function() {
 
   class FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign) {
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
       if (this.constructor == FigureGrid.constructor) {
         throw new Error('Invalid Figure grid constructor call: abstract class');
       }
@@ -314,6 +314,7 @@ var bitgrid = (function() {
       this.scope = scope;
       this.drawScope = drawScope;
       this.drawAlign = drawAlign;
+      this.gridSpace = gridSpace;
     }
 
     clonePattern(coords) {
@@ -347,7 +348,7 @@ var bitgrid = (function() {
         bOuter = (this.drawScope !== 'inner');
         computeGridProperties = bOuter ? computeOuterGridProperties : computeInnerGridProperties;
         if (pprops.raw.overlap !== -pprops.area.width) {
-          gprops = computeGridProperties(rcoords, pprops,  mw, mh);
+          gprops = computeGridProperties(rcoords, pprops, mw, mh);
           pcoords.y = gprops.ys + gprops.is * (pprops.area.height + pprops.column.overlap) + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
             this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, pprops.area.width, pprops.raw.overlap, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
@@ -395,6 +396,15 @@ var bitgrid = (function() {
       console.log('drawRawEx() not defined');
     }
 
+    getGridSpace() {
+      return this.gridSpace;
+    }
+
+    setGridSpace(v) {
+      this.gridSpace = v;
+      this.draw(this.scope.coords, this.pattern.coords);
+    }
+
   }
 
   /*
@@ -403,8 +413,8 @@ var bitgrid = (function() {
 
   class RectangleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign) {
-      super(parent, pattern, scope, drawScope, drawAlign);
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
+      super(parent, pattern, scope, drawScope, drawAlign, gridSpace);
     }
 
     areValidCoords(coords) {
@@ -440,12 +450,12 @@ var bitgrid = (function() {
 
   class Rectangle extends bitarea.Rectangle {
     
-    constructor(parent, bond, gridParent, drawScope, drawAlign) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign);
+      this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace);
     }
 
     bindTo(bond) {
@@ -477,6 +487,14 @@ var bitgrid = (function() {
       this.grid.draw(coords, patternCoords);
     }
 
+    getGridSpace() {
+      return this.grid.getGridSpace();
+    }
+
+    setGridSpace(v) {
+      this.grid.setGridSpace(v);
+    }
+
   } // RECTANGLE GRID
 
   /*
@@ -485,8 +503,8 @@ var bitgrid = (function() {
 
   class CircleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign) {
-      super(parent, pattern, scope, drawScope, drawAlign);
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
+      super(parent, pattern, scope, drawScope, drawAlign, gridSpace);
     }
 
     areValidCoords(coords) {
@@ -567,12 +585,12 @@ var bitgrid = (function() {
 
   class Circle extends bitarea.CircleEx {
     
-    constructor(parent, bond, gridParent, drawScope, drawAlign) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign);
+      this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace);
     }
 
     bindTo(bond) {
@@ -604,6 +622,14 @@ var bitgrid = (function() {
       this.grid.draw(coords, patternCoords);
     }
 
+    getGridSpace() {
+      return this.grid.getGridSpace();
+    }
+
+    setGridSpace(v) {
+      this.grid.setGridSpace(v);
+    }
+
   } // CIRCLE GRID
 
   /*
@@ -612,8 +638,8 @@ var bitgrid = (function() {
 
   class HexGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawALign) {
-      super(parent, pattern, scope, drawScope, drawALign);
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
+      super(parent, pattern, scope, drawScope, drawAlign, gridSpace);
     }
 
     areValidCoords(coords) {
@@ -693,12 +719,12 @@ var bitgrid = (function() {
 
   class Hex extends bitarea.HexEx {
     
-    constructor(parent, bond, gridParent, drawScope, drawAlign) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDHEX;
       this.isGrid = true;
-      this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign);
+      this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace);
     }
 
     bindTo(bond) {
@@ -728,6 +754,14 @@ var bitgrid = (function() {
     draw(coords, patternCoords) {
       super.draw(coords);
       this.grid.draw(coords, patternCoords);
+    }
+
+    getGridSpace() {
+      return this.grid.getGridSpace();
+    }
+
+    setGridSpace(v) {
+      this.grid.setGridSpace(v);
     }
 
   } // HEX GRID
