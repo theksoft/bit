@@ -283,10 +283,12 @@ var bitgrid = (function() {
     fCompute = fCompute || computeInnerGridProperties;
     pp = Object.create(patternProps);
     pp.raw = Object.create(patternProps.raw);
+    pp.area = Object.create(patternProps.area);
     if (pp.column.overlap !== 0) {
       throw new Error('column.overlap = ' + pp.column.overlap + ' => Unsupported figure properties for griding!');
     }
     pp.raw.overlap = 0;
+    pp.area.width += space;
     gp = fCompute(rectCoords, pp, space, maxWidth, maxHeight);
     if (gp.nx !== gp.nxx || gp.xs !== gp.xx) {
       throw new Error('Error when computing figure overlap by full width! => xs: ' + gp.xs + ' xx: ' + gp.xx + 'nx: ' + gp.nx + ' nxx: ' + gp.nxx);
@@ -304,7 +306,8 @@ var bitgrid = (function() {
         gp.ts2 = patternProps.raw.extraTilts[1];
       }
     }
-    pp.raw = null; pp = null;
+    gp.spc = space;
+    pp.area = pp.raw = null; pp = null;
     return gp;
   }
 
@@ -412,12 +415,12 @@ var bitgrid = (function() {
           gprops = computeGridPropertiesEx(rcoords, pprops, space, computeGridProperties, mw, mh);
           pcoords.y = gprops.ys + gprops.is * gprops.spy + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.ts1, gprops.ts2, gprops.tx1, gprops.tx2, !bOuter);
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.spc, gprops.ts1, gprops.ts2, gprops.tx1, gprops.tx2, !bOuter);
             pcoords.y += 2*gprops.spy;
           }
           pcoords.y = gprops.ys + gprops.ix * gprops.spy + pprops.offset.y;
           for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.tx1, gprops.tx2, gprops.ts1, gprops.ts2, !bOuter);
+            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.spc, gprops.tx1, gprops.tx2, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += 2*gprops.spy;
           }
         }
@@ -482,7 +485,7 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, tilt1, tilt2, tilt3, tilt4) {
+    drawRawEx(coords, elts, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4) {
       let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
@@ -491,7 +494,7 @@ var bitgrid = (function() {
         if (null !== elt) {
           elts.push(elt);
         }
-        c.x += (i%2 === 0) ? 0 : step;
+        c.x += (i%2 === 0) ? spc : step - spc;
       }
     }
 
@@ -582,7 +585,7 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, tilt1, tilt2, tilt3, tilt4, bInner) {
+    drawRawEx(coords, elts, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4, bInner) {
       let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
@@ -593,7 +596,7 @@ var bitgrid = (function() {
             elts.push(elt);
           }
         }
-        c.x += (i%2 === 0) ? 0 : step;
+        c.x += (i%2 === 0) ? spc : step - spc;
       }
     }
 
@@ -709,7 +712,7 @@ var bitgrid = (function() {
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, tilt1, tilt2, tilt3, tilt4, bInner) {
+    drawRawEx(coords, elts, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4, bInner) {
       let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
@@ -720,7 +723,7 @@ var bitgrid = (function() {
             elts.push(elt);
           }
         }
-        c.x += (i%2 === 0) ? 0 : step;
+        c.x += (i%2 === 0) ? spc : step - spc;
       }
     }
 
