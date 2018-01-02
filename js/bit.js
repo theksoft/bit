@@ -1106,10 +1106,10 @@ var bit = (function() {
 
     function onGridSpaceChange(e) {
       let v, d;
-      d = doms.inGridSpace.defaultValue;
+      d = parseInt(doms.inGridSpace.defaultValue);
       v = getGridSpace();
       if (d !== v) {
-        doms.inGridSpace.defaultValue = v;
+        doms.inGridSpace.defaultValue = v.toString();
         if (context.gSpace) {
           context.space = v;
         }
@@ -1117,8 +1117,8 @@ var bit = (function() {
       }
     }
 
-    var setGridSpace = (v) => doms.inGridSpace.value = doms.inGridSpace.defaultValue = v || context.space;
-    var getGridSpace = () => doms.inGridSpace.value;
+    var setGridSpace = (v) => doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v || context.space).toString();
+    var getGridSpace = () => parseInt(doms.inGridSpace.value);
 
     function gridParamsDisable() {
       doms.inGridSpace.disabled = true;
