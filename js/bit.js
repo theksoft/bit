@@ -145,10 +145,13 @@ var bit = (function() {
             false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
           return false;
         }
-        // TODO: Areas freezing
+        let i = context.areas.indexOf(grid);
+        grid.freezeTo(areas);
+        grid.remove();
+        context.areas.splice(i, 1);
+        areas.forEach(e => context.areas.push(e));
         context.modified = true;
-        return false;
-//        return true;
+        return true;
       }
 
     };
@@ -1729,6 +1732,7 @@ var bit = (function() {
               context.selected.empty();
               newSel.forEach(e => context.selected.add(e));
               updateGridMode();
+              newSel = null;
             }
           }
         }
