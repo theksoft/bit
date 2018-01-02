@@ -225,6 +225,26 @@ ul, ol {
   margin: 5px;
 }
 
+#tools hr {
+  background-color: #333;
+  height: 2px;
+  border: 0;
+  margin: 1em;
+}
+
+#tools label, #tools input {
+  font-size: 12px;
+  color: #ccc;
+  vertical-align: middle;
+  padding: 5px;
+}
+
+#grid-space {
+  background-color: #333;
+  border: 2px solid #555;
+  border-radius: 3px;
+}
+
 #tools img {
   background-color: #ccc;
   border: 2px solid #fff;
