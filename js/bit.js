@@ -887,7 +887,9 @@ var bit = (function() {
         btnOuterGridScope : $('grid-scope-outer'),
         btnStdGridAlign   : $('grid-algn-std'),
         btnAltGridAlign   : $('grid-algn-alt'),
-        btnAlt2GridAlign   : $('grid-algn-alt2')
+        btnAlt2GridAlign  : $('grid-algn-alt2'),
+
+        inGridSpace       : $('grid-space')
     };
 
     const modes = utils.fgTypes;
@@ -895,12 +897,15 @@ var bit = (function() {
     const aligns = bitgrid.aligns;
 
     var context = {
-        selected : null,
-        mode : modes.NONE,
+        handlers : null,
+        selected  : null,
+        mode      : modes.NONE,
         allowGrid : false,
-        freezed : true,
-        scope : scopes.INNER,
-        align : aligns.STANDARD
+        freezed   : true,
+        scope     : scopes.INNER,
+        align     : aligns.STANDARD,
+        space     : 0,
+        gSpace    : true 
     };
 
     function setDrawingMode() {
@@ -1074,9 +1079,83 @@ var bit = (function() {
       doms.btnAlt2GridAlign.classList.add(bitedit.clsStatus.DISABLED);
     }
 
+    function enableGridMode(obj) {
+      if (!context.allowGrid && canGrid(obj)) {
+        gridEnable();
+        context.allowGrid = true;
+      } else if (context.allowGrid && !canGrid(obj)) {
+        if (isGridDrawingModeSelected()) {
+          toggleSelect(null);
+          context.mode = modes.NONE;
+        }
+        gridDisable();
+        context.allowGrid = false;
+      }
+    }
+
+    function disableGridMode() {
+      if (context.allowGrid) {
+        if (isGridDrawingModeSelected()) {
+          toggleSelect(null);
+          context.mode = modes.NONE;
+        }
+        gridDisable();
+        context.allowGrid = false;
+      }
+    }
+
+    function onGridSpaceChange(e) {
+      let v, d;
+      d = parseInt(doms.inGridSpace.defaultValue);
+      v = getGridSpace();
+      if (d !== v) {
+        doms.inGridSpace.defaultValue = v.toString();
+        if (context.gSpace) {
+          context.space = v;
+        }
+        context.handlers.onGridSpaceChange(v);
+      }
+    }
+
+    var setGridSpace = (v) => doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v || context.space).toString();
+    var getGridSpace = () => parseInt(doms.inGridSpace.value);
+
+    function gridParamsDisable() {
+      doms.inGridSpace.disabled = true;
+    }
+
+    function gridParamsEnable() {
+      doms.inGridSpace.disabled = false;
+    }
+
+    function gridParamsReset() {
+      doms.inGridSpace.defaultValue = "0";
+      doms.inGridSpace.value = "0";
+      gridParamsDisable();
+    }
+
+    function enableGridParams(obj) {
+      if (context.allowGrid) {
+        context.gSpace = true;
+        setGridSpace();
+        gridParamsEnable();
+      } else if (obj.isGrid) {
+        context.gSpace = false;
+        setGridSpace(obj.getGridSpace());
+        gridParamsEnable();
+      }
+    }
+
+    function disableGridParams() {
+      context.gSpace = true;
+      setGridSpace();
+      gridParamsDisable();
+    }
+
     return {
 
-      init : function() {
+      init : function(handlers) {
+        context.handlers = handlers;
         this.release();
       },
 
@@ -1089,12 +1168,16 @@ var bit = (function() {
         context.scope = scopes.INNER;
         context.align = aligns.STANDARD;
         context.allowGrid = false;
+        gridParamsReset();
+        context.space = 0;
+        context.gSpace = true;
         this.release();
       },
 
       getDrawingMode : () => context.mode,
       getScopeMode : () => context.scope,
       getAlignMode : () => context.align,
+      getGridSpace,
       
       none : () => modes.NONE === context.mode ? true : false,
 
@@ -1120,6 +1203,7 @@ var bit = (function() {
         doms.btnStdGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
         doms.btnAltGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
         doms.btnAlt2GridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
+        doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
         context.freezed = true;
       },
 
@@ -1137,7 +1221,7 @@ var bit = (function() {
         doms.btnCircleDtr.addEventListener('click', onDrawModeSelect, false);
         doms.btnCircleCtr.addEventListener('click', onDrawModeSelect, false);
         doms.btnPolygon.addEventListener('click', onDrawModeSelect, false);
-        doms.btnGridHex.addEventListener('click', onDrawGridModeSelect, false);
+        doms.btnGridHex.addEventListener('click', onDrawGridModeSelect, false); 
         doms.btnGridRectangle.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnGridCircle.addEventListener('click', onDrawGridModeSelect, false);
         doms.btnInnerGridScope.addEventListener('click', onDrawGridScopeSelect, false);
@@ -1145,34 +1229,20 @@ var bit = (function() {
         doms.btnStdGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
         doms.btnAltGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
         doms.btnAlt2GridAlign.addEventListener('click', onDrawGridAlignSelect, false);
+        doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
         context.freezed = false;
       },
 
       isGridDrawingModeSelected,
 
-      enableGridMode : function(obj) {
-        if (!context.allowGrid && canGrid(obj)) {
-          gridEnable();
-          context.allowGrid = true;
-        } else if (context.allowGrid && !canGrid(obj)) {
-          if (isGridDrawingModeSelected()) {
-            toggleSelect(null);
-            context.mode = modes.NONE;
-          }
-          gridDisable();
-          context.allowGrid = false;
-        }
+      enableGridTools : function(obj) {
+        enableGridMode(obj);
+        enableGridParams(obj);
       },
 
-      disableGridMode : function() {
-        if (context.allowGrid) {
-          if (isGridDrawingModeSelected()) {
-            toggleSelect(null);
-            context.mode = modes.NONE;
-          }
-          gridDisable();
-          context.allowGrid = false;
-        }
+      disableGridTools() {
+        disableGridMode();
+        disableGridParams();
       },
 
       modes, scopes, aligns
@@ -1389,6 +1459,19 @@ var bit = (function() {
         return false;
       }
 
+    },
+
+    tlsHandlers = {
+
+      onGridSpaceChange : function(v) {
+        if (context.selected.length() === 1) {
+          let area = context.selected.get(0).getFigure();
+          if (area.isGrid) {
+            area.setGridSpace(v);
+          }
+        }
+      }
+
     };
 
     function isAreaSelected(area) {
@@ -1434,8 +1517,8 @@ var bit = (function() {
         if (!figGen) {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
-         }
-        return new figGen(parent, bond, gridParent, tls.getScopeMode(), tls.getAlignMode());
+        }
+        return new figGen(parent, bond, gridParent, tls.getScopeMode(), tls.getAlignMode(), tls.getGridSpace());
       }
 
       var handlers = {
@@ -1457,7 +1540,7 @@ var bit = (function() {
           }
           if (null == generator) {
             alert('Unable to draw selected area!');
-            tls.disableGridMode();
+            tls.disableGridTools();
             return false;
           }
           tls.freeze();
@@ -1481,7 +1564,7 @@ var bit = (function() {
             mdl.addArea(fig);
             context.selected.set(fig);
             tls.release();
-            tls.enableGridMode(fig);
+            tls.enableGridTools(fig);
             generator = null;
             break;
           case 'error':
@@ -1499,7 +1582,7 @@ var bit = (function() {
           generator.cancel();
           generator = null;
           tls.release();
-          tls.disableGridMode();
+          tls.disableGridTools();
         }
 
       };
@@ -1516,15 +1599,15 @@ var bit = (function() {
 
       function updateGridMode() {
         if (context.selected.length() === 1) {
-          tls.enableGridMode(context.selected.get(0).getFigure());
+          tls.enableGridTools(context.selected.get(0).getFigure());
         } else {
-          tls.disableGridMode();
+          tls.disableGridTools();
         }
       }
 
       function areaSelect(area) {
         context.selected.set(mdl.findArea(area));
-        tls.enableGridMode(context.selected.get(0).getFigure());
+        tls.enableGridTools(context.selected.get(0).getFigure());
       }
 
       function areaMultiSelect(area) {
@@ -1552,7 +1635,7 @@ var bit = (function() {
 
       function areaUnselectAll() {
         context.selected.empty();
-        tls.disableGridMode();
+        tls.disableGridTools();
       }
 
       var handlers = {
@@ -1619,7 +1702,7 @@ var bit = (function() {
           context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
           context.selected.forEach(e => mdl.removeArea(e.getFigure()));
           context.selected.empty();
-          tls.disableGridMode();
+          tls.disableGridTools();
         }
 
       };
@@ -1728,7 +1811,7 @@ var bit = (function() {
 
     mnu.init(mnuHandlers);
     wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers, editor.handlers);
-    tls.init();
+    tls.init(tlsHandlers);
 
   })(); /* APPLICATION MANAGEMENT */
 
