@@ -457,6 +457,22 @@ var bitgrid = (function() {
       this.draw(this.scope.coords, this.pattern.coords);
     }
 
+    freezeTo(areas, newParent) {
+      let generator = factory[this.pattern.getType()];
+      if (!generator) {
+        console.log('ERROR - Unsupported managing grid figure');
+        return;
+      }
+      this.elts.forEach(e => {
+        let c = e.getCoords();
+        if (!this.pattern.equalCoords(c)) {
+          let clone = new generator(newParent, false);
+          clone.setCoords(c);
+          clone.redraw();
+          areas.push(clone);
+        }
+      });
+    }
   }
 
   /*
@@ -545,6 +561,10 @@ var bitgrid = (function() {
 
     setGridSpace(v) {
       this.grid.setGridSpace(v);
+    }
+
+    freezeTo(areas) {
+      this.grid.freezeTo(areas, this.parent);
     }
 
   } // RECTANGLE GRID
@@ -682,6 +702,10 @@ var bitgrid = (function() {
       this.grid.setGridSpace(v);
     }
 
+    freezeTo(areas) {
+      this.grid.freezeTo(areas, this.parent);
+    }
+
   } // CIRCLE GRID
 
   /*
@@ -814,6 +838,10 @@ var bitgrid = (function() {
 
     setGridSpace(v) {
       this.grid.setGridSpace(v);
+    }
+
+    freezeTo(areas) {
+      this.grid.freezeTo(areas, this.parent);
     }
 
   } // HEX GRID
