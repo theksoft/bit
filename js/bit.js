@@ -17,7 +17,8 @@ var bit = (function() {
       UP    : 38,
       RIGHT : 39,
       DOWN  : 40,
-      a     : 65
+      a     : 65,
+      F8    : 119
     };
       
     const fgTypes = {
@@ -137,7 +138,18 @@ var bit = (function() {
         });
       },
 
-      forEachArea : f => context.areas.forEach(f)
+      forEachArea : f => context.areas.forEach(f),
+
+      freezeGridArea : function(grid, areas) {
+        if (!grid.isGrid ||
+            false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
+          return false;
+        }
+        // TODO: Areas freezing
+        context.modified = true;
+        return false;
+//        return true;
+      }
 
     };
 
@@ -539,6 +551,11 @@ var bit = (function() {
         case utils.keyCodes.a:
           if (ready() && utils.ctrlKey(e)) {
             context.aSel.onSelectAll();
+          }
+          break;
+        case utils.keyCodes.F8:
+          if (ready() && utils.ctrlKey(e)) {
+            context.aSel.onFreeze();
           }
           break;
         default:
@@ -1703,6 +1720,17 @@ var bit = (function() {
           context.selected.forEach(e => mdl.removeArea(e.getFigure()));
           context.selected.empty();
           tls.disableGridTools();
+        },
+
+        onFreeze : function() {
+          if (context.selected.length() === 1) {
+            let newSel = [];
+            if (mdl.freezeGridArea(context.selected.get(0).getFigure(), newSel)) {
+              context.selected.empty();
+              newSel.forEach(e => context.selected.add(e));
+              updateGridMode();
+            }
+          }
         }
 
       };
