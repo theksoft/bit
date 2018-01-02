@@ -212,50 +212,64 @@ var bitgrid = (function() {
 
   function computeOuterGridProperties(rectCoords, patternProps, space, maxWidth, maxHeight) {
 
-    var index = (g, p, fdim, fov) => Math.ceil((g-(p+fdim))/(fdim+fov));
-    var start = (p, i, fdim, fov) => p + i*(fdim+fov);
-    var extra = (p, fdim, fov) => p - (fdim+fov);
-    var count = (g, dim, s, fdim, fov) => Math.floor(((g + dim - s) / (fdim + fov)) + 1);
-    var last = (s, n, fdim, fov) => s + (n-1)*(fdim+fov);
+    var index = (g, p, fdim, step) => Math.ceil((g-(p+fdim))/step);
+    var start = (p, i, step) => p + i*step;
+    var extra = (p, step) => p - step;
+    var count = (g, dim, s, fdim, step) => Math.floor(((g + dim - s) / step) + 1);
+    var last = (s, n, step) => s + (n-1)*step;
 
-    let tmp, props = {};
-    tmp = index(rectCoords.x, patternProps.start.x, patternProps.area.width, patternProps.raw.overlap);
-    props.xs = start(patternProps.start.x, tmp, patternProps.area.width, patternProps.raw.overlap);
+    let tmp, stepx, stepy, exs, props = {};
+    stepx = patternProps.area.width + patternProps.raw.overlap + (0 >= patternProps.raw.overlap ? space : 2*space);
+    tmp = index(rectCoords.x, patternProps.start.x, patternProps.area.width, stepx);
+    props.xs = start(patternProps.start.x, tmp, stepx);
     if (props.xs < 0) {
-      props.xs += patternProps.area.width + patternProps.raw.overlap;
+      props.xs += stepx;
       tmp++;
     }
     [props.ts1, props.ts2] = (tmp%2 === 0) ? [patternProps.start.tilt, patternProps.raw.tilt] : [patternProps.raw.tilt, patternProps.start.tilt];
-    props.xx = props.xs + patternProps.column.offset;
+    exs = 0;
+    if(0 !== patternProps.column.offset) {
+      if (0 < patternProps.raw.overlap || patternProps.start.tilt !== patternProps.raw.tilt) {
+        exs = space;
+      } else {
+        exs = Math.round(space/2);
+      }
+    }
+    props.xx = props.xs + patternProps.column.offset + exs
     props.tx1 = props.ts1;
     props.tx2 = props.ts2;
-    tmp = extra(props.xx, patternProps.area.width, patternProps.raw.overlap);
+    tmp = extra(props.xx, stepx);
     if (tmp > 0 && tmp + patternProps.area.width >= rectCoords.x) {
       props.xx = tmp;
       props.tx1 = props.ts2;
       props.tx2 = props.ts1;
     }
-    props.spx = patternProps.area.width + patternProps.raw.overlap;
+    props.spx = stepx;
 
-    tmp = index(rectCoords.y, patternProps.start.y, patternProps.area.height, patternProps.column.overlap);
-    props.ys = start(patternProps.start.y, tmp, patternProps.area.height, patternProps.column.overlap);
+    stepy = patternProps.area.height + patternProps.column.overlap + (0 >= patternProps.raw.overlap ? space : Math.round(space/2));
+    tmp = index(rectCoords.y, patternProps.start.y, patternProps.area.height, stepy);
+    props.ys = start(patternProps.start.y, tmp, stepy);
     if (props.ys < 0) {
-      props.ys += patternProps.area.height + patternProps.column.overlap;
+      props.ys += stepy;
       tmp++;
     }
     props.is = Math.abs(tmp % 2);
     props.ix = Math.abs((tmp + 1) % 2);
-    props.spy = patternProps.area.height + patternProps.column.overlap;
+    if (patternProps.raw.switchTiltOnNewRaw) {
+      props.ts1 = props.ts2 = patternProps.start.tilt;
+      props.tx1 = props.tx2 = patternProps.raw.tilt;
+    }
+    props.spy = stepy;
 
-    props.nx = count(rectCoords.x, rectCoords.width, props.xs, patternProps.area.width, patternProps.raw.overlap);
-    props.nxx = count(rectCoords.x, rectCoords.width, props.xx, patternProps.area.width, patternProps.raw.overlap);
-    props.ny = count(rectCoords.y, rectCoords.height, props.ys, patternProps.area.height, patternProps.column.overlap);
+    props.nx = count(rectCoords.x, rectCoords.width, props.xs, patternProps.area.width, stepx);
+    props.nxx = count(rectCoords.x, rectCoords.width, props.xx, patternProps.area.width, stepx);
+    props.ny = count(rectCoords.y, rectCoords.height, props.ys, patternProps.area.height, stepy);
 
-    tmp = last(props.xs, props.nx, patternProps.area.width, patternProps.raw.overlap);
+    tmp = last(props.xs, props.nx, stepx);
     if (tmp >= rectCoords.x + rectCoords.width || tmp + patternProps.area.width > maxWidth ) props.nx--;
-    tmp = last(props.xx, props.nxx, patternProps.area.width, patternProps.raw.overlap);
+    tmp = last(props.xx, props.nxx, stepx);
     if (tmp >= rectCoords.x + rectCoords.width || tmp + patternProps.area.width > maxWidth ) props.nxx--;
-    tmp = last(props.ys, props.ny, patternProps.area.height, patternProps.column.overlap);
+    tmp = last(props.ys, props.ny, stepy);
     if (tmp >= rectCoords.y + rectCoords.height || tmp + patternProps.area.height > maxHeight ) props.ny--;
     return props;
   }
