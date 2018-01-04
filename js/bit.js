@@ -909,7 +909,8 @@ var bit = (function() {
         btnAltGridAlign   : $('grid-algn-alt'),
         btnAlt2GridAlign  : $('grid-algn-alt2'),
 
-        inGridSpace       : $('grid-space')
+        inGridSpace       : $('grid-space'),
+        btnShowOrder      : $('show-order')
     };
 
     const modes = utils.fgTypes;
@@ -917,15 +918,17 @@ var bit = (function() {
     const aligns = bitgrid.aligns;
 
     var context = {
-        handlers : null,
-        selected  : null,
-        mode      : modes.NONE,
-        allowGrid : false,
-        freezed   : true,
-        scope     : scopes.INNER,
-        align     : aligns.STANDARD,
-        space     : 0,
-        gSpace    : true 
+        handlers    : null,
+        selected    : null,
+        mode        : modes.NONE,
+        allowGrid   : false,
+        freezed     : true,
+        scope       : scopes.INNER,
+        align       : aligns.STANDARD,
+        space       : 0,
+        gSpace      : true,
+        allowOrder  : false,
+        showOrder   : false
     };
 
     function setDrawingMode() {
@@ -1142,15 +1145,21 @@ var bit = (function() {
 
     function gridParamsDisable() {
       doms.inGridSpace.disabled = true;
+      doms.btnShowOrder.classList.add(bitedit.clsStatus.DISABLED);
+      context.allowOrder = false;
     }
 
     function gridParamsEnable() {
       doms.inGridSpace.disabled = false;
+      doms.btnShowOrder.classList.remove(bitedit.clsStatus.DISABLED);
+      context.allowOrder = true;
     }
 
     function gridParamsReset() {
       doms.inGridSpace.defaultValue = "0";
       doms.inGridSpace.value = "0";
+      doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
+      context.showOrder = false;
       gridParamsDisable();
     }
 
@@ -1170,6 +1179,28 @@ var bit = (function() {
       context.gSpace = true;
       setGridSpace();
       gridParamsDisable();
+    }
+
+    function onShowOrder(e) {
+      if(context.allowOrder && !context.showOrder) {
+        doms.btnShowOrder.classList.add(bitedit.clsStatus.SELECTED);
+        doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
+        doms.btnShowOrder.addEventListener('mouseup', onHideOrder, false);
+        doms.btnShowOrder.addEventListener('mouseleave', onHideOrder, false);
+        context.handlers.onShowOrder(true);
+        context.showOrder = true;
+      }
+    }
+
+    function onHideOrder(e) {
+      if(context.allowOrder && context.showOrder) {
+        doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
+        doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
+        doms.btnShowOrder.removeEventListener('mouseup', onHideOrder, false);
+        doms.btnShowOrder.removeEventListener('mouseleave', onHideOrder, false);
+        context.handlers.onShowOrder(false);
+        context.showOrder = false;
+      }
     }
 
     return {
@@ -1224,6 +1255,7 @@ var bit = (function() {
         doms.btnAltGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
         doms.btnAlt2GridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
         doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
+        doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         context.freezed = true;
       },
 
@@ -1250,6 +1282,7 @@ var bit = (function() {
         doms.btnAltGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
         doms.btnAlt2GridAlign.addEventListener('click', onDrawGridAlignSelect, false);
         doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
+        doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         context.freezed = false;
       },
 
@@ -1439,7 +1472,8 @@ var bit = (function() {
     context = {
       selected : new bitedit.MultiSelector(),
       mover : new bitedit.Mover(),
-      editor : new bitedit.Editor()
+      editor : new bitedit.Editor(),
+      order : new bitedit.Order()
     },
 
     mnuHandlers = {
@@ -1489,6 +1523,19 @@ var bit = (function() {
           if (area.isGrid) {
             area.setGridSpace(v);
           }
+        }
+      },
+
+      onShowOrder : function(bShow) {
+        if (bShow) {
+          let list, fig;
+          if (context.selected.length() === 1) {
+            fig = context.selected.get(0).getFigure();
+            list = (fig.isGrid) ? [fig] : fig.getBonds();
+            list.forEach(g => context.order.display(g.getElts()));
+          }
+        } else {
+          context.order.hide();
         }
       }
 

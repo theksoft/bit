@@ -231,3 +231,12 @@
 #draw-area rect.grip.move {
   cursor : move;
 }
+
+#grid-area text.order {
+  font-family: arial;
+  font-style: normal;
+  font-weight: bolder;
+  font-size: 12px;
+  fill: #222;
+  stroke: none;
+}

@@ -368,6 +368,10 @@ var bitgrid = (function() {
       this.gridSpace = gridSpace;
     }
 
+    getElts() {
+      return this.elts.slice();
+    }
+
     clonePattern(coords) {
       let generator = factory[this.pattern.getType()];
       if (!generator) {
@@ -428,7 +432,8 @@ var bitgrid = (function() {
       this.elts.forEach(e => e.remove());
       this.elts.splice(0, this.elts.length);
       elts.forEach(e => this.elts.push(e));
-      elts.splice(0, this.elts.length);
+      elts.splice(0, elts.length);
+      this.reorder();
     }
 
     areValidCoords(coords) {
@@ -473,6 +478,18 @@ var bitgrid = (function() {
         }
       });
     }
+
+    reorder() {
+      this.elts.sort((a, b) => {
+        let rtn;
+        rtn = a.coords.y - b.coords.y;
+        if (0 === rtn) {
+          rtn = a.coords.x - b.coords.x;
+        }
+        return rtn;
+      });
+    }
+
   }
 
   /*
@@ -565,6 +582,10 @@ var bitgrid = (function() {
 
     freezeTo(areas) {
       this.grid.freezeTo(areas, this.parent);
+    }
+
+    getElts() {
+      return this.grid.getElts();
     }
 
   } // RECTANGLE GRID
@@ -706,6 +727,10 @@ var bitgrid = (function() {
       this.grid.freezeTo(areas, this.parent);
     }
 
+    getElts() {
+      return this.grid.getElts();
+    }
+
   } // CIRCLE GRID
 
   /*
@@ -842,6 +867,10 @@ var bitgrid = (function() {
 
     freezeTo(areas) {
       this.grid.freezeTo(areas, this.parent);
+    }
+
+    getElts() {
+      return this.grid.getElts();
     }
 
   } // HEX GRID
