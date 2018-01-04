@@ -916,6 +916,18 @@ var bit = (function() {
     const modes = utils.fgTypes;
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
+    const orders = bitgrid.orders;
+
+    const btnsOrder = [
+      { dom : $('grid-order-tl'), order : orders.TOPLEFT },
+      { dom : $('grid-order-lt'), order : orders.LEFTTOP },
+      { dom : $('grid-order-lb'), order : orders.LEFTBOTTOM },
+      { dom : $('grid-order-bl'), order : orders.BOTTOMLEFT },
+      { dom : $('grid-order-br'), order : orders.BOTTOMRIGHT },
+      { dom : $('grid-order-rb'), order : orders.RIGHTBOTTOM },
+      { dom : $('grid-order-rt'), order : orders.RIGHTTOP },
+      { dom : $('grid-order-tr'), order : orders.TOPRIGHT }
+    ];
 
     var context = {
         handlers    : null,
@@ -925,6 +937,7 @@ var bit = (function() {
         freezed     : true,
         scope       : scopes.INNER,
         align       : aligns.STANDARD,
+        order       : btnsOrder[0].order,
         space       : 0,
         gSpace      : true,
         allowOrder  : false,
@@ -1143,15 +1156,45 @@ var bit = (function() {
     var setGridSpace = (v) => doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v || context.space).toString();
     var getGridSpace = () => parseInt(doms.inGridSpace.value);
 
+    function onGridOrderChange(evt) {
+      evt.preventDefault();
+      if(context.allowOrder) {
+        let i, next;
+        i = btnsOrder.findIndex(e => (e.dom === evt.target));
+        if (i !== -1) {
+          next = btnsOrder[(i+1) % btnsOrder.length];
+          toggleState(evt.target, next.dom);
+          if (context.gSpace) {
+            context.order = next.order;
+          }
+          context.handlers.onGridOrderChange(next.order);
+        }
+      }
+    }
+
+    function setGridOrder(value) {
+      let v = value || context.order;
+      btnsOrder.forEach(e => {
+        if (e.dom.style.display !== 'none' && v !== e.order)
+          e.dom.style.display = 'none';
+        if (v === e.order)
+          e.dom.style.display = 'inline';
+      });
+    }
+
+    var getGridOrder = () => context.order;
+
     function gridParamsDisable() {
       doms.inGridSpace.disabled = true;
       doms.btnShowOrder.classList.add(bitedit.clsStatus.DISABLED);
+      btnsOrder.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
       context.allowOrder = false;
     }
 
     function gridParamsEnable() {
       doms.inGridSpace.disabled = false;
       doms.btnShowOrder.classList.remove(bitedit.clsStatus.DISABLED);
+      btnsOrder.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
       context.allowOrder = true;
     }
 
@@ -1160,6 +1203,7 @@ var bit = (function() {
       doms.inGridSpace.value = "0";
       doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
       context.showOrder = false;
+      setGridOrder(btnsOrder[0].order);
       gridParamsDisable();
     }
 
@@ -1167,10 +1211,12 @@ var bit = (function() {
       if (context.allowGrid) {
         context.gSpace = true;
         setGridSpace();
+        setGridOrder();
         gridParamsEnable();
       } else if (obj.isGrid) {
         context.gSpace = false;
         setGridSpace(obj.getGridSpace());
+        setGridOrder(obj.getGridOrder());
         gridParamsEnable();
       }
     }
@@ -1178,6 +1224,7 @@ var bit = (function() {
     function disableGridParams() {
       context.gSpace = true;
       setGridSpace();
+      setGridOrder();
       gridParamsDisable();
     }
 
@@ -1222,12 +1269,14 @@ var bit = (function() {
         gridParamsReset();
         context.space = 0;
         context.gSpace = true;
+        context.order = btnsOrder[0].order;
         this.release();
       },
 
       getDrawingMode : () => context.mode,
       getScopeMode : () => context.scope,
       getAlignMode : () => context.align,
+      getGridOrder,
       getGridSpace,
       
       none : () => modes.NONE === context.mode ? true : false,
@@ -1256,6 +1305,7 @@ var bit = (function() {
         doms.btnAlt2GridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
         doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
+        btnsOrder.forEach(e => e.dom.removeEventListener('click', onGridOrderChange, false));
         context.freezed = true;
       },
 
@@ -1283,6 +1333,7 @@ var bit = (function() {
         doms.btnAlt2GridAlign.addEventListener('click', onDrawGridAlignSelect, false);
         doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
+        btnsOrder.forEach(e => e.dom.addEventListener('click', onGridOrderChange, false));
         context.freezed = false;
       },
 
@@ -1298,7 +1349,7 @@ var bit = (function() {
         disableGridParams();
       },
 
-      modes, scopes, aligns
+      modes, scopes, aligns, orders
 
     };
 
@@ -1537,6 +1588,15 @@ var bit = (function() {
         } else {
           context.order.hide();
         }
+      },
+
+      onGridOrderChange : function(v) {
+        if (context.selected.length() === 1) {
+          let area = context.selected.get(0).getFigure();
+          if (area.isGrid) {
+            area.setGridOrder(v);
+          }
+        }
       }
 
     };
@@ -1585,7 +1645,7 @@ var bit = (function() {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
         }
-        return new figGen(parent, bond, gridParent, tls.getScopeMode(), tls.getAlignMode(), tls.getGridSpace());
+        return new figGen(parent, bond, gridParent, tls.getScopeMode(), tls.getAlignMode(), tls.getGridSpace(), tls.getGridOrder());
       }
 
       var handlers = {

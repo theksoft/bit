@@ -1959,11 +1959,12 @@ var fEquilateralTriangle = (function() {
     }
 
     display(areas) {
-      this.hide();
       if (0 < areas.length) {
-        this.parent = areas[0].parent;
-        this.group = document.createElementNS(NSSVG, 'g');
-        this.parent.appendChild(this.group);
+        if (null === this.parent) {
+          this.parent = areas[0].parent;
+          this.group = document.createElementNS(NSSVG, 'g');
+          this.parent.appendChild(this.group);
+        }
         areas.forEach((e,i) => {
           this.elts.push(new OrderDisplay(this.group, e, i+1));
         });

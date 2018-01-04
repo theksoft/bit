@@ -17,6 +17,17 @@ var bitgrid = (function() {
     ALT_VERTICAL    : 'vAlt'
   };
 
+  const orders = {
+    TOPLEFT         : 'TL',
+    LEFTTOP         : 'LT',
+    LEFTBOTTOM      : 'LB',
+    BOTTOMLEFT      : 'BL',
+    BOTTOMRIGHT     : 'BR',
+    RIGHTBOTTOM     : 'RB',
+    RIGHTTOP        : 'RT',
+    TOPRIGHT        : 'TR'
+  };
+
   const types = {
     GRIDRECTANGLE   : 'gridRectangle',
     GRIDCIRCLE      : 'gridCircle',
@@ -353,7 +364,7 @@ var bitgrid = (function() {
 
   class FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder) {
       if (this.constructor == FigureGrid.constructor) {
         throw new Error('Invalid Figure grid constructor call: abstract class');
       }
@@ -366,6 +377,7 @@ var bitgrid = (function() {
       this.drawScope = drawScope;
       this.drawAlign = drawAlign;
       this.gridSpace = gridSpace;
+      this.gridOrder = gridOrder;
     }
 
     getElts() {
@@ -462,6 +474,44 @@ var bitgrid = (function() {
       this.draw(this.scope.coords, this.pattern.coords);
     }
 
+    getGridOrder() {
+      return this.gridOrder;
+    }
+
+    setGridOrder(v) {
+      this.gridOrder = v;
+      this.reorder();
+    }
+
+    reorder() {
+      var dx = (a,b) => a.coords.x - b.coords.x;
+      var dy = (a,b) => a.coords.y - b.coords.y;
+      let m, s, fm, fs;
+
+      switch(this.gridOrder) {
+      case orders.TOPLEFT:      m = dy; s = dx; fm = fs = 1; break;
+      case orders.LEFTTOP:      m = dx; s = dy; fm = fs = 1; break;
+      case orders.LEFTBOTTOM:   m = dx; s = dy; fm = 1; fs = -1; break;
+      case orders.BOTTOMLEFT:   m = dy; s = dx; fm = -1; fs = 1; break;
+      case orders.BOTTOMRIGHT:  m = dy; s = dx; fm = fs = -1; break;
+      case orders.RIGHTBOTTOM:  m = dx; s = dy; fm = fs = -1; break;
+      case orders.RIGHTTOP:     m = dx; s = dy; fm = -1; fs = 1; break;
+      case orders.TOPRIGHT:     m = dy; s = dx; fm = 1; fs = -1; break;
+      default:                  m = dy; s = dx; fm = fs = 1;
+      }
+
+      this.elts.sort((a,b) => {
+        let rtn;
+        rtn = m(a,b)*fm;
+        if (Math.abs(rtn) < 2) rtn = 0; // Round errors esp. with odd space numbers
+        if (0 === rtn) {
+          rtn = s(a,b)*fs;
+          if (Math.abs(rtn) < 2) rtn = 0;
+        }
+        return rtn;
+      });
+    }
+
     freezeTo(areas, newParent) {
       let generator = factory[this.pattern.getType()];
       if (!generator) {
@@ -479,17 +529,6 @@ var bitgrid = (function() {
       });
     }
 
-    reorder() {
-      this.elts.sort((a, b) => {
-        let rtn;
-        rtn = a.coords.y - b.coords.y;
-        if (0 === rtn) {
-          rtn = a.coords.x - b.coords.x;
-        }
-        return rtn;
-      });
-    }
-
   }
 
   /*
@@ -498,8 +537,8 @@ var bitgrid = (function() {
 
   class RectangleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
-      super(parent, pattern, scope, drawScope, drawAlign, gridSpace);
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder) {
+      super(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     areValidCoords(coords) {
@@ -535,12 +574,12 @@ var bitgrid = (function() {
 
   class Rectangle extends bitarea.Rectangle {
     
-    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace, gridOrder) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace);
+      this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     bindTo(bond) {
@@ -580,6 +619,14 @@ var bitgrid = (function() {
       this.grid.setGridSpace(v);
     }
 
+    getGridOrder() {
+      return this.grid.getGridOrder();
+    }
+
+    setGridOrder(v) {
+      this.grid.setGridOrder(v);
+    }
+
     freezeTo(areas) {
       this.grid.freezeTo(areas, this.parent);
     }
@@ -596,8 +643,8 @@ var bitgrid = (function() {
 
   class CircleGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
-      super(parent, pattern, scope, drawScope, drawAlign, gridSpace);
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder) {
+      super(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     areValidCoords(coords) {
@@ -678,12 +725,12 @@ var bitgrid = (function() {
 
   class Circle extends bitarea.CircleEx {
     
-    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace, gridOrder) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace);
+      this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     bindTo(bond) {
@@ -723,6 +770,14 @@ var bitgrid = (function() {
       this.grid.setGridSpace(v);
     }
 
+    getGridOrder() {
+      return this.grid.getGridOrder();
+    }
+
+    setGridOrder(v) {
+      this.grid.setGridOrder(v);
+    }
+
     freezeTo(areas) {
       this.grid.freezeTo(areas, this.parent);
     }
@@ -739,8 +794,8 @@ var bitgrid = (function() {
 
   class HexGrid extends FigureGrid {
 
-    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace) {
-      super(parent, pattern, scope, drawScope, drawAlign, gridSpace);
+    constructor(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder) {
+      super(parent, pattern, scope, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     areValidCoords(coords) {
@@ -820,12 +875,12 @@ var bitgrid = (function() {
 
   class Hex extends bitarea.HexEx {
     
-    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace) {
+    constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace, gridOrder) {
       super(parent, false);
       this.bindTo(bond);
       this.type = types.GRIDHEX;
       this.isGrid = true;
-      this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace);
+      this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     bindTo(bond) {
@@ -865,6 +920,14 @@ var bitgrid = (function() {
       this.grid.setGridSpace(v);
     }
 
+    getGridOrder() {
+      return this.grid.getGridOrder();
+    }
+
+    setGridOrder(v) {
+      this.grid.setGridOrder(v);
+    }
+
     freezeTo(areas) {
       this.grid.freezeTo(areas, this.parent);
     }
@@ -876,7 +939,7 @@ var bitgrid = (function() {
   } // HEX GRID
 
   return {
-    scopes, aligns,
+    scopes, aligns, orders,
     Rectangle, Circle, Hex
   };
 
