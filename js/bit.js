@@ -885,38 +885,42 @@ var bit = (function() {
 
   var tls = (function() {
 
-    const doms = {
-        btnHexDtr         : $('hex-d'),
-        btnHexRct         : $('hex-r'),
-        btnRectangle      : $('rectangle'),
-        btnSquare         : $('square'),
-        btnRhombus        : $('rhombus'),
-        btnTriangleEql    : $('triangle-e'),
-        btnTriangleIsc    : $('triangle-i'),
-        btnTriangleRct    : $('triangle-r'),
-        btnEllipse        : $('ellipse'),
-        btnCircleDtr      : $('circle-d'),
-        btnCircleCtr      : $('circle-c'),
-        btnPolygon        : $('polygon'),
-
-        btnGridHex        : $('hex-grid'),
-        btnGridRectangle  : $('rectangle-grid'),
-        btnGridCircle     : $('circle-grid'),
-
-        btnInnerGridScope : $('grid-scope-inner'),
-        btnOuterGridScope : $('grid-scope-outer'),
-        btnStdGridAlign   : $('grid-algn-std'),
-        btnAltGridAlign   : $('grid-algn-alt'),
-        btnAlt2GridAlign  : $('grid-algn-alt2'),
-
-        inGridSpace       : $('grid-space'),
-        btnShowOrder      : $('show-order')
-    };
-
     const modes = utils.fgTypes;
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
     const orders = bitgrid.orders;
+
+    const btnsMode = [
+      { dom : $('hex-d'),       mode : modes.HEXDTR },
+      { dom : $('hex-r'),       mode : modes.HEXRCT },
+      { dom : $('rectangle'),   mode : modes.RECTANGLE },
+      { dom : $('square'),      mode : modes.SQUARE },
+      { dom : $('rhombus'),     mode : modes.RHOMBUS },
+      { dom : $('triangle-e'),  mode : modes.TRIANGLEEQL },
+      { dom : $('triangle-i'),  mode : modes.TRIANGLEISC },
+      { dom : $('triangle-r'),  mode : modes.TRIANGLERCT },
+      { dom : $('ellipse'),     mode : modes.ELLIPSE },
+      { dom : $('circle-d'),    mode : modes.CIRCLEDTR },
+      { dom : $('circle-c'),    mode : modes.CIRCLECTR },
+      { dom : $('polygon'),     mode : modes.POLYGON }
+    ];
+
+    const btnsGridMode = [
+      { dom : $('hex-grid'),        mode : modes.GRIDHEX },
+      { dom : $('rectangle-grid'),  mode : modes.GRIDRECTANGLE },
+      { dom : $('circle-grid'),     mode : modes.GRIDCIRCLE }
+    ];
+
+    const btnsGridScope = [
+      { dom : $('grid-scope-inner'),  scope : scopes.INNER },
+      { dom : $('grid-scope-outer'),  scope : scopes.OUTER }
+    ];
+    
+    const btnsGridAlign = [
+      { dom : $('grid-algn-std'),   align : aligns.STANDARD },
+      { dom : $('grid-algn-alt'),   align : aligns.ALT_HORIZONTAL },
+      { dom : $('grid-algn-alt2'),  align : aligns.ALT_VERTICAL }
+    ];
 
     const btnsOrder = [
       { dom : $('grid-order-tl'), order : orders.TOPLEFT },
@@ -929,14 +933,19 @@ var bit = (function() {
       { dom : $('grid-order-tr'), order : orders.TOPRIGHT }
     ];
 
+    const doms = {
+        inGridSpace       : $('grid-space'),
+        btnShowOrder      : $('show-order')
+    };
+
     var context = {
         handlers    : null,
         selected    : null,
         mode        : modes.NONE,
         allowGrid   : false,
         freezed     : true,
-        scope       : scopes.INNER,
-        align       : aligns.STANDARD,
+        scope       : btnsGridScope[0].scope,
+        align       : btnsGridAlign[0].align,
         order       : btnsOrder[0].order,
         space       : 0,
         gSpace      : true,
@@ -945,69 +954,13 @@ var bit = (function() {
     };
 
     function setDrawingMode() {
-      switch(context.selected) {
-      case doms.btnHexDtr:
-        context.mode = modes.HEXDTR;
-        break;
-      case doms.btnHexRct:
-        context.mode = modes.HEXRCT;
-        break;
-      case doms.btnRectangle:
-        context.mode = modes.RECTANGLE;
-        break;
-      case doms.btnSquare:
-        context.mode = modes.SQUARE;
-        break;
-      case doms.btnRhombus:
-        context.mode = modes.RHOMBUS;
-        break;
-      case doms.btnTriangleEql:
-        context.mode = modes.TRIANGLEEQL;
-        break;
-      case doms.btnTriangleIsc:
-        context.mode = modes.TRIANGLEISC;
-        break;
-      case doms.btnTriangleRct:
-        context.mode = modes.TRIANGLERCT;
-        break;
-      case doms.btnEllipse:
-        context.mode = modes.ELLIPSE;
-        break;
-      case doms.btnCircleDtr:
-        context.mode = modes.CIRCLEDTR;
-        break;
-      case doms.btnCircleCtr:
-        context.mode = modes.CIRCLECTR;
-        break;
-      case doms.btnPolygon:
-        context.mode = modes.POLYGON;
-        break;
-      case doms.btnGridRectangle:
-        context.mode = modes.GRIDRECTANGLE;
-        break;
-      case doms.btnGridCircle:
-        context.mode = modes.GRIDCIRCLE;
-        break;
-      case doms.btnGridHex:
-        context.mode = modes.GRIDHEX;
-        break;
-
-      default:
-        context.mode = modes.NONE;
-      }
+      let m = btnsMode.find(e => (context.selected === e.dom)) ||
+              btnsGridMode.find(e => (context.selected === e.dom)) ;
+      context.mode = (m && m.mode) || modes.NONE;
     }
 
     function isGridDrawingModeSelected() {
-      let rtn = false;
-      switch(context.selected) {
-      case doms.btnGridRectangle:
-      case doms.btnGridHex:
-      case doms.btnGridCircle:
-        rtn = true;
-        break;
-      default:
-      }
-      return rtn;
+      return (-1 !== btnsGridMode.findIndex(e => (context.selected === e.dom)));
     }
 
     function select(obj) {
@@ -1035,6 +988,17 @@ var bit = (function() {
       objTo.style.display = 'inline';
     }
 
+    function toggleTableState(table, target, action) {
+      let i, next;
+      i = table.findIndex(e => (e.dom === target));
+      if (i !== -1) {
+        action = action || (() => {});
+        next = table[(i+1) % table.length];
+        toggleState(target, next.dom);
+        action(next);
+      }
+    }
+
     function onDrawModeSelect(evt) {
       evt.preventDefault();
       toggleSelect(evt.target);
@@ -1051,31 +1015,14 @@ var bit = (function() {
 
     function onDrawGridScopeSelect(evt) {
       evt.preventDefault();
-      if(context.allowGrid) {
-        if (evt.target === doms.btnInnerGridScope) {
-          toggleState(doms.btnInnerGridScope, doms.btnOuterGridScope);
-          context.scope = scopes.OUTER;
-        } else {
-          toggleState(doms.btnOuterGridScope, doms.btnInnerGridScope);
-          context.scope = scopes.INNER;
-        }
-      }
+      if(context.allowGrid)
+        toggleTableState(btnsGridScope, evt.target, e => context.scope = e.scope);
     }
 
     function onDrawGridAlignSelect(evt) {
       evt.preventDefault();
-      if(context.allowGrid) {
-        if (evt.target === doms.btnStdGridAlign) {
-          toggleState(doms.btnStdGridAlign, doms.btnAltGridAlign);
-          context.align = aligns.ALT_HORIZONTAL;
-        } else if (evt.target === doms.btnAltGridAlign) {
-          toggleState(doms.btnAltGridAlign, doms.btnAlt2GridAlign);
-          context.align = aligns.ALT_VERTICAL;
-        } else {
-          toggleState(doms.btnAlt2GridAlign, doms.btnStdGridAlign);
-          context.align = aligns.STANDARD;
-        }
-      }
+      if(context.allowGrid)
+        toggleTableState(btnsGridAlign, evt.target, e => context.align = e.align);
     }
 
     function canGrid(obj) {
@@ -1094,25 +1041,15 @@ var bit = (function() {
     }
 
     function gridEnable() {
-      doms.btnGridHex.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnGridRectangle.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnGridCircle.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnInnerGridScope.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnOuterGridScope.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnStdGridAlign.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnAltGridAlign.classList.remove(bitedit.clsStatus.DISABLED);
-      doms.btnAlt2GridAlign.classList.remove(bitedit.clsStatus.DISABLED);
+      btnsGridMode.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
+      btnsGridScope.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
+      btnsGridAlign.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
     }
 
     function gridDisable() {
-      doms.btnGridHex.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnGridRectangle.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnGridCircle.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnInnerGridScope.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnOuterGridScope.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnStdGridAlign.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnAltGridAlign.classList.add(bitedit.clsStatus.DISABLED);
-      doms.btnAlt2GridAlign.classList.add(bitedit.clsStatus.DISABLED);
+      btnsGridMode.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
+      btnsGridScope.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
+      btnsGridAlign.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
     }
 
     function enableGridMode(obj) {
@@ -1159,16 +1096,11 @@ var bit = (function() {
     function onGridOrderChange(evt) {
       evt.preventDefault();
       if(context.allowOrder) {
-        let i, next;
-        i = btnsOrder.findIndex(e => (e.dom === evt.target));
-        if (i !== -1) {
-          next = btnsOrder[(i+1) % btnsOrder.length];
-          toggleState(evt.target, next.dom);
-          if (context.gSpace) {
-            context.order = next.order;
-          }
-          context.handlers.onGridOrderChange(next.order);
-        }
+        toggleTableState(btnsOrder, evt.target, e => {
+          if (context.gSpace)
+            context.order = e.order;
+          context.handlers.onGridOrderChange(e.order);
+        });
       }
     }
 
@@ -1259,12 +1191,12 @@ var bit = (function() {
 
       reset : function() {
         toggleSelect(null);
-        toggleState(doms.btnOuterGridScope, doms.btnInnerGridScope);
-        toggleState((aligns.ALT_VERTICAL === context.align) ? doms.btnAlt2GridAlign : doms.btnAltGridAlign, doms.btnStdGridAlign);
+        toggleState(btnsGridScope[1].dom, btnsGridScope[0].dom);
+        toggleState((btnsGridAlign[2].align === context.align) ? btnsGridAlign[2].dom : btnsGridAlign[1].dom, btnsGridAlign[0].dom);
         gridDisable();
         context.mode = modes.NONE;
-        context.scope = scopes.INNER;
-        context.align = aligns.STANDARD;
+        context.scope = btnsGridScope[0].scope;
+        context.align = btnsGridAlign[0].align;
         context.allowGrid = false;
         gridParamsReset();
         context.space = 0;
@@ -1283,26 +1215,10 @@ var bit = (function() {
 
       freeze : function() {
         if (context.freezed) return;
-        doms.btnHexDtr.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnHexRct.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnRectangle.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnSquare.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnRhombus.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnTriangleEql.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnTriangleIsc.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnTriangleRct.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnEllipse.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnCircleDtr.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnCircleCtr.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnPolygon.removeEventListener('click', onDrawModeSelect, false);
-        doms.btnGridHex.removeEventListener('click', onDrawGridModeSelect, false);
-        doms.btnGridRectangle.removeEventListener('click', onDrawGridModeSelect, false);
-        doms.btnGridCircle.removeEventListener('click', onDrawGridModeSelect, false);
-        doms.btnInnerGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
-        doms.btnOuterGridScope.removeEventListener('click', onDrawGridScopeSelect, false);
-        doms.btnStdGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
-        doms.btnAltGridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
-        doms.btnAlt2GridAlign.removeEventListener('click', onDrawGridAlignSelect, false);
+        btnsMode.forEach(e => e.dom.removeEventListener('click', onDrawModeSelect, false));
+        btnsGridMode.forEach(e => e.dom.removeEventListener('click', onDrawGridModeSelect, false));
+        btnsGridScope.forEach(e => e.dom.removeEventListener('click', onDrawGridScopeSelect, false));
+        btnsGridAlign.forEach(e => e.dom.removeEventListener('click', onDrawGridAlignSelect, false));
         doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         btnsOrder.forEach(e => e.dom.removeEventListener('click', onGridOrderChange, false));
@@ -1311,26 +1227,10 @@ var bit = (function() {
 
       release : function() {
         if (!context.freezed) return;
-        doms.btnHexDtr.addEventListener('click', onDrawModeSelect, false);
-        doms.btnHexRct.addEventListener('click', onDrawModeSelect, false);
-        doms.btnRectangle.addEventListener('click', onDrawModeSelect, false);
-        doms.btnSquare.addEventListener('click', onDrawModeSelect, false);
-        doms.btnRhombus.addEventListener('click', onDrawModeSelect, false);
-        doms.btnTriangleEql.addEventListener('click', onDrawModeSelect, false);
-        doms.btnTriangleIsc.addEventListener('click', onDrawModeSelect, false);
-        doms.btnTriangleRct.addEventListener('click', onDrawModeSelect, false);
-        doms.btnEllipse.addEventListener('click', onDrawModeSelect, false);
-        doms.btnCircleDtr.addEventListener('click', onDrawModeSelect, false);
-        doms.btnCircleCtr.addEventListener('click', onDrawModeSelect, false);
-        doms.btnPolygon.addEventListener('click', onDrawModeSelect, false);
-        doms.btnGridHex.addEventListener('click', onDrawGridModeSelect, false); 
-        doms.btnGridRectangle.addEventListener('click', onDrawGridModeSelect, false);
-        doms.btnGridCircle.addEventListener('click', onDrawGridModeSelect, false);
-        doms.btnInnerGridScope.addEventListener('click', onDrawGridScopeSelect, false);
-        doms.btnOuterGridScope.addEventListener('click', onDrawGridScopeSelect, false);
-        doms.btnStdGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
-        doms.btnAltGridAlign.addEventListener('click', onDrawGridAlignSelect, false);
-        doms.btnAlt2GridAlign.addEventListener('click', onDrawGridAlignSelect, false);
+        btnsMode.forEach(e => e.dom.addEventListener('click', onDrawModeSelect, false));
+        btnsGridMode.forEach(e => e.dom.addEventListener('click', onDrawGridModeSelect, false));
+        btnsGridScope.forEach(e => e.dom.addEventListener('click', onDrawGridScopeSelect, false));
+        btnsGridAlign.forEach(e => e.dom.addEventListener('click', onDrawGridAlignSelect, false));
         doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         btnsOrder.forEach(e => e.dom.addEventListener('click', onGridOrderChange, false));
