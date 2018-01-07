@@ -1012,12 +1012,6 @@ var bit = (function() {
       }
     }
 
-    function onDrawGridScopeSelect(evt) {
-      evt.preventDefault();
-      if(context.allowGrid)
-        toggleTableState(btnsGridScope, evt.target, e => context.scope = e.scope);
-    }
-
     function onDrawGridAlignSelect(evt) {
       evt.preventDefault();
       if(context.allowGrid)
@@ -1041,13 +1035,11 @@ var bit = (function() {
 
     function gridEnable() {
       btnsGridMode.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
-      btnsGridScope.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
       btnsGridAlign.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
     }
 
     function gridDisable() {
       btnsGridMode.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
-      btnsGridScope.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
       btnsGridAlign.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
     }
 
@@ -1075,6 +1067,27 @@ var bit = (function() {
         context.allowGrid = false;
       }
     }
+
+    function onGridScopeChange(evt) {
+      evt.preventDefault();
+      toggleTableState(btnsGridScope, evt.target, e => {
+        if (context.gParam)
+          context.scope = e.scope;
+        context.handlers.onGridScopeChange(e.scope);
+      });
+    }
+
+    function setGridScope(value) {
+      let v = value || context.scope;
+      btnsGridScope.forEach(e => {
+        if (e.dom.style.display !== 'none' && v !== e.scope)
+          e.dom.style.display = 'none';
+        if (v === e.scope)
+          e.dom.style.display = 'inline';
+      });
+    }
+
+    var getGridScope = () => context.scope;
 
     function onGridSpaceChange(e) {
       let v, d;
@@ -1114,6 +1127,7 @@ var bit = (function() {
     var getGridOrder = () => context.order;
 
     function gridParamsReset() {
+      toggleState(btnsGridScope[1].dom, btnsGridScope[0].dom);
       doms.inGridSpace.defaultValue = "0";
       doms.inGridSpace.value = "0";
       doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
@@ -1146,10 +1160,12 @@ var bit = (function() {
     function updateGridParams(obj) {
       if (obj && obj.isGrid) {
         context.gParam = false;
+        setGridScope(obj.getGridScope());
         setGridSpace(obj.getGridSpace());
         setGridOrder(obj.getGridOrder());
       } else {
         context.gParam = true;
+        setGridScope();
         setGridSpace();
         setGridOrder();
       }
@@ -1164,14 +1180,13 @@ var bit = (function() {
 
       reset : function() {
         toggleSelect(null);
-        toggleState(btnsGridScope[1].dom, btnsGridScope[0].dom);
         toggleState((btnsGridAlign[2].align === context.align) ? btnsGridAlign[2].dom : btnsGridAlign[1].dom, btnsGridAlign[0].dom);
         gridDisable();
         context.mode = modes.NONE;
-        context.scope = btnsGridScope[0].scope;
         context.align = btnsGridAlign[0].align;
         context.allowGrid = false;
         gridParamsReset();
+        context.scope = btnsGridScope[0].scope;
         context.gParam = true;
         context.space = 0;
         context.order = btnsOrder[0].order;
@@ -1179,7 +1194,7 @@ var bit = (function() {
       },
 
       getDrawingMode : () => context.mode,
-      getScopeMode : () => context.scope,
+      getGridScope,
       getAlignMode : () => context.align,
       getGridOrder,
       getGridSpace,
@@ -1190,7 +1205,7 @@ var bit = (function() {
         if (context.freezed) return;
         btnsMode.forEach(e => e.dom.removeEventListener('click', onDrawModeSelect, false));
         btnsGridMode.forEach(e => e.dom.removeEventListener('click', onDrawGridModeSelect, false));
-        btnsGridScope.forEach(e => e.dom.removeEventListener('click', onDrawGridScopeSelect, false));
+        btnsGridScope.forEach(e => e.dom.removeEventListener('click', onGridScopeChange, false));
         btnsGridAlign.forEach(e => e.dom.removeEventListener('click', onDrawGridAlignSelect, false));
         doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
@@ -1202,7 +1217,7 @@ var bit = (function() {
         if (!context.freezed) return;
         btnsMode.forEach(e => e.dom.addEventListener('click', onDrawModeSelect, false));
         btnsGridMode.forEach(e => e.dom.addEventListener('click', onDrawGridModeSelect, false));
-        btnsGridScope.forEach(e => e.dom.addEventListener('click', onDrawGridScopeSelect, false));
+        btnsGridScope.forEach(e => e.dom.addEventListener('click', onGridScopeChange, false));
         btnsGridAlign.forEach(e => e.dom.addEventListener('click', onDrawGridAlignSelect, false));
         doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
@@ -1441,6 +1456,15 @@ var bit = (function() {
 
     tlsHandlers = {
 
+      onGridScopeChange : function(v) {
+        if (context.selected.length() === 1) {
+          let area = context.selected.get(0).getFigure();
+          if (area.isGrid) {
+            area.setGridScope(v);
+          }
+        }
+      },
+
       onGridSpaceChange : function(v) {
         if (context.selected.length() === 1) {
           let area = context.selected.get(0).getFigure();
@@ -1518,7 +1542,7 @@ var bit = (function() {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
         }
-        return new figGen(parent, bond, gridParent, tls.getScopeMode(), tls.getAlignMode(), tls.getGridSpace(), tls.getGridOrder());
+        return new figGen(parent, bond, gridParent, tls.getGridScope(), tls.getAlignMode(), tls.getGridSpace(), tls.getGridOrder());
       }
 
       var handlers = {

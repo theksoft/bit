@@ -465,6 +465,15 @@ var bitgrid = (function() {
       console.log('drawRawEx() not defined');
     }
 
+    getGridScope() {
+      return this.drawScope;
+    }
+
+    setGridScope(v) {
+      this.drawScope = v;
+      this.draw(this.scope.coords, this.pattern.coords);
+    }
+
     getGridSpace() {
       return this.gridSpace;
     }
@@ -609,6 +618,14 @@ var bitgrid = (function() {
     draw(coords, patternCoords) {
       super.draw(coords);
       this.grid.draw(coords, patternCoords);
+    }
+
+    getGridScope() {
+      return this.grid.getGridScope();
+    }
+
+    setGridScope(v) {
+      this.grid.setGridScope(v);
     }
 
     getGridSpace() {
@@ -762,6 +779,14 @@ var bitgrid = (function() {
       this.grid.draw(coords, patternCoords);
     }
 
+    getGridScope() {
+      return this.grid.getGridScope();
+    }
+
+    setGridScope(v) {
+      this.grid.setGridScope(v);
+    }
+
     getGridSpace() {
       return this.grid.getGridSpace();
     }
@@ -910,6 +935,14 @@ var bitgrid = (function() {
     draw(coords, patternCoords) {
       super.draw(coords);
       this.grid.draw(coords, patternCoords);
+    }
+
+    getGridScope() {
+      return this.grid.getGridScope();
+    }
+
+    setGridScope(v) {
+      this.grid.setGridScope(v);
     }
 
     getGridSpace() {
