@@ -1115,7 +1115,9 @@ var bit = (function() {
       }
     }
 
-    var setGridSpace = (v) => doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v || context.space).toString();
+    var setGridSpace = (v) => { 
+      doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v === 0) ? "0" : (v || context.space).toString();
+    }
     var getGridSpace = () => parseInt(doms.inGridSpace.value);
 
     function onGridOrderChange(evt) {
