@@ -474,6 +474,15 @@ var bitgrid = (function() {
       this.draw(this.scope.coords, this.pattern.coords);
     }
 
+    getGridAlign() {
+      return this.drawAlign;
+    }
+
+    setGridAlign(v) {
+      this.drawAlign = v;
+      this.draw(this.scope.coords, this.pattern.coords);
+    }
+
     getGridSpace() {
       return this.gridSpace;
     }
@@ -626,6 +635,14 @@ var bitgrid = (function() {
 
     setGridScope(v) {
       this.grid.setGridScope(v);
+    }
+
+    getGridAlign() {
+      return this.grid.getGridAlign();
+    }
+
+    setGridAlign(v) {
+      this.grid.setGridAlign(v);
     }
 
     getGridSpace() {
@@ -787,6 +804,14 @@ var bitgrid = (function() {
       this.grid.setGridScope(v);
     }
 
+    getGridAlign() {
+      return this.grid.getGridAlign();
+    }
+
+    setGridAlign(v) {
+      this.grid.setGridAlign(v);
+    }
+
     getGridSpace() {
       return this.grid.getGridSpace();
     }
@@ -943,6 +968,14 @@ var bitgrid = (function() {
 
     setGridScope(v) {
       this.grid.setGridScope(v);
+    }
+
+    getGridAlign() {
+      return this.grid.getGridAlign();
+    }
+
+    setGridAlign(v) {
+      this.grid.setGridAlign(v);
     }
 
     getGridSpace() {
