@@ -891,24 +891,24 @@ var bit = (function() {
     const orders = bitgrid.orders;
 
     const btnsMode = [
-      { dom : $('hex-d'),       mode : modes.HEXDTR },
-      { dom : $('hex-r'),       mode : modes.HEXRCT },
-      { dom : $('rectangle'),   mode : modes.RECTANGLE },
-      { dom : $('square'),      mode : modes.SQUARE },
-      { dom : $('rhombus'),     mode : modes.RHOMBUS },
-      { dom : $('triangle-e'),  mode : modes.TRIANGLEEQL },
-      { dom : $('triangle-i'),  mode : modes.TRIANGLEISC },
-      { dom : $('triangle-r'),  mode : modes.TRIANGLERCT },
-      { dom : $('ellipse'),     mode : modes.ELLIPSE },
-      { dom : $('circle-d'),    mode : modes.CIRCLEDTR },
-      { dom : $('circle-c'),    mode : modes.CIRCLECTR },
-      { dom : $('polygon'),     mode : modes.POLYGON }
+      { dom : $('hex-d'),             mode : modes.HEXDTR },
+      { dom : $('hex-r'),             mode : modes.HEXRCT },
+      { dom : $('rectangle'),         mode : modes.RECTANGLE },
+      { dom : $('square'),            mode : modes.SQUARE },
+      { dom : $('rhombus'),           mode : modes.RHOMBUS },
+      { dom : $('triangle-e'),        mode : modes.TRIANGLEEQL },
+      { dom : $('triangle-i'),        mode : modes.TRIANGLEISC },
+      { dom : $('triangle-r'),        mode : modes.TRIANGLERCT },
+      { dom : $('ellipse'),           mode : modes.ELLIPSE },
+      { dom : $('circle-d'),          mode : modes.CIRCLEDTR },
+      { dom : $('circle-c'),          mode : modes.CIRCLECTR },
+      { dom : $('polygon'),           mode : modes.POLYGON }
     ];
 
     const btnsGridMode = [
-      { dom : $('hex-grid'),        mode : modes.GRIDHEX },
-      { dom : $('rectangle-grid'),  mode : modes.GRIDRECTANGLE },
-      { dom : $('circle-grid'),     mode : modes.GRIDCIRCLE }
+      { dom : $('hex-grid'),          mode : modes.GRIDHEX },
+      { dom : $('rectangle-grid'),    mode : modes.GRIDRECTANGLE },
+      { dom : $('circle-grid'),       mode : modes.GRIDCIRCLE }
     ];
 
     const btnsGridScope = [
@@ -917,25 +917,25 @@ var bit = (function() {
     ];
     
     const btnsGridAlign = [
-      { dom : $('grid-algn-std'),   align : aligns.STANDARD },
-      { dom : $('grid-algn-alt'),   align : aligns.ALT_HORIZONTAL },
-      { dom : $('grid-algn-alt2'),  align : aligns.ALT_VERTICAL }
+      { dom : $('grid-algn-std'),     align : aligns.STANDARD },
+      { dom : $('grid-algn-alt'),     align : aligns.ALT_HORIZONTAL },
+      { dom : $('grid-algn-alt2'),    align : aligns.ALT_VERTICAL }
     ];
 
     const btnsOrder = [
-      { dom : $('grid-order-tl'), order : orders.TOPLEFT },
-      { dom : $('grid-order-lt'), order : orders.LEFTTOP },
-      { dom : $('grid-order-lb'), order : orders.LEFTBOTTOM },
-      { dom : $('grid-order-bl'), order : orders.BOTTOMLEFT },
-      { dom : $('grid-order-br'), order : orders.BOTTOMRIGHT },
-      { dom : $('grid-order-rb'), order : orders.RIGHTBOTTOM },
-      { dom : $('grid-order-rt'), order : orders.RIGHTTOP },
-      { dom : $('grid-order-tr'), order : orders.TOPRIGHT }
+      { dom : $('grid-order-tl'),     order : orders.TOPLEFT },
+      { dom : $('grid-order-lt'),     order : orders.LEFTTOP },
+      { dom : $('grid-order-lb'),     order : orders.LEFTBOTTOM },
+      { dom : $('grid-order-bl'),     order : orders.BOTTOMLEFT },
+      { dom : $('grid-order-br'),     order : orders.BOTTOMRIGHT },
+      { dom : $('grid-order-rb'),     order : orders.RIGHTBOTTOM },
+      { dom : $('grid-order-rt'),     order : orders.RIGHTTOP },
+      { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
     ];
 
     const doms = {
-        inGridSpace       : $('grid-space'),
-        btnShowOrder      : $('show-order')
+      inGridSpace   : $('grid-space'),
+      btnShowOrder  : $('show-order')
     };
 
     var context = {
@@ -947,9 +947,8 @@ var bit = (function() {
         scope       : btnsGridScope[0].scope,
         align       : btnsGridAlign[0].align,
         order       : btnsOrder[0].order,
+        gParam      : true,
         space       : 0,
-        gSpace      : true,
-        allowOrder  : false,
         showOrder   : false
     };
 
@@ -1083,7 +1082,7 @@ var bit = (function() {
       v = getGridSpace();
       if (d !== v) {
         doms.inGridSpace.defaultValue = v.toString();
-        if (context.gSpace) {
+        if (context.gParam) {
           context.space = v;
         }
         context.handlers.onGridSpaceChange(v);
@@ -1095,13 +1094,11 @@ var bit = (function() {
 
     function onGridOrderChange(evt) {
       evt.preventDefault();
-      if(context.allowOrder) {
-        toggleTableState(btnsOrder, evt.target, e => {
-          if (context.gSpace)
-            context.order = e.order;
-          context.handlers.onGridOrderChange(e.order);
-        });
-      }
+      toggleTableState(btnsOrder, evt.target, e => {
+        if (context.gParam)
+          context.order = e.order;
+        context.handlers.onGridOrderChange(e.order);
+      });
     }
 
     function setGridOrder(value) {
@@ -1116,52 +1113,16 @@ var bit = (function() {
 
     var getGridOrder = () => context.order;
 
-    function gridParamsDisable() {
-      doms.inGridSpace.disabled = true;
-      doms.btnShowOrder.classList.add(bitedit.clsStatus.DISABLED);
-      btnsOrder.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
-      context.allowOrder = false;
-    }
-
-    function gridParamsEnable() {
-      doms.inGridSpace.disabled = false;
-      doms.btnShowOrder.classList.remove(bitedit.clsStatus.DISABLED);
-      btnsOrder.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
-      context.allowOrder = true;
-    }
-
     function gridParamsReset() {
       doms.inGridSpace.defaultValue = "0";
       doms.inGridSpace.value = "0";
       doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
       context.showOrder = false;
       setGridOrder(btnsOrder[0].order);
-      gridParamsDisable();
-    }
-
-    function enableGridParams(obj) {
-      if (context.allowGrid) {
-        context.gSpace = true;
-        setGridSpace();
-        setGridOrder();
-        gridParamsEnable();
-      } else if (obj.isGrid) {
-        context.gSpace = false;
-        setGridSpace(obj.getGridSpace());
-        setGridOrder(obj.getGridOrder());
-        gridParamsEnable();
-      }
-    }
-
-    function disableGridParams() {
-      context.gSpace = true;
-      setGridSpace();
-      setGridOrder();
-      gridParamsDisable();
     }
 
     function onShowOrder(e) {
-      if(context.allowOrder && !context.showOrder) {
+      if(!context.showOrder) {
         doms.btnShowOrder.classList.add(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         doms.btnShowOrder.addEventListener('mouseup', onHideOrder, false);
@@ -1172,13 +1133,25 @@ var bit = (function() {
     }
 
     function onHideOrder(e) {
-      if(context.allowOrder && context.showOrder) {
+      if(context.showOrder) {
         doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         doms.btnShowOrder.removeEventListener('mouseup', onHideOrder, false);
         doms.btnShowOrder.removeEventListener('mouseleave', onHideOrder, false);
         context.handlers.onShowOrder(false);
         context.showOrder = false;
+      }
+    }
+
+    function updateGridParams(obj) {
+      if (obj && obj.isGrid) {
+        context.gParam = false;
+        setGridSpace(obj.getGridSpace());
+        setGridOrder(obj.getGridOrder());
+      } else {
+        context.gParam = true;
+        setGridSpace();
+        setGridOrder();
       }
     }
 
@@ -1199,8 +1172,8 @@ var bit = (function() {
         context.align = btnsGridAlign[0].align;
         context.allowGrid = false;
         gridParamsReset();
+        context.gParam = true;
         context.space = 0;
-        context.gSpace = true;
         context.order = btnsOrder[0].order;
         this.release();
       },
@@ -1241,12 +1214,12 @@ var bit = (function() {
 
       enableGridTools : function(obj) {
         enableGridMode(obj);
-        enableGridParams(obj);
+        updateGridParams(obj);
       },
 
       disableGridTools() {
         disableGridMode();
-        disableGridParams();
+        updateGridParams();
       },
 
       modes, scopes, aligns, orders
