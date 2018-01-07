@@ -6,6 +6,8 @@
 var bitedit = (function() {
   'use strict';
 
+  const NSSVG = 'http://www.w3.org/2000/svg';
+
   const clsStatus = {
     DISABLED      : 'disabled',
     SELECTED      : 'selected',
@@ -1624,6 +1626,35 @@ var fEquilateralTriangle = (function() {
   }
 
   /*
+   * ORDER DISPLAY
+   */
+  
+  class OrderDisplay {
+
+    constructor(g, figure, order) {
+      let x, y;
+      this.g = g;
+      this.figure = figure;
+      this.order = order;
+      [x, y] = figure.getCenter();
+      this.dom = document.createElementNS(NSSVG, 'text');
+      this.dom.textContent = order.toString();
+      this.dom.setAttribute('text-anchor', 'middle');
+      this.dom.setAttribute('alignment-baseline', 'middle');
+      this.dom.setAttribute('x', x);
+      this.dom.setAttribute('y', y);
+      this.dom.classList.add('order');
+      this.g.appendChild(this.dom);
+    }
+
+    remove() {
+      this.g.removeChild(this.dom);
+      this.g = this.dom = this.figure = null;
+    }
+
+  } // ORDER DISPLAY
+
+  /*
    * EDITOR FACTORY
    */
 
@@ -1916,9 +1947,44 @@ var fEquilateralTriangle = (function() {
 
   } // EDITOR
 
+  /*
+   * ORDER
+   */
+
+  class Order {
+
+    constructor() {
+      this.elts = [];
+      this.parent = this.group = null;;
+    }
+
+    display(areas) {
+      if (0 < areas.length) {
+        if (null === this.parent) {
+          this.parent = areas[0].parent;
+          this.group = document.createElementNS(NSSVG, 'g');
+          this.parent.appendChild(this.group);
+        }
+        areas.forEach((e,i) => {
+          this.elts.push(new OrderDisplay(this.group, e, i+1));
+        });
+      }
+    }
+
+    hide() {
+      this.elts.forEach(e => e.remove());
+      this.elts.splice(0, this.elts.length);
+      if (null !== this.parent) {
+        this.parent.removeChild(this.group);
+      }
+      this.parent = this.group = null;
+    }
+ 
+  } // ORDER
+
   return {
     directions, clsStatus, isGrip,
-    MultiSelector, Mover, Editor
+    MultiSelector, Mover, Editor, Order
   };
   
 })(); /* BIT Area Editors */

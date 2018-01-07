@@ -733,14 +733,14 @@ var bitgen = (function() {
 
   class GridRectangle extends Rectangle {
     
-    constructor(parent, bond, gridParent, scope, align, space) {
+    constructor(parent, bond, gridParent, scope, align, space, order) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent, scope, align, space);
+      this.createFigure(parent, bond, gridParent, scope, align, space, order);
     }
 
-    createFigure(parent, bond, gridParent, scope, align, space) {
+    createFigure(parent, bond, gridParent, scope, align, space, order) {
       if (bond) {
-        this.figure = new bitgrid.Rectangle(parent, bond, gridParent, scope, align, space);
+        this.figure = new bitgrid.Rectangle(parent, bond, gridParent, scope, align, space, order);
       }
     }
 
@@ -752,14 +752,14 @@ var bitgen = (function() {
 
   class GridCircle extends CircleEx {
     
-    constructor(parent, bond, gridParent, scope, align, space) {
+    constructor(parent, bond, gridParent, scope, align, space, order) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent, scope, align, space);
+      this.createFigure(parent, bond, gridParent, scope, align, space, order);
     }
 
-    createFigure(parent, bond, gridParent, scope, align, space) {
+    createFigure(parent, bond, gridParent, scope, align, space, order) {
       if (bond) {
-        this.figure = new bitgrid.Circle(parent, bond, gridParent, scope, align, space);
+        this.figure = new bitgrid.Circle(parent, bond, gridParent, scope, align, space, order);
       }
     }
 
@@ -771,14 +771,14 @@ var bitgen = (function() {
 
   class GridHex extends HexEx {
     
-    constructor(parent, bond, gridParent, scope, align, space) {
+    constructor(parent, bond, gridParent, scope, align, space, order) {
       super(parent, false, false);
-      this.createFigure(parent, bond, gridParent, scope, align, space);
+      this.createFigure(parent, bond, gridParent, scope, align, space, order);
     }
 
-    createFigure(parent, bond, gridParent, scope, align, space) {
+    createFigure(parent, bond, gridParent, scope, align, space, order) {
       if (bond) {
-        this.figure = new bitgrid.Hex(parent, bond, gridParent, scope, align, space);
+        this.figure = new bitgrid.Hex(parent, bond, gridParent, scope, align, space, order);
       }
     }
 
