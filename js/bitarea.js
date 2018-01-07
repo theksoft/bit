@@ -177,6 +177,11 @@ var bitarea = (function() {
       return [];
     }
 
+    getCenter() {
+      console.log('getCenter() not defined');
+      return [100, 100];
+    }
+
   } // FIGURE
 
   /*
@@ -264,6 +269,13 @@ var bitarea = (function() {
         { x : c.x, y : c.y + c.height },
         { x : c.x + c.width, y : c.y + c.height },
         { x : c.x + c.width, y : c.y }
+      ];
+    }
+
+    getCenter() {
+      return [
+        this.coords.x + Math.round(this.coords.width/2),
+        this.coords.y + Math.round(this.coords.height/2)
       ];
     }
 
@@ -409,6 +421,10 @@ var bitarea = (function() {
       if (this.coords.y - this.coords.r < coords.y) return false;
       if (this.coords.y + this.coords.r > coords.y + coords.height) return false;
       return true;
+    }
+
+    getCenter() {
+      return [this.svgCoords.x, this.svgCoords.y];
     }
 
   } // CIRCLE CLASS (from CENTER)
@@ -748,6 +764,10 @@ var bitarea = (function() {
 
     within(coords) {
       return this.coords.reduce((r, e) => r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height), true);
+    }
+
+    getCenter() {
+      return [this.coords[0].x, this.coords[0].y];
     }
 
   } // POLYGON

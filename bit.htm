@@ -61,21 +61,34 @@
           <img id="rectangle-grid" src="icons/rectangle_grid.png" width="32" height="32" alt="Rectangle Grid" class="disabled"/>
           <img id="circle-grid" src="icons/circle_d_grid.png" width="32" height="32" alt="Circle Grid (from diameter)" class="disabled"/>
         </div>
-        <div>
-          <span id="grid-scope" class="toggle">
-            <img id="grid-scope-inner" src="icons/grid_inner.png" width="32" height="32" alt="Inner Scope" class="on disabled"/>
-            <img id="grid-scope-outer" src="icons/grid_outer.png" width="32" height="32" alt="Outer Scope" class="off disabled" style="display:none;"/>
-          </span>
-          <span id="grid-alignment" class="toggle">
-            <img id="grid-algn-std" src="icons/grid_alg.png" width="32" height="32" alt="Standard ALignment" class="on disabled"/>
-            <img id="grid-algn-alt" src="icons/grid_alt.png" width="32" height="32" alt="Horizontal Alternate Alignment" class="off disabled" style="display:none;"/>
-            <img id="grid-algn-alt2" src="icons/grid_alt2.png" width="32" height="32" alt="Vertical Alternate Alignment" class="off disabled" style="display:none;"/>
-          </span>
-        </div>
         <hr>
         <div>
+          <span id="grid-scope" class="toggle">
+            <img id="grid-scope-inner" src="icons/grid_inner.png" width="32" height="32" alt="Inner Scope" class="on"/>
+            <img id="grid-scope-outer" src="icons/grid_outer.png" width="32" height="32" alt="Outer Scope" class="off" style="display:none;"/>
+          </span>
+          <span id="grid-alignment" class="toggle">
+            <img id="grid-algn-std" src="icons/grid_alg.png" width="32" height="32" alt="Standard ALignment" class="on"/>
+            <img id="grid-algn-alt" src="icons/grid_alt.png" width="32" height="32" alt="Horizontal Alternate Alignment" class="off" style="display:none;"/>
+            <img id="grid-algn-alt2" src="icons/grid_alt2.png" width="32" height="32" alt="Vertical Alternate Alignment" class="off" style="display:none;"/>
+          </span>
+        </div>
+        <div>
+          <img id="show-order" src="icons/order.png" width="32" height="32" alt="Showorder"/>
+          <span id="grid-order" class="toggle">
+            <img id="grid-order-tl" src="icons/ordering-1.png" width="32" height="32" alt="Grid Ordering #1" class="on"/>
+            <img id="grid-order-lt" src="icons/ordering-2.png" width="32" height="32" alt="Grid Ordering #2" class="off" style="display:none;"/>
+            <img id="grid-order-lb" src="icons/ordering-3.png" width="32" height="32" alt="Grid Ordering #3" class="off" style="display:none;"/>
+            <img id="grid-order-bl" src="icons/ordering-4.png" width="32" height="32" alt="Grid Ordering #4" class="off" style="display:none;"/>
+            <img id="grid-order-br" src="icons/ordering-5.png" width="32" height="32" alt="Grid Ordering #5" class="off" style="display:none;"/>
+            <img id="grid-order-rb" src="icons/ordering-6.png" width="32" height="32" alt="Grid Ordering #6" class="off" style="display:none;"/>
+            <img id="grid-order-rt" src="icons/ordering-7.png" width="32" height="32" alt="Grid Ordering #7" class="off" style="display:none;"/>
+            <img id="grid-order-tr" src="icons/ordering-8.png" width="32" height="32" alt="Grid Ordering #8" class="off" style="display:none;"/>
+          </span>
+        </div>
+        <div>
 	        <label for="grid-space">Grid Space:</label>
-	        <input type="number" id="grid-space" min="0" max="128" value="0" disabled/>
+          <input type="number" id="grid-space" min="0" max="128" value="0"/>
         </div>
         <hr>
       </aside>

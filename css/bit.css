@@ -237,6 +237,7 @@ ul, ol {
   color: #ccc;
   vertical-align: middle;
   padding: 5px;
+  margin: 4px 4px 1px;
 }
 
 #grid-space {
