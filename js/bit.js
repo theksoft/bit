@@ -933,9 +933,17 @@ var bit = (function() {
       { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
     ];
 
+    const inForm = [
+      { dom : $('href-prop') },
+      { dom : $('alt-prop') },
+      { dom : $('title-prop') }
+    ];
+
     const doms = {
-      inGridSpace   : $('grid-space'),
-      btnShowOrder  : $('show-order')
+      inGridSpace     : $('grid-space'),
+      btnShowOrder    : $('show-order'),
+      btnPropsSave    : $('area-props-save'),
+      btnPropsReload  : $('area-props-reload')
     };
 
     var context = {
@@ -1189,6 +1197,19 @@ var bit = (function() {
       }
     }
 
+    var onPropKey = e => e.stopPropagation();
+    var leavePropForm = () => inForm.forEach(e => e.dom.blur());
+
+    function onPropsSave(e) {
+      console.log("Area properties saved!")
+      e.preventDefault();
+    }
+
+    function onPropsReload(e) {
+      console.log("Area properties reloaded!")
+      e.preventDefault();
+    }
+
     return {
 
       init : function(handlers) {
@@ -1227,6 +1248,10 @@ var bit = (function() {
         doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         btnsOrder.forEach(e => e.dom.removeEventListener('click', onGridOrderChange, false));
+        doms.btnPropsSave.removeEventListener('click', onPropsSave, false);
+        doms.btnPropsReload.removeEventListener('click', onPropsReload, false);
+        inForm.forEach(e => e.dom.removeEventListener('keydown', onPropKey, false));
+        leavePropForm();
         context.freezed = true;
       },
 
@@ -1239,6 +1264,9 @@ var bit = (function() {
         doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         btnsOrder.forEach(e => e.dom.addEventListener('click', onGridOrderChange, false));
+        doms.btnPropsSave.addEventListener('click', onPropsSave, false);
+        doms.btnPropsReload.addEventListener('click', onPropsReload, false);
+        inForm.forEach(e => e.dom.addEventListener('keydown', onPropKey, false));
         context.freezed = false;
       },
 
@@ -1253,6 +1281,8 @@ var bit = (function() {
         disableGridMode();
         updateGridParams();
       },
+
+      leavePropForm,
 
       modes, scopes, aligns, orders
 
@@ -1698,6 +1728,7 @@ var bit = (function() {
         },
 
         onSelect(target, shiftKey) {
+          tls.leavePropForm();
           if (!shiftKey) {
             areaSelect(target);
           } else {

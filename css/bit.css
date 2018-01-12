@@ -276,6 +276,65 @@ ul, ol {
   border: 2px solid #ffba99;
 }
 
+/* TOOLS PROPERTIES FORM */
+
+#area-props label {
+  display: inline-block;
+  width: 30px;
+  text-align: right;
+}
+
+#area-props input[type=text] {
+  background-color: #333;
+  border: 2px solid #555;
+  border-radius: 3px;
+  width: 120px;
+  padding: 2px 5px;
+  margin: 4px 12px 1px 1px;
+}
+
+#area-props-btn {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+}
+
+#area-props-save {
+  order: 1;
+  margin-left: 10px;
+}
+
+#area-props-reload {
+  order: 2;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#area-props button {
+  background-color: #004;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  color: #ccc;
+  font-size: 12px;
+  vertical-align: middle;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+}
+
+#area-props button:hover {
+  background-color: #226;
+}
+
+#area-props button:active {
+  background-color: #337;
+}
+
+#area-props button:disabled {
+  background-color: #333;
+  color: #888;
+}
+
 /* FOOTER ELEMENTS */
 
 #footer {
