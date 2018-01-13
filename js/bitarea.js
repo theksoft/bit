@@ -130,6 +130,10 @@ var bitarea = (function() {
       return false;
     }
 
+    getDom() {
+      return this.dom;
+    }
+
     getDomParent() {
       return this.domParent;
     }

@@ -1208,6 +1208,7 @@ var bit = (function() {
 
     var blurAreaProps = () => inForm.forEach(e => e.dom.blur());
     var onPropsKey = (e) => e.stopPropagation();
+    var resetAreaProps = () => inForm.forEach(e => e.dom.defaultValue = e.dom.value = "...");
 
     function displayAreaProps(obj) {
       let props = obj.getAreaProperties();
@@ -1340,9 +1341,11 @@ var bit = (function() {
       },
 
       blurAreaProps,
+      resetAreaProps,
       disableAreaProps,
       saveAreaProps,
       restoreAreaProps,
+      displayAreaProps,
 
       modes, scopes, aligns, orders
 
@@ -1629,6 +1632,18 @@ var bit = (function() {
       return context.selected.has(mdl.findArea(area));
     }
 
+    function onAreaEnter(e) {
+      if (context.selected.length() === 0) {
+        tls.displayAreaProps(this);
+      }
+    }
+
+    function onAreaLeave(e) {
+      if (context.selected.length() === 0) {
+        tls.resetAreaProps();
+      }
+    }
+
     var draw = (function() {
 
       var factory = {
@@ -1717,6 +1732,8 @@ var bit = (function() {
             context.selected.set(fig);
             tls.release();
             tls.enableGridTools(fig);
+            fig.getDom().addEventListener('mouseover', onAreaEnter.bind(fig), false);
+            fig.getDom().addEventListener('mouseleave', onAreaLeave.bind(fig), false);
             generator = null;
             break;
           case 'error':
