@@ -889,7 +889,6 @@ var bit = (function() {
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
     const orders = bitgrid.orders;
-    const properties = bitarea.properties; 
 
     const btnsMode = [
       { dom : $('hex-d'),             mode : modes.HEXDTR },
@@ -933,6 +932,12 @@ var bit = (function() {
       { dom : $('grid-order-rt'),     order : orders.RIGHTTOP },
       { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
     ];
+
+    const properties = {
+      HREF  : 'href',
+      ALT   : 'alt',
+      TITLE : 'title'
+    };
 
     const inForm = [
       { dom : $('href-prop'),         prop  : properties.HREF },
@@ -1212,7 +1217,7 @@ var bit = (function() {
 
     function displayAreaProps(obj) {
       let props = obj.getAreaProperties();
-      inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop]);
+      inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "");
     }
 
     function enableAreaProps(obj) {
@@ -1238,7 +1243,6 @@ var bit = (function() {
     function onPropsSave(e) {
       let p = {};
       inForm.forEach(e => p[e.prop] = e.dom.value);
-      // To be validated here
       context.handlers.onPropsSave(p);
       e.preventDefault();
     }

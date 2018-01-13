@@ -43,12 +43,6 @@ var bitarea = (function() {
     RIGHT   : -Math.PI / 2
   };
 
-  const properties = {
-    HREF  : 'href',
-    ALT   : 'alt',
-    TITLE : 'title'
-  };
-
   /*
    * FIGURE CLASS
    */
@@ -69,9 +63,6 @@ var bitarea = (function() {
       }
       this.createSVGElt();
       this.properties = {};
-      this.properties[properties.HREF] = 
-      this.properties[properties.ALT] = 
-      this.properties[properties.TITLE] = '';
     }
 
     createSVGElt() {
@@ -817,7 +808,7 @@ var bitarea = (function() {
   }
 
   return {
-    NSSVG, types, tilts, properties,
+    NSSVG, types, tilts,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
