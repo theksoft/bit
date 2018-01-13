@@ -889,6 +889,7 @@ var bit = (function() {
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
     const orders = bitgrid.orders;
+    const properties = bitarea.properties; 
 
     const btnsMode = [
       { dom : $('hex-d'),             mode : modes.HEXDTR },
@@ -934,16 +935,16 @@ var bit = (function() {
     ];
 
     const inForm = [
-      { dom : $('href-prop') },
-      { dom : $('alt-prop') },
-      { dom : $('title-prop') }
+      { dom : $('href-prop'),         prop  : properties.HREF },
+      { dom : $('alt-prop'),          prop  : properties.ALT },
+      { dom : $('title-prop'),        prop  : properties.TITLE }
     ];
 
     const doms = {
       inGridSpace     : $('grid-space'),
       btnShowOrder    : $('show-order'),
       btnPropsSave    : $('area-props-save'),
-      btnPropsReload  : $('area-props-reload')
+      btnPropsRestore : $('area-props-restore')
     };
 
     var context = {
@@ -1007,12 +1008,14 @@ var bit = (function() {
     }
 
     function onDrawModeSelect(evt) {
+      blurAreaProps();
       evt.preventDefault();
       toggleSelect(evt.target);
       setDrawingMode();
     }
 
     function onDrawGridModeSelect(evt) {
+      blurAreaProps();
       evt.preventDefault();
       if(context.allowGrid) {
         toggleSelect(evt.target);
@@ -1069,6 +1072,7 @@ var bit = (function() {
     }
 
     function onGridScopeChange(evt) {
+      blurAreaProps();
       evt.preventDefault();
       toggleTableState(btnsGridScope, evt.target, e => {
         if (context.gParam)
@@ -1090,6 +1094,7 @@ var bit = (function() {
     var getGridScope = () => context.scope;
 
     function onGridAlignChange(evt) {
+      blurAreaProps();
       evt.preventDefault();
       toggleTableState(btnsGridAlign, evt.target, e => {
         if (context.gParam)
@@ -1111,6 +1116,7 @@ var bit = (function() {
     var getGridAlign = () => context.align;
 
     function onGridSpaceChange(e) {
+      blurAreaProps();
       let v, d;
       d = parseInt(doms.inGridSpace.defaultValue);
       v = getGridSpace();
@@ -1129,6 +1135,7 @@ var bit = (function() {
     var getGridSpace = () => parseInt(doms.inGridSpace.value);
 
     function onGridOrderChange(evt) {
+      blurAreaProps();
       evt.preventDefault();
       toggleTableState(btnsOrder, evt.target, e => {
         if (context.gParam)
@@ -1160,6 +1167,7 @@ var bit = (function() {
     }
 
     function onShowOrder(e) {
+      blurAreaProps();
       if(!context.showOrder) {
         doms.btnShowOrder.classList.add(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
@@ -1171,6 +1179,7 @@ var bit = (function() {
     }
 
     function onHideOrder(e) {
+      blurAreaProps();
       if(context.showOrder) {
         doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
@@ -1197,17 +1206,56 @@ var bit = (function() {
       }
     }
 
-    var onPropKey = e => e.stopPropagation();
-    var leavePropForm = () => inForm.forEach(e => e.dom.blur());
+    var blurAreaProps = () => inForm.forEach(e => e.dom.blur());
+    var onPropsKey = (e) => e.stopPropagation();
+
+    function displayAreaProps(obj) {
+      let props = obj.getAreaProperties();
+      inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop]);
+    }
+
+    function enableAreaProps(obj) {
+      inForm.forEach(e => e.dom.disabled = false);
+      displayAreaProps(obj);
+      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
+    }
+
+    function disableAreaProps() {
+      inForm.forEach(e => {
+        e.dom.defaultValue = e.dom.value = "...";
+        e.dom.blur();
+        e.dom.disabled = true;
+      });
+      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
+    }
+
+    function onPropsInput(e) {
+      let d = inForm.reduce( (a,e) => a && (e.dom.defaultValue === e.dom.value), true);
+      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = d;
+    }
 
     function onPropsSave(e) {
-      console.log("Area properties saved!")
+      let p = {};
+      inForm.forEach(e => p[e.prop] = e.dom.value);
+      // To be validated here
+      context.handlers.onPropsSave(p);
       e.preventDefault();
     }
 
-    function onPropsReload(e) {
-      console.log("Area properties reloaded!")
+    function onPropsRestore(e) {
+      context.handlers.onPropsRestore();
       e.preventDefault();
+    }
+
+    function saveAreaProps(obj, p) {
+      obj.setAreaProperties(p);
+      inForm.forEach(e => e.dom.defaultValue = e.dom.value);
+      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
+    }
+
+    function restoreAreaProps(obj) {
+      displayAreaProps(obj);
+      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
 
     return {
@@ -1228,6 +1276,7 @@ var bit = (function() {
         context.align = btnsGridAlign[0].align;
         context.space = 0;
         context.order = btnsOrder[0].order;
+        disableAreaProps();
         this.release();
       },
 
@@ -1249,9 +1298,12 @@ var bit = (function() {
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         btnsOrder.forEach(e => e.dom.removeEventListener('click', onGridOrderChange, false));
         doms.btnPropsSave.removeEventListener('click', onPropsSave, false);
-        doms.btnPropsReload.removeEventListener('click', onPropsReload, false);
-        inForm.forEach(e => e.dom.removeEventListener('keydown', onPropKey, false));
-        leavePropForm();
+        doms.btnPropsRestore.removeEventListener('click', onPropsRestore, false);
+        inForm.forEach(e => {
+          e.dom.removeEventListener('keydown', onPropsKey, false);
+          e.dom.removeEventListener('input', onPropsInput, false)
+          e.dom.blur();
+        });
         context.freezed = true;
       },
 
@@ -1265,8 +1317,11 @@ var bit = (function() {
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         btnsOrder.forEach(e => e.dom.addEventListener('click', onGridOrderChange, false));
         doms.btnPropsSave.addEventListener('click', onPropsSave, false);
-        doms.btnPropsReload.addEventListener('click', onPropsReload, false);
-        inForm.forEach(e => e.dom.addEventListener('keydown', onPropKey, false));
+        doms.btnPropsRestore.addEventListener('click', onPropsRestore, false);
+        inForm.forEach(e => {
+          e.dom.addEventListener('input', onPropsInput, false)
+          e.dom.addEventListener('keydown', onPropsKey, false)
+        });
         context.freezed = false;
       },
 
@@ -1275,14 +1330,19 @@ var bit = (function() {
       enableGridTools : function(obj) {
         enableGridMode(obj);
         updateGridParams(obj);
+        enableAreaProps(obj);
       },
 
       disableGridTools() {
         disableGridMode();
         updateGridParams();
+        disableAreaProps();
       },
 
-      leavePropForm,
+      blurAreaProps,
+      disableAreaProps,
+      saveAreaProps,
+      restoreAreaProps,
 
       modes, scopes, aligns, orders
 
@@ -1499,60 +1559,71 @@ var bit = (function() {
         return false;
       }
 
-    },
-
-    tlsHandlers = {
-
-      onGridScopeChange : function(v) {
-        if (context.selected.length() === 1) {
-          let area = context.selected.get(0).getFigure();
-          if (area.isGrid) {
-            area.setGridScope(v);
-          }
-        }
-      },
-
-      onGridAlignChange : function(v) {
-        if (context.selected.length() === 1) {
-          let area = context.selected.get(0).getFigure();
-          if (area.isGrid) {
-            area.setGridAlign(v);
-          }
-        }
-      },
-
-      onGridSpaceChange : function(v) {
-        if (context.selected.length() === 1) {
-          let area = context.selected.get(0).getFigure();
-          if (area.isGrid) {
-            area.setGridSpace(v);
-          }
-        }
-      },
-
-      onShowOrder : function(bShow) {
-        if (bShow) {
-          let list, fig;
-          if (context.selected.length() === 1) {
-            fig = context.selected.get(0).getFigure();
-            list = (fig.isGrid) ? [fig] : fig.getBonds();
-            list.forEach(g => context.order.display(g.getElts()));
-          }
-        } else {
-          context.order.hide();
-        }
-      },
-
-      onGridOrderChange : function(v) {
-        if (context.selected.length() === 1) {
-          let area = context.selected.get(0).getFigure();
-          if (area.isGrid) {
-            area.setGridOrder(v);
-          }
-        }
-      }
-
     };
+
+    var tools = (function() {
+
+      var handlers = {
+          
+          onGridScopeChange : function(v) {
+            if (context.selected.length() === 1) {
+              let area = context.selected.get(0).getFigure();
+              if (area.isGrid) {
+                area.setGridScope(v);
+              }
+            }
+          },
+
+          onGridAlignChange : function(v) {
+            if (context.selected.length() === 1) {
+              let area = context.selected.get(0).getFigure();
+              if (area.isGrid) {
+                area.setGridAlign(v);
+              }
+            }
+          },
+
+          onGridSpaceChange : function(v) {
+            if (context.selected.length() === 1) {
+              let area = context.selected.get(0).getFigure();
+              if (area.isGrid) {
+                area.setGridSpace(v);
+              }
+            }
+          },
+
+          onShowOrder : function(bShow) {
+            if (bShow) {
+              let list, fig;
+              if (context.selected.length() === 1) {
+                fig = context.selected.get(0).getFigure();
+                list = (fig.isGrid) ? [fig] : fig.getBonds();
+                list.forEach(g => context.order.display(g.getElts()));
+              }
+            } else {
+              context.order.hide();
+            }
+          },
+
+          onGridOrderChange : function(v) {
+            if (context.selected.length() === 1) {
+              let area = context.selected.get(0).getFigure();
+              if (area.isGrid) {
+                area.setGridOrder(v);
+              }
+            }
+          },
+
+          onPropsSave : (p) => tls.saveAreaProps(context.selected.get(0).getFigure(), p),
+          onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).getFigure())
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
 
     function isAreaSelected(area) {
       return context.selected.has(mdl.findArea(area));
@@ -1624,6 +1695,7 @@ var bit = (function() {
             return false;
           }
           tls.freeze();
+          tls.disableAreaProps();
           generator.start(pt);
           return true;
         },
@@ -1677,7 +1749,8 @@ var bit = (function() {
 
       var tracker = null;
 
-      function updateGridMode() {
+      function updateGridTools() {
+        tls.blurAreaProps();
         if (context.selected.length() === 1) {
           tls.enableGridTools(context.selected.get(0).getFigure());
         } else {
@@ -1686,13 +1759,14 @@ var bit = (function() {
       }
 
       function areaSelect(area) {
+        tls.blurAreaProps();
         context.selected.set(mdl.findArea(area));
         tls.enableGridTools(context.selected.get(0).getFigure());
       }
 
       function areaMultiSelect(area) {
         context.selected.toggle(mdl.findArea(area));
-        updateGridMode();
+        updateGridTools();
       }
 
       function computeSelection(coords) {
@@ -1705,12 +1779,12 @@ var bit = (function() {
             context.selected.toggle(e);
           }
         });
-        updateGridMode();
+        updateGridTools();
       }
 
       function areaSelectAll() {
         mdl.forEachArea(e => context.selected.add(e));
-        updateGridMode();
+        updateGridTools();
       }
 
       function areaUnselectAll() {
@@ -1728,7 +1802,6 @@ var bit = (function() {
         },
 
         onSelect(target, shiftKey) {
-          tls.leavePropForm();
           if (!shiftKey) {
             areaSelect(target);
           } else {
@@ -1792,7 +1865,7 @@ var bit = (function() {
             if (mdl.freezeGridArea(context.selected.get(0).getFigure(), newSel)) {
               context.selected.empty();
               newSel.forEach(e => context.selected.add(e));
-              updateGridMode();
+              updateGridTools();
               newSel = null;
             }
           }
@@ -1904,7 +1977,7 @@ var bit = (function() {
 
     mnu.init(mnuHandlers);
     wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers, editor.handlers);
-    tls.init(tlsHandlers);
+    tls.init(tools.handlers);
 
   })(); /* APPLICATION MANAGEMENT */
 

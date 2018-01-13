@@ -43,6 +43,12 @@ var bitarea = (function() {
     RIGHT   : -Math.PI / 2
   };
 
+  const properties = {
+    HREF  : 'href',
+    ALT   : 'alt',
+    TITLE : 'title'
+  };
+
   /*
    * FIGURE CLASS
    */
@@ -62,6 +68,10 @@ var bitarea = (function() {
         this.parent.appendChild(this.domParent);
       }
       this.createSVGElt();
+      this.properties = {};
+      this.properties[properties.HREF] = 
+      this.properties[properties.ALT] = 
+      this.properties[properties.TITLE] = '';
     }
 
     createSVGElt() {
@@ -180,6 +190,14 @@ var bitarea = (function() {
     getCenter() {
       console.log('getCenter() not defined');
       return [100, 100];
+    }
+
+    getAreaProperties() {
+      return Object.create(this.properties);
+    }
+
+    setAreaProperties(p) {
+      Object.assign(this.properties, p);
     }
 
   } // FIGURE
@@ -795,7 +813,7 @@ var bitarea = (function() {
   }
 
   return {
-    NSSVG, types, tilts,
+    NSSVG, types, tilts, properties,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
