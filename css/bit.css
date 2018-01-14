@@ -240,6 +240,10 @@ ul, ol {
   margin: 4px 4px 1px;
 }
 
+#tools input[type=number] {
+	width: 45px;
+}
+
 #grid-space {
   background-color: #333;
   border: 2px solid #555;
