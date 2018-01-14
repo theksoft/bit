@@ -889,6 +889,7 @@ var bit = (function() {
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
     const orders = bitgrid.orders;
+    const properties = bitmap.properties;
 
     const btnsMode = [
       { dom : $('hex-d'),             mode : modes.HEXDTR },
@@ -932,12 +933,6 @@ var bit = (function() {
       { dom : $('grid-order-rt'),     order : orders.RIGHTTOP },
       { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
     ];
-
-    const properties = {
-      HREF  : 'href',
-      ALT   : 'alt',
-      TITLE : 'title'
-    };
 
     const inForm = [
       { dom : $('href-prop'),         prop  : properties.HREF },
