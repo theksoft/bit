@@ -62,6 +62,7 @@ var bitarea = (function() {
         this.parent.appendChild(this.domParent);
       }
       this.createSVGElt();
+      this.properties = {};
     }
 
     createSVGElt() {
@@ -118,6 +119,10 @@ var bitarea = (function() {
     within(coords) {
       console.log('within() not defined');
       return false;
+    }
+
+    getDom() {
+      return this.dom;
     }
 
     getDomParent() {
@@ -180,6 +185,14 @@ var bitarea = (function() {
     getCenter() {
       console.log('getCenter() not defined');
       return [100, 100];
+    }
+
+    getAreaProperties() {
+      return Object.create(this.properties);
+    }
+
+    setAreaProperties(p) {
+      Object.assign(this.properties, p);
     }
 
   } // FIGURE
