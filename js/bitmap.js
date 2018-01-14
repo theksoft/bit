@@ -19,12 +19,17 @@ var bitmap = (function() {
     POLYGON   : 'poly'
   }
 
+  /*
+   * FIGURE MAPPER
+   */
+
   class Figure {
 
-    constructor(fig, shape) {
+    constructor(fig, shape, props) {
       this.fig = fig;
       this.htmlString = '';
       if (!fig.hasBonds()) {
+        props = props || fig.getAreaProperties();
         this.htmlString = '<area shape="' + shape + '" coords="' + this.getCoords() + '"'
           + (props[properties.HREF]   ? ' href="'   + props[properties.HREF]  + '"' : '')
           + (props[properties.ALT]    ? ' alt="'    + props[properties.ALT]   + '"' : '')
@@ -39,10 +44,14 @@ var bitmap = (function() {
 
   }
 
+  /*
+   * RECTANGLE MAPPER
+   */
+
   class Rectangle extends Figure {
 
-    constructor(fig) {
-      super(fig, shapes.RECTANGLE);
+    constructor(fig, props) {
+      super(fig, shapes.RECTANGLE, props);
     }
 
     getCoords() {
@@ -53,10 +62,14 @@ var bitmap = (function() {
 
   }
 
+  /*
+   * CIRCLE MAPPER
+   */
+
   class Circle extends Figure {
 
-    constructor(fig) {
-      super(fig, shapes.CIRCLE);
+    constructor(fig, props) {
+      super(fig, shapes.CIRCLE, props);
     }
 
     getCoords() {
@@ -66,10 +79,14 @@ var bitmap = (function() {
 
   }
 
+  /*
+   * POLYGON MAPPER
+   */
+
   class Polygon extends Figure {
 
-    constructor(fig) {
-      super(fig, shapes.POLYGON);
+    constructor(fig, props) {
+      super(fig, shapes.POLYGON, props);
     }
 
     getCoords() {
@@ -78,10 +95,23 @@ var bitmap = (function() {
 
   }
 
+  /*
+   * GRID MAPPER
+   */
+
   class Grid {
 
-    constructor(fig) {
-      this.htmlString = ''; // TODO: All grid elements
+    constructor(fig, props, fCreate) {
+      let n, props, ptn;
+      ptn = '/[#]/gm';
+      this.htmlString = fig.getElts().reduceRight((a,e,i) => {
+        props = fig.getAreaProperties();
+        n = i.toString();
+        if (props[properties.HREF])   props[properties.HREF]  = props[properties.HREF].replace(ptn, n) 
+        if (props[properties.ALT])    props[properties.ALT]   = props[properties.ALT].replace(ptn, n) 
+        if (props[properties.TITLE])  props[properties.TITLE] = props[properties.TITLE].replace(ptn, n) 
+        return a + fCreate(e, props).getHTMLString()
+      }, '');
     }
 
     getHTMLString() {
@@ -89,6 +119,10 @@ var bitmap = (function() {
     }
 
   }
+
+  /*
+   * MAPPER
+   */
 
   var factory = {
     'rectangle'     : Rectangle,
@@ -108,14 +142,14 @@ var bitmap = (function() {
     'gridHex'       : Grid
   };
 
-  function create(fig) {
+  function create(fig, props) {
     if(!fig || null == fig) return null;
     let figMap = factory[fig.getType()];
     if (!figMap) {
       console.log('ERROR - Editor mode not handled');
       return null;
     }
-    return new figMap(fig);
+    return new figMap(fig, props, create);
   }
 
   class Mapper {
@@ -129,7 +163,7 @@ var bitmap = (function() {
   }
 
   return {
-    properties
+    properties, Mapper
   };
 
 })(); /* BIT Map Area Definitions */
