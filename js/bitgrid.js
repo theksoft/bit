@@ -547,6 +547,10 @@ var bitgrid = (function() {
       });
     }
 
+    isPatternInGrid() {
+      return this.elts.reduce((a,e) => a || this.pattern.equalCoords(e.getCoords()), false);
+    }
+
   }
 
   /*
@@ -667,6 +671,10 @@ var bitgrid = (function() {
 
     getElts() {
       return this.grid.getElts();
+    }
+
+    isPatternInGrid() {
+      return this.grid.isPatternInGrid();
     }
 
   } // RECTANGLE GRID
@@ -836,6 +844,10 @@ var bitgrid = (function() {
       return this.grid.getElts();
     }
 
+    isPatternInGrid() {
+      return this.grid.isPatternInGrid();
+    }
+
   } // CIRCLE GRID
 
   /*
@@ -1000,6 +1012,10 @@ var bitgrid = (function() {
 
     getElts() {
       return this.grid.getElts();
+    }
+
+    isPatternInGrid() {
+      return this.grid.isPatternInGrid();
     }
 
   } // HEX GRID

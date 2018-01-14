@@ -106,6 +106,10 @@ var bit = (function() {
         return false;
       },
 
+      getAreas : function() {
+        return context.areas.slice();
+      },
+
       addArea : function(area) {
         context.areas.push(area);
         context.modified = true;
@@ -185,11 +189,11 @@ var bit = (function() {
         MOVING    : 'moving',
         MOVED     : 'moved',
         EDITING   : 'editing',
-        EDITED    : 'edited'
+        EDITED    : 'edited',
+        PREVIEW   : 'preview'
       };
 
     var context = {
-      mode : 'new',
       state : states.OPEN,
       offset : { x : 0, y : 0 },
       iDrg : null, aDrw : null, aSel : null, aMov : null, aEdt : null
@@ -217,11 +221,17 @@ var bit = (function() {
         },
 
         setViewDims : function() {
-          var fc = doms.footer.getBoundingClientRect(),
-              ac = doms.aside.getBoundingClientRect(),
-              wc = doms.wks.getBoundingClientRect();
-          var width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5),
-              height = Math.floor(fc.top - wc.top - 5);
+          let fc, ac, wc, width, height;
+          fc = doms.footer.getBoundingClientRect();
+          wc = doms.wks.getBoundingClientRect();
+          if (states.PREVIEW !== context.state) {
+            ac = doms.aside.getBoundingClientRect();
+            width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
+            height = Math.floor(fc.top - wc.top - 5);
+          } else {
+            width = Math.floor(fc.right - wc.left - 5);
+            height = Math.floor(fc.top - wc.top - 5);
+          }
           doms.workarea.style.width = width + 'px';
           doms.workarea.style.height = height + 'px';
           return this;
@@ -865,7 +875,9 @@ var bit = (function() {
         doms.image.src = '';
         hide(doms.workarea);
         hide(doms.aside);
-        context.mode = 'new';
+        show(doms.drawarea);
+        show(doms.gridarea);
+        context.state = states.OPEN;
       },
 
       load : function(f) {
@@ -873,6 +885,33 @@ var bit = (function() {
         doms.image.onload = onLoadImage;
         doms.image.src = window.URL.createObjectURL(f);
         return this;
+      },
+
+      switchToPreview : function() {
+        hide(doms.aside);
+        hide(doms.drawarea);
+        hide(doms.gridarea);
+        areaDrawer.disable();
+        areaMover.disable();
+        areaEditor.disable();
+        areaSelector.disable();
+        context.state = states.PREVIEW;
+        viewport.setWorkingDims(doms.image.width, doms.image.height)
+                .resize();
+        return [doms.container, doms.image];
+      },
+
+      switchToEdit : function() {
+        show(doms.aside);
+        show(doms.drawarea);
+        show(doms.gridarea);
+        areaDrawer.enable();
+        areaMover.enable();
+        areaEditor.enable();
+        areaSelector.enable();
+        context.state = states.READY;
+        viewport.setWorkingDims(doms.image.width, doms.image.height)
+                .resize();
       }
 
     };
@@ -937,7 +976,8 @@ var bit = (function() {
     const inForm = [
       { dom : $('href-prop'),         prop  : properties.HREF },
       { dom : $('alt-prop'),          prop  : properties.ALT },
-      { dom : $('title-prop'),        prop  : properties.TITLE }
+      { dom : $('title-prop'),        prop  : properties.TITLE },
+      { dom : $('id-prop'),           prop  : properties.ID }
     ];
 
     const doms = {
@@ -1435,9 +1475,10 @@ var bit = (function() {
 
     var doms = {
       newProjectBtn : $('new-project'),
-      fileDropZone : $('file-drop-zone'),
-      loadFileLbl : $('load-file-lbl'),
-      loadFileInput : $('load-file')
+      fileDropZone  : $('file-drop-zone'),
+      loadFileLbl   : $('load-file-lbl'),
+      loadFileInput : $('load-file'),
+      previewBtn    : $('preview')
     },
     context = {
       handlers : null
@@ -1472,6 +1513,11 @@ var bit = (function() {
       context.handlers.onNewFiles(e.target.files);
     }
     
+    function onPreviewBtnClick(e) {
+      e.preventDefault();
+      context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+    }
+
     return {
 
       init : function(handlers) {
@@ -1482,6 +1528,7 @@ var bit = (function() {
         doms.fileDropZone.addEventListener('dragleave', onFileDragLeave, false);
         doms.fileDropZone.addEventListener('drop', onFileDrop, false);
         doms.loadFileInput.addEventListener('change', onLoadFileInputChange, false);
+        doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
         return this.reset();
       },
 
@@ -1493,13 +1540,17 @@ var bit = (function() {
         show(doms.loadFileInput);
         show(doms.loadFileLbl);
         show(doms.fileDropZone);
+        hide(doms.previewBtn);
+        doms.previewBtn.classList.remove('selected');
         return this;
       },
 
       switchToEditMode : function() {
-        hide(doms.fileDropZone)
-        hide(doms.loadFileInput)
-        hide(doms.loadFileLbl)
+        doms.previewBtn.classList.remove('selected');
+        hide(doms.fileDropZone);
+        hide(doms.loadFileInput);
+        hide(doms.loadFileLbl);
+        show(doms.previewBtn);
         return this;
       }
 
@@ -1521,7 +1572,8 @@ var bit = (function() {
       selected : new bitedit.MultiSelector(),
       mover : new bitedit.Mover(),
       editor : new bitedit.Editor(),
-      order : new bitedit.Order()
+      order : new bitedit.Order(),
+      mapper : new bitmap.Mapper()
     },
 
     mnuHandlers = {
@@ -1548,6 +1600,17 @@ var bit = (function() {
           wks.load(selFile);
         } else {
           ftr.error(selFile);
+        }
+      },
+
+      onPreview : function(activated) {
+        if (activated) {
+          let c, i;
+          [c, i] = wks.switchToPreview();
+          context.mapper.displayPreview(c, i, mdl.getAreas());
+        } else {
+          wks.switchToEdit();
+          context.mapper.cancelPreview();
         }
       }
 

@@ -56,6 +56,7 @@ ul, ol {
   flex-flow: row;
   order: 1;
   align-self: stretch;
+  align-items: flex-start;
   margin-bottom: auto;
 }
 
@@ -66,6 +67,7 @@ ul, ol {
 #tools {
   order: 1;
   align-self: stretch;
+  min-width: 200px;
 }
 
 #footer {
@@ -136,6 +138,13 @@ ul, ol {
   padding: 5px 10px;
   border: 1px ridge gray;
   margin-left: 5px;
+}
+
+#header nav .selected label,
+#header nav .selected button,
+#header nav .selected a:link,
+#header nav .selected a:visited {
+  background-color: #800;
 }
 
 #header nav label,
@@ -395,4 +404,3 @@ ul, ol {
   font-size: 12px;
   padding: 5px 10px;
 }
-

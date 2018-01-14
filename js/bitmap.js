@@ -9,7 +9,8 @@ var bitmap = (function() {
   const properties = {
     HREF  : 'href',
     ALT   : 'alt',
-    TITLE : 'title'
+    TITLE : 'title',
+    ID    : 'id'
   };
 
   const shapes = {
@@ -28,12 +29,10 @@ var bitmap = (function() {
     constructor(fig, shape, props) {
       this.fig = fig;
       this.htmlString = '';
-      if (!fig.hasBonds()) {
+      if (!fig.hasBonds() || fig.getBonds().reduce((a,l) => a && !l.isPatternInGrid(), true)) {
         props = props || fig.getAreaProperties();
         this.htmlString = '<area shape="' + shape + '" coords="' + this.getCoords() + '"'
-          + (props[properties.HREF]   ? ' href="'   + props[properties.HREF]  + '"' : '')
-          + (props[properties.ALT]    ? ' alt="'    + props[properties.ALT]   + '"' : '')
-          + (props[properties.TITLE]  ? ' title="'  + props[properties.TITLE] + '"' : '')
+          + Object.values(properties).reduce((a,e) => a + (props[e] ? ' ' + e + '="' + props[e] + '"' : ''), '')
           + ' />';
       }
     }
@@ -55,7 +54,7 @@ var bitmap = (function() {
     }
 
     getCoords() {
-      let c = fig.getCoords();
+      let c = this.fig.getCoords();
       return c.x + ', ' + c.y + ', '
         + (c.x + c.width) + ', ' + (c.y + c.height); 
     }
@@ -73,7 +72,7 @@ var bitmap = (function() {
     }
 
     getCoords() {
-      let c = fig.getCoords();
+      let c = this.fig.getCoords();
       return c.x + ', ' + c.y + ', ' + c.r;
     }
 
@@ -90,7 +89,7 @@ var bitmap = (function() {
     }
 
     getCoords() {
-      return fig.getPoints().map(e => e.x + ', ' + e.y).join(', ');
+      return this.fig.getPoints(this.fig.getCoords()).map(e => e.x + ', ' + e.y).join(', ');
     }
 
   }
@@ -101,15 +100,14 @@ var bitmap = (function() {
 
   class Grid {
 
-    constructor(fig, props, fCreate) {
+    constructor(fig, p, fCreate) {
       let n, props, ptn;
-      ptn = '/[#]/gm';
-      this.htmlString = fig.getElts().reduceRight((a,e,i) => {
+      this.fig= fig;
+      ptn = /\[#\]/gm;
+      this.htmlString = fig.getElts().reduce((a,e,i) => {
         props = fig.getAreaProperties();
-        n = i.toString();
-        if (props[properties.HREF])   props[properties.HREF]  = props[properties.HREF].replace(ptn, n) 
-        if (props[properties.ALT])    props[properties.ALT]   = props[properties.ALT].replace(ptn, n) 
-        if (props[properties.TITLE])  props[properties.TITLE] = props[properties.TITLE].replace(ptn, n) 
+        n = (i+1).toString();
+        Object.values(properties).forEach(e => { if (props[e]) props[e] = props[e].replace(ptn, n) });
         return a + fCreate(e, props).getHTMLString()
       }, '');
     }
@@ -143,10 +141,10 @@ var bitmap = (function() {
   };
 
   function create(fig, props) {
-    if(!fig || null == fig) return null;
+    if (!fig || null == fig) return null;
     let figMap = factory[fig.getType()];
     if (!figMap) {
-      console.log('ERROR - Editor mode not handled');
+      console.log('ERROR - Mapper mode not handled');
       return null;
     }
     return new figMap(fig, props, create);
@@ -154,10 +152,46 @@ var bitmap = (function() {
 
   class Mapper {
 
-    constructor() {}
+    constructor() {
+      this.map = this.container = this.image = null;
+    }
 
     getInnerString(areas) {
       return areas.reduceRight((a,e) => a + create(e).getHTMLString(), '');
+    }
+
+    displayPreview(container, image, areas) {
+      this.container = container;
+      this.image = image;
+      this.image.setAttribute('usemap', '#map');
+      this.map = document.createElement('map');
+      this.map.setAttribute('name', 'map');
+      this.container.appendChild(this.map);
+      this.map.innerHTML = this.getInnerString(areas);
+      let i, list;
+      list = this.map.querySelectorAll('area');
+      for (i = 0; i < list.length; i++) {
+        list[i].addEventListener('click', e => {
+          e.preventDefault();
+          let output, attrs, sa;
+          sa = '';
+          if (e.target.hasAttributes()) {
+            attrs = e.target.attributes;
+            for(let i = 0; i < attrs.length; i++)
+              sa += ' ' + attrs[i].name + '="' + attrs[i].value + '"';
+          }
+          output = '<area' + sa + ' />';
+          alert(output);
+        }, false);
+      }
+    }
+
+    cancelPreview() {
+      if (null !== this.container)
+        this.container.removeChild(this.map);
+      if (null !== this.image)
+        this.image.removeAttribute('usemap');
+      this.map = this.container = this.image = null;
     }
 
   }
