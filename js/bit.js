@@ -144,13 +144,13 @@ var bit = (function() {
 
       forEachArea : f => context.areas.forEach(f),
 
-      freezeGridArea : function(grid, areas) {
+      freezeGridArea : function(grid, areas, specialize) {
         if (!grid.isGrid ||
             false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
           return false;
         }
         let i = context.areas.indexOf(grid);
-        grid.freezeTo(areas);
+        grid.freezeTo(areas, specialize);
         grid.remove();
         context.areas.splice(i, 1);
         areas.forEach(e => context.areas.push(e));
@@ -1941,7 +1941,7 @@ var bit = (function() {
         onFreeze : function() {
           if (context.selected.length() === 1) {
             let newSel = [];
-            if (mdl.freezeGridArea(context.selected.get(0).getFigure(), newSel)) {
+            if (mdl.freezeGridArea(context.selected.get(0).getFigure(), newSel, bitmap.Mapper.specializeProperties)) {
               context.selected.empty();
               newSel.forEach(e => context.selected.add(e));
               updateGridTools();

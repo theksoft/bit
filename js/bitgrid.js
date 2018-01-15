@@ -530,19 +530,26 @@ var bitgrid = (function() {
       });
     }
 
-    freezeTo(areas, newParent) {
-      let generator = factory[this.pattern.getType()];
+    freezeTo(areas, newParent, specialize) {
+      let generator, props;
+      generator = factory[this.pattern.getType()];
       if (!generator) {
         console.log('ERROR - Unsupported managing grid figure');
         return;
       }
-      this.elts.forEach(e => {
-        let c = e.getCoords();
+      this.elts.forEach((e,i) => {
+        let c, props;
+        c = e.getCoords();
+        props = this.scope.getAreaProperties();
+        specialize(props, (i+1).toString());
         if (!this.pattern.equalCoords(c)) {
           let clone = new generator(newParent, false);
           clone.setCoords(c);
           clone.redraw();
+          clone.setAreaProperties(props);
           areas.push(clone);
+        } else {
+          this.pattern.setAreaProperties(props);  // within the grid
         }
       });
     }
@@ -665,8 +672,8 @@ var bitgrid = (function() {
       this.grid.setGridOrder(v);
     }
 
-    freezeTo(areas) {
-      this.grid.freezeTo(areas, this.parent);
+    freezeTo(areas, specialize) {
+      this.grid.freezeTo(areas, this.parent, specialize);
     }
 
     getElts() {
@@ -836,8 +843,8 @@ var bitgrid = (function() {
       this.grid.setGridOrder(v);
     }
 
-    freezeTo(areas) {
-      this.grid.freezeTo(areas, this.parent);
+    freezeTo(areas, specialize) {
+      this.grid.freezeTo(areas, this.parent, specialize);
     }
 
     getElts() {
@@ -1006,8 +1013,8 @@ var bitgrid = (function() {
       this.grid.setGridOrder(v);
     }
 
-    freezeTo(areas) {
-      this.grid.freezeTo(areas, this.parent);
+    freezeTo(areas, specialize) {
+      this.grid.freezeTo(areas, this.parent, specialize);
     }
 
     getElts() {

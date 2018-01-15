@@ -101,19 +101,23 @@ var bitmap = (function() {
   class Grid {
 
     constructor(fig, p, fCreate) {
-      let n, props, ptn;
+      let n, props;
       this.fig= fig;
-      ptn = /\[#\]/gm;
       this.htmlString = fig.getElts().reduce((a,e,i) => {
         props = fig.getAreaProperties();
         n = (i+1).toString();
-        Object.values(properties).forEach(e => { if (props[e]) props[e] = props[e].replace(ptn, n) });
+        Grid.specializeProperties(props, n);
         return a + fCreate(e, props).getHTMLString()
       }, '');
     }
 
     getHTMLString() {
       return this.htmlString;
+    }
+
+    static specializeProperties(props, n) {
+      let ptn = /\[#\]/gm;
+      Object.values(properties).forEach(e => { if (props[e]) props[e] = props[e].replace(ptn, n); });
     }
 
   }
@@ -192,6 +196,10 @@ var bitmap = (function() {
       if (null !== this.image)
         this.image.removeAttribute('usemap');
       this.map = this.container = this.image = null;
+    }
+
+    static specializeProperties(props, n) {
+      Grid.specializeProperties(props, n);
     }
 
   }
