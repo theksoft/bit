@@ -319,14 +319,15 @@ ul, ol {
 }
 
 #area-props-save {
-  order: 2;
+  order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
 #area-props-restore {
-  order: 1;
+  order: 2;
   margin-left: 10px;
+  margin-right: 10px;
 }
 
 #area-props button {
