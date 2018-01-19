@@ -413,7 +413,7 @@ var bit = (function() {
         rmWel('mousemove', onDrawProgress);
         addWel('click', onDrawStart);
         document.removeEventListener('keydown', onDrawCancel);
-        context.state = states.READY; // TODO: Edit data on selected area ? or edit in tools ?
+        context.state = states.READY;
       }
 
       function onDrawStart(e) {
@@ -1574,7 +1574,7 @@ var bit = (function() {
       editor : new bitedit.Editor(),
       order : new bitedit.Order(),
       mapper : new bitmap.Mapper()
-    },
+/*    },
 
     mnuHandlers = {
 
@@ -1613,20 +1613,76 @@ var bit = (function() {
           context.mapper.cancelPreview();
         }
       }
-
-    },
-    
-    dragHandlers = {
-
-      prevent : function(e) {
-        if (!tls.none()) return true;
-        if (mdl.findArea(e.target)) return true;
-        return false;
-      }
-
+*/
     };
 
-    var tools = (function() {
+    var menu = (function() {
+
+      var handlers = {
+          
+        onNewProject : function() {
+          if (!mdl.isModified() || confirm('Discard all changes?')) {
+            ftr.reset();
+            wks.reset();
+            tls.reset();
+            mnu.reset();
+            mdl.reset();
+          }
+        },
+
+        onNewFiles : function(files) {
+          var selFile = files[0];
+          if (0 === files.length) {
+            ftr.reset();
+          } else if (1 < files.length) {
+            ftr.error(null);
+          } else if (mdl.setFile(selFile)) {
+            mnu.switchToEditMode();
+            ftr.info(selFile);
+            wks.load(selFile);
+          } else {
+            ftr.error(selFile);
+          }
+        },
+
+        onPreview : function(activated) {
+          if (activated) {
+            let c, i;
+            [c, i] = wks.switchToPreview();
+            context.mapper.displayPreview(c, i, mdl.getAreas());
+          } else {
+            wks.switchToEdit();
+            context.mapper.cancelPreview();
+          }
+        }
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
+
+    var dragger = (function(){
+
+      var handlers = {
+          
+        prevent : function(e) {
+          if (!tls.none()) return true;
+          if (mdl.findArea(e.target)) return true;
+          return false;
+        }
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
+
+    var tooler = (function() {
 
       var handlers = {
           
@@ -1706,7 +1762,7 @@ var bit = (function() {
       }
     }
 
-    var draw = (function() {
+    var drawer = (function() {
 
       var factory = {
         'rectangle'   : bitgen.Rectangle,
@@ -2054,9 +2110,9 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
-    mnu.init(mnuHandlers);
-    wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers, editor.handlers);
-    tls.init(tools.handlers);
+    mnu.init(menu.handlers);
+    wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
+    tls.init(tooler.handlers);
 
   })(); /* APPLICATION MANAGEMENT */
 
