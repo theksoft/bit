@@ -292,9 +292,9 @@ var bitgrid = (function() {
   function computeGridPropertiesEx(rectCoords, patternProps, space, fCompute, maxWidth, maxHeight) {
     let gp, pp, snc;
     fCompute = fCompute || computeInnerGridProperties;
-    pp = Object.create(patternProps);
-    pp.raw = Object.create(patternProps.raw);
-    pp.area = Object.create(patternProps.area);
+    pp = Object.assign({}, patternProps);
+    pp.raw = Object.assign({}, patternProps.raw);
+    pp.area = Object.assign({}, patternProps.area);
     if (pp.column.overlap !== 0) {
       throw new Error('column.overlap = ' + pp.column.overlap + ' => Unsupported figure properties for griding!');
     }
@@ -385,13 +385,13 @@ var bitgrid = (function() {
     }
 
     clonePattern(coords) {
-      let generator = factory[this.pattern.getType()];
+      let generator = factory[this.pattern.type];
       if (!generator) {
         console.log('ERROR - Unsupported grid figure');
         return null;
       }
       let clone = new generator(this.group, true);
-      clone.setCoords(coords);
+      clone.coords = coords;
       clone.redraw();
       return clone;
     }
@@ -410,7 +410,7 @@ var bitgrid = (function() {
         space = this.gridSpace;
         rcoords = this.getBoundingRectCoords(coords);
         pcoords = this.pattern.copyCoords(patternCoords);
-        pprops = getPatternProperties(this.pattern.getType(), pcoords, this.drawAlign);
+        pprops = getPatternProperties(this.pattern.type, pcoords, this.drawAlign);
         mw = this.parent.getAttribute('width');
         mh = this.parent.getAttribute('height');
         bOuter = (this.drawScope !== 'inner');
@@ -532,30 +532,30 @@ var bitgrid = (function() {
 
     freezeTo(areas, newParent, specialize) {
       let generator, props;
-      generator = factory[this.pattern.getType()];
+      generator = factory[this.pattern.type];
       if (!generator) {
         console.log('ERROR - Unsupported managing grid figure');
         return;
       }
       this.elts.forEach((e,i) => {
         let c, props;
-        c = e.getCoords();
-        props = this.scope.getAreaProperties();
+        c = e.coords;
+        props = this.scope.areaProperties;
         specialize(props, (i+1).toString());
         if (!this.pattern.equalCoords(c)) {
           let clone = new generator(newParent, false);
-          clone.setCoords(c);
+          clone.coords = c;
           clone.redraw();
-          clone.setAreaProperties(props);
+          clone.areaProperties = props;
           areas.push(clone);
         } else {
-          this.pattern.setAreaProperties(props);  // within the grid
+          this.pattern.areaProperties = props;  // within the grid
         }
       });
     }
 
     isPatternInGrid() {
-      return this.elts.reduce((a,e) => a || this.pattern.equalCoords(e.getCoords()), false);
+      return this.elts.reduce((a,e) => a || this.pattern.equalCoords(e.coords), false);
     }
 
   }
@@ -606,7 +606,7 @@ var bitgrid = (function() {
     constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace, gridOrder) {
       super(parent, false);
       this.bindTo(bond);
-      this.type = types.GRIDRECTANGLE;
+      this._type = types.GRIDRECTANGLE;
       this.isGrid = true;
       this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
@@ -617,8 +617,8 @@ var bitgrid = (function() {
     }
 
     unbindFrom(bond) {
-      bond = bond || this.bonds[0];
-      if (bond !== this.bonds[0]) {
+      bond = bond || this._bonds[0];
+      if (bond !== this._bonds[0]) {
         throw new Error('Error managing bound element(s)');
       }
       super.unbindFrom(bond, clsQualifiers.GRIDSCOPE)
@@ -739,7 +739,7 @@ var bitgrid = (function() {
 
     isContained(gc, pc) {
       let rtn, type;
-      type = this.pattern.getType();
+      type = this.pattern.type;
       if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
         rtn = this.isPointWithin(gc, pc.x, pc.y, pc.r) ? true : false;
       } else {
@@ -751,7 +751,7 @@ var bitgrid = (function() {
 
     intersect(gc, pc) {
       let rtn, type;
-      type = this.pattern.getType();
+      type = this.pattern.type;
       if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
         rtn = this.isPointWithin(gc, pc.x, pc.y, -pc.r) ? true : false;
       } else {
@@ -777,7 +777,7 @@ var bitgrid = (function() {
     constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace, gridOrder) {
       super(parent, false);
       this.bindTo(bond);
-      this.type = types.GRIDCIRCLE;
+      this._type = types.GRIDCIRCLE;
       this.isGrid = true;
       this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
@@ -788,8 +788,8 @@ var bitgrid = (function() {
     }
 
     unbindFrom(bond) {
-      bond = bond || this.bonds[0];
-      if (bond !== this.bonds[0]) {
+      bond = bond || this._bonds[0];
+      if (bond !== this._bonds[0]) {
         throw new Error('Error managing bound element(s)');
       }
       super.unbindFrom(bond, clsQualifiers.GRIDSCOPE)
@@ -902,7 +902,7 @@ var bitgrid = (function() {
 
     isContained(gc, pc) {
       let rtn, type;
-      type = this.pattern.getType();
+      type = this.pattern.type;
       if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
         rtn = this.isPointWithin(gc, pc.x, pc.y, pc.r) ? true : false;
       } else {
@@ -914,7 +914,7 @@ var bitgrid = (function() {
 
     intersect(gc, pc) {
       let rtn, type;
-      type = this.pattern.getType();
+      type = this.pattern.type;
       if (type === bitarea.types.CIRCLEDTR || type === bitarea.types.CIRCLECTR) {
         rtn = this.isPointWithin(gc, pc.x, pc.y, -pc.r) ? true : false;
       } else {
@@ -947,7 +947,7 @@ var bitgrid = (function() {
     constructor(parent, bond, gridParent, drawScope, drawAlign, gridSpace, gridOrder) {
       super(parent, false);
       this.bindTo(bond);
-      this.type = types.GRIDHEX;
+      this._type = types.GRIDHEX;
       this.isGrid = true;
       this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
@@ -958,8 +958,8 @@ var bitgrid = (function() {
     }
 
     unbindFrom(bond) {
-      bond = bond || this.bonds[0];
-      if (bond !== this.bonds[0]) {
+      bond = bond || this._bonds[0];
+      if (bond !== this._bonds[0]) {
         throw new Error('Error managing bound element(s)');
       }
       super.unbindFrom(bond, clsQualifiers.GRIDSCOPE)

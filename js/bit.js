@@ -121,7 +121,7 @@ var bit = (function() {
             if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
               return;
             }
-            let bonds = area.getBonds();
+            let bonds = area.copyBonds();
             bonds.forEach(e => {
               let j = context.areas.indexOf(e);
               e.remove();
@@ -1251,7 +1251,7 @@ var bit = (function() {
     var resetAreaProps = () => inForm.forEach(e => e.dom.defaultValue = e.dom.value = "...");
 
     function displayAreaProps(obj) {
-      let props = obj.getAreaProperties();
+      let props = obj.areaProperties;
       inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "");
     }
 
@@ -1288,7 +1288,7 @@ var bit = (function() {
     }
 
     function saveAreaProps(obj, p) {
-      obj.setAreaProperties(p);
+      obj.areaProperties = p;
       inForm.forEach(e => e.dom.defaultValue = e.dom.value);
       doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
@@ -1574,46 +1574,6 @@ var bit = (function() {
       editor : new bitedit.Editor(),
       order : new bitedit.Order(),
       mapper : new bitmap.Mapper()
-/*    },
-
-    mnuHandlers = {
-
-      onNewProject : function() {
-        if (!mdl.isModified() || confirm('Discard all changes?')) {
-          ftr.reset();
-          wks.reset();
-          tls.reset();
-          mnu.reset();
-          mdl.reset();
-        }
-      },
-
-      onNewFiles : function(files) {
-        var selFile = files[0];
-        if (0 === files.length) {
-          ftr.reset();
-        } else if (1 < files.length) {
-          ftr.error(null);
-        } else if (mdl.setFile(selFile)) {
-          mnu.switchToEditMode();
-          ftr.info(selFile);
-          wks.load(selFile);
-        } else {
-          ftr.error(selFile);
-        }
-      },
-
-      onPreview : function(activated) {
-        if (activated) {
-          let c, i;
-          [c, i] = wks.switchToPreview();
-          context.mapper.displayPreview(c, i, mdl.getAreas());
-        } else {
-          wks.switchToEdit();
-          context.mapper.cancelPreview();
-        }
-      }
-*/
     };
 
     var menu = (function() {
@@ -1628,6 +1588,7 @@ var bit = (function() {
             mnu.reset();
             mdl.reset();
           }
+
         },
 
         onNewFiles : function(files) {
@@ -1718,7 +1679,7 @@ var bit = (function() {
               let list, fig;
               if (context.selected.length() === 1) {
                 fig = context.selected.get(0).getFigure();
-                list = (fig.isGrid) ? [fig] : fig.getBonds();
+                list = (fig.isGrid) ? [fig] : fig.copyBonds();
                 list.forEach(g => context.order.display(g.getElts()));
               }
             } else {
@@ -1850,8 +1811,8 @@ var bit = (function() {
             context.selected.set(fig);
             tls.release();
             tls.enableGridTools(fig);
-            fig.getDom().addEventListener('mouseover', onAreaEnter.bind(fig), false);
-            fig.getDom().addEventListener('mouseleave', onAreaLeave.bind(fig), false);
+            fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
+            fig.dom.addEventListener('mouseleave', onAreaLeave.bind(fig), false);
             generator = null;
             break;
           case 'error':
@@ -1961,7 +1922,7 @@ var bit = (function() {
 
         onTrackProgress : function(pt) {
           tracker.progress(pt);
-          computeSelection(tracker.getCoords());
+          computeSelection(tracker.coords);
         },
 
         onTrackEnd : function() {

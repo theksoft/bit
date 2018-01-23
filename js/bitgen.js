@@ -66,10 +66,10 @@ var bitgen = (function() {
     }
 
     start(point) {
-      let coords = this.figure.getCoords();
+      let coords = this.figure.coords;
       this.org.x = coords.x = point.x;
       this.org.y = coords.y = point.y;
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       this.figure.redraw();
     }
 
@@ -84,7 +84,7 @@ var bitgen = (function() {
         return 'error';
       }
 
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       this.figure.redraw();
       return 'done';
     }
@@ -150,12 +150,12 @@ var bitgen = (function() {
     }
     
     progress(point) {
-      this.figure.setCoords(this.computeCoords(point));
+      this.figure.coords = this.computeCoords(point);
       this.figure.redraw();
     }
 
-    getCoords() {
-      return this.figure.getCoords();
+    get coords() {
+      return this.figure.coords;
     }
 
   } //TRACKER
@@ -223,10 +223,10 @@ var bitgen = (function() {
     }
 
     start(point) {
-      let coords = this.figure.getCoords();
+      let coords = this.figure.coords;
       this.org.x = coords.x = point.x;
       this.org.y = coords.y = point.y;
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       this.figure.redraw();
     }
 
@@ -241,7 +241,7 @@ var bitgen = (function() {
         return 'error';
       }
 
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       this.figure.redraw();
       return 'done';
     }
@@ -647,7 +647,7 @@ var bitgen = (function() {
         return 'error';
       }
 
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       this.figure.redraw();
       return 'done';
     }
@@ -686,11 +686,11 @@ var bitgen = (function() {
     }
 
     start(point) {
-      let coords = this.figure.getCoords();
+      let coords = this.figure.coords;
       coords[0].x = this.org.x = point.x;
       coords[0].y = this.org.y = point.y;
       coords.push({ x : point.x, y : point.y });
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       this.figure.redraw();
     }
 
@@ -708,17 +708,17 @@ var bitgen = (function() {
         }
         this.cancel();
         this.figure = new bitarea.Polygon(this.context.parent, this.context.noGroup);
-        this.figure.setCoords(coords);
+        this.figure.coords = coords;
         this.figure.redraw();
         return 'done';
       }
       coords.push({ x : point.x, y : point.y });
-      this.figure.setCoords(coords);
+      this.figure.coords = coords;
       return 'continue';
     }
 
     computeCoords(point) {
-      let coords = this.figure.copyCoords(this.figure.coords);
+      let coords = this.figure.copyCoords();
       let last = coords.length - 1;
       coords[last].x = point.x;
       coords[last].y = point.y;

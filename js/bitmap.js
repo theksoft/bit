@@ -29,8 +29,8 @@ var bitmap = (function() {
     constructor(fig, shape, props) {
       this.fig = fig;
       this.htmlString = '';
-      if (!fig.hasBonds() || fig.getBonds().reduce((a,l) => a && !l.isPatternInGrid(), true)) {
-        props = props || fig.getAreaProperties();
+      if (!fig.hasBonds() || fig.copyBonds().reduce((a,l) => a && !l.isPatternInGrid(), true)) {
+        props = props || fig.areaProperties;
         this.htmlString = '<area shape="' + shape + '" coords="' + this.getCoords() + '"'
           + Object.values(properties).reduce((a,e) => a + (props[e] ? ' ' + e + '="' + props[e] + '"' : ''), '')
           + ' />';
@@ -54,7 +54,7 @@ var bitmap = (function() {
     }
 
     getCoords() {
-      let c = this.fig.getCoords();
+      let c = this.fig.coords;
       return c.x + ', ' + c.y + ', '
         + (c.x + c.width) + ', ' + (c.y + c.height); 
     }
@@ -72,7 +72,7 @@ var bitmap = (function() {
     }
 
     getCoords() {
-      let c = this.fig.getCoords();
+      let c = this.fig.coords;
       return c.x + ', ' + c.y + ', ' + c.r;
     }
 
@@ -89,7 +89,7 @@ var bitmap = (function() {
     }
 
     getCoords() {
-      return this.fig.getPoints(this.fig.getCoords()).map(e => e.x + ', ' + e.y).join(', ');
+      return this.fig.getPoints(this.fig.coords).map(e => e.x + ', ' + e.y).join(', ');
     }
 
   }
@@ -104,7 +104,7 @@ var bitmap = (function() {
       let n, props;
       this.fig= fig;
       this.htmlString = fig.getElts().reduce((a,e,i) => {
-        props = fig.getAreaProperties();
+        props = fig.areaProperties;
         n = (i+1).toString();
         Grid.specializeProperties(props, n);
         return a + fCreate(e, props).getHTMLString()
@@ -146,7 +146,7 @@ var bitmap = (function() {
 
   function create(fig, props) {
     if (!fig || null == fig) return null;
-    let figMap = factory[fig.getType()];
+    let figMap = factory[fig.type];
     if (!figMap) {
       console.log('ERROR - Mapper mode not handled');
       return null;
