@@ -1649,7 +1649,7 @@ var bit = (function() {
           
           onGridScopeChange : function(v) {
             if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.setGridScope(v);
               }
@@ -1658,7 +1658,7 @@ var bit = (function() {
 
           onGridAlignChange : function(v) {
             if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.setGridAlign(v);
               }
@@ -1667,7 +1667,7 @@ var bit = (function() {
 
           onGridSpaceChange : function(v) {
             if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.setGridSpace(v);
               }
@@ -1678,7 +1678,7 @@ var bit = (function() {
             if (bShow) {
               let list, fig;
               if (context.selected.length() === 1) {
-                fig = context.selected.get(0).getFigure();
+                fig = context.selected.get(0).figure;
                 list = (fig.isGrid) ? [fig] : fig.copyBonds();
                 list.forEach(g => context.order.display(g.getElts()));
               }
@@ -1689,15 +1689,15 @@ var bit = (function() {
 
           onGridOrderChange : function(v) {
             if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.setGridOrder(v);
               }
             }
           },
 
-          onPropsSave : (p) => tls.saveAreaProps(context.selected.get(0).getFigure(), p),
-          onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).getFigure())
+          onPropsSave : (p) => tls.saveAreaProps(context.selected.get(0).figure, p),
+          onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).figure)
 
       };
 
@@ -1776,7 +1776,7 @@ var bit = (function() {
         },
 
         onStart : function(parent, pt, alt, gridParent) {
-          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).getFigure() : null; 
+          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).figure : null; 
           context.selected.empty();
           if (null === bondElt) {
             generator = create(parent, alt);
@@ -1806,7 +1806,7 @@ var bit = (function() {
           let height = parent.getAttribute('height');
           switch(generator.end(pt, width, height)) {
           case 'done':
-            let fig = generator.getFigure();
+            let fig = generator.figure;
             mdl.addArea(fig);
             context.selected.set(fig);
             tls.release();
@@ -1848,7 +1848,7 @@ var bit = (function() {
       function updateGridTools() {
         tls.blurAreaProps();
         if (context.selected.length() === 1) {
-          tls.enableGridTools(context.selected.get(0).getFigure());
+          tls.enableGridTools(context.selected.get(0).figure);
         } else {
           tls.disableGridTools();
         }
@@ -1857,7 +1857,7 @@ var bit = (function() {
       function areaSelect(area) {
         tls.blurAreaProps();
         context.selected.set(mdl.findArea(area));
-        tls.enableGridTools(context.selected.get(0).getFigure());
+        tls.enableGridTools(context.selected.get(0).figure);
       }
 
       function areaMultiSelect(area) {
@@ -1949,8 +1949,8 @@ var bit = (function() {
         },
 
         onDeleteAll : function() {
-          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
-          context.selected.forEach(e => mdl.removeArea(e.getFigure()));
+          context.selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
+          context.selected.forEach(e => mdl.removeArea(e.figure));
           context.selected.empty();
           tls.disableGridTools();
         },
@@ -1958,7 +1958,7 @@ var bit = (function() {
         onFreeze : function() {
           if (context.selected.length() === 1) {
             let newSel = [];
-            if (mdl.freezeGridArea(context.selected.get(0).getFigure(), newSel, bitmap.Mapper.specializeProperties)) {
+            if (mdl.freezeGridArea(context.selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
               context.selected.empty();
               newSel.forEach(e => context.selected.add(e));
               updateGridTools();
@@ -1988,7 +1988,7 @@ var bit = (function() {
         onStart : (parent, pt) => {
           let width = parent.getAttribute('width');
           let height = parent.getAttribute('height');
-          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
+          context.selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
           context.mover.start(context.selected, pt, width, height);
           tls.freeze();
         },
