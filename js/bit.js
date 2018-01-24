@@ -1233,10 +1233,10 @@ var bit = (function() {
     function updateGridParams(obj) {
       if (obj && obj.isGrid) {
         context.gParam = false;
-        setGridScope(obj.getGridScope());
-        setGridAlign(obj.getGridAlign());
-        setGridSpace(obj.getGridSpace());
-        setGridOrder(obj.getGridOrder());
+        setGridScope(obj.gridScope);
+        setGridAlign(obj.gridAlign);
+        setGridSpace(obj.gridSpace);
+        setGridOrder(obj.gridOrder);
       } else {
         context.gParam = true;
         setGridScope();
@@ -1651,7 +1651,7 @@ var bit = (function() {
             if (context.selected.length() === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridScope(v);
+                area.gridScope = v;
               }
             }
           },
@@ -1660,7 +1660,7 @@ var bit = (function() {
             if (context.selected.length() === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridAlign(v);
+                area.gridAlign = v;
               }
             }
           },
@@ -1669,7 +1669,7 @@ var bit = (function() {
             if (context.selected.length() === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridSpace(v);
+                area.gridSpace = v;
               }
             }
           },
@@ -1680,7 +1680,7 @@ var bit = (function() {
               if (context.selected.length() === 1) {
                 fig = context.selected.get(0).figure;
                 list = (fig.isGrid) ? [fig] : fig.copyBonds();
-                list.forEach(g => context.order.display(g.getElts()));
+                list.forEach(g => context.order.display(g.areas));
               }
             } else {
               context.order.hide();
@@ -1691,7 +1691,7 @@ var bit = (function() {
             if (context.selected.length() === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridOrder(v);
+                area.gridOrder = v;
               }
             }
           },

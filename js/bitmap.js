@@ -103,7 +103,7 @@ var bitmap = (function() {
     constructor(figure, p, fCreate) {
       let n, props;
       this._figure = figure;
-      this._htmlString = figure.getElts().reduce((a,e,i) => {
+      this._htmlString = figure.areas.reduce((a,e,i) => {
         props = figure.areaProperties;
         n = (i+1).toString();
         Grid.specializeProperties(props, n);
