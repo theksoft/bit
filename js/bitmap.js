@@ -26,19 +26,19 @@ var bitmap = (function() {
 
   class Figure {
 
-    constructor(fig, shape, props) {
-      this.fig = fig;
-      this.htmlString = '';
-      if (!fig.hasBonds() || fig.copyBonds().reduce((a,l) => a && !l.isPatternInGrid(), true)) {
-        props = props || fig.areaProperties;
-        this.htmlString = '<area shape="' + shape + '" coords="' + this.getCoords() + '"'
+    constructor(figure, shape, props) {
+      this._figure = figure;
+      this._htmlString = '';
+      if (!figure.hasBonds() || figure.copyBonds().reduce((a,l) => a && !l.isPatternInGrid(), true)) {
+        props = props || figure.areaProperties;
+        this._htmlString = '<area shape="' + shape + '" coords="' + this.coords + '"'
           + Object.values(properties).reduce((a,e) => a + (props[e] ? ' ' + e + '="' + props[e] + '"' : ''), '')
           + ' />';
       }
     }
 
-    getHTMLString() {
-      return this.htmlString;
+    get htmlString() {
+      return this._htmlString;
     }
 
   }
@@ -49,12 +49,12 @@ var bitmap = (function() {
 
   class Rectangle extends Figure {
 
-    constructor(fig, props) {
-      super(fig, shapes.RECTANGLE, props);
+    constructor(figure, props) {
+      super(figure, shapes.RECTANGLE, props);
     }
 
-    getCoords() {
-      let c = this.fig.coords;
+    get coords() {
+      let c = this._figure.coords;
       return c.x + ', ' + c.y + ', '
         + (c.x + c.width) + ', ' + (c.y + c.height); 
     }
@@ -67,12 +67,12 @@ var bitmap = (function() {
 
   class Circle extends Figure {
 
-    constructor(fig, props) {
-      super(fig, shapes.CIRCLE, props);
+    constructor(figure, props) {
+      super(figure, shapes.CIRCLE, props);
     }
 
-    getCoords() {
-      let c = this.fig.coords;
+    get coords() {
+      let c = this._figure.coords;
       return c.x + ', ' + c.y + ', ' + c.r;
     }
 
@@ -84,12 +84,12 @@ var bitmap = (function() {
 
   class Polygon extends Figure {
 
-    constructor(fig, props) {
-      super(fig, shapes.POLYGON, props);
+    constructor(figure, props) {
+      super(figure, shapes.POLYGON, props);
     }
 
-    getCoords() {
-      return this.fig.getPoints(this.fig.coords).map(e => e.x + ', ' + e.y).join(', ');
+    get coords() {
+      return this._figure.getPoints(this._figure.coords).map(e => e.x + ', ' + e.y).join(', ');
     }
 
   }
@@ -100,19 +100,19 @@ var bitmap = (function() {
 
   class Grid {
 
-    constructor(fig, p, fCreate) {
+    constructor(figure, p, fCreate) {
       let n, props;
-      this.fig= fig;
-      this.htmlString = fig.getElts().reduce((a,e,i) => {
-        props = fig.areaProperties;
+      this._figure = figure;
+      this._htmlString = figure.getElts().reduce((a,e,i) => {
+        props = figure.areaProperties;
         n = (i+1).toString();
         Grid.specializeProperties(props, n);
-        return a + fCreate(e, props).getHTMLString()
+        return a + fCreate(e, props).htmlString
       }, '');
     }
 
-    getHTMLString() {
-      return this.htmlString;
+    get htmlString() {
+      return this._htmlString;
     }
 
     static specializeProperties(props, n) {
@@ -144,36 +144,36 @@ var bitmap = (function() {
     'gridHex'       : Grid
   };
 
-  function create(fig, props) {
-    if (!fig || null == fig) return null;
-    let figMap = factory[fig.type];
+  function create(figure, props) {
+    if (!figure || null == figure) return null;
+    let figMap = factory[figure.type];
     if (!figMap) {
       console.log('ERROR - Mapper mode not handled');
       return null;
     }
-    return new figMap(fig, props, create);
+    return new figMap(figure, props, create);
   }
 
   class Mapper {
 
     constructor() {
-      this.map = this.container = this.image = null;
+      this._map = this._container = this._image = null;
     }
 
     getInnerString(areas) {
-      return areas.reduceRight((a,e) => a + create(e).getHTMLString(), '');
+      return areas.reduceRight((a,e) => a + create(e).htmlString, '');
     }
 
     displayPreview(container, image, areas) {
-      this.container = container;
-      this.image = image;
-      this.image.setAttribute('usemap', '#map');
-      this.map = document.createElement('map');
-      this.map.setAttribute('name', 'map');
-      this.container.appendChild(this.map);
-      this.map.innerHTML = this.getInnerString(areas);
+      this._container = container;
+      this._image = image;
+      this._image.setAttribute('usemap', '#map');
+      this._map = document.createElement('map');
+      this._map.setAttribute('name', 'map');
+      this._container.appendChild(this._map);
+      this._map.innerHTML = this.getInnerString(areas);
       let i, list;
-      list = this.map.querySelectorAll('area');
+      list = this._map.querySelectorAll('area');
       for (i = 0; i < list.length; i++) {
         list[i].addEventListener('click', e => {
           e.preventDefault();
@@ -191,11 +191,11 @@ var bitmap = (function() {
     }
 
     cancelPreview() {
-      if (null !== this.container)
-        this.container.removeChild(this.map);
-      if (null !== this.image)
-        this.image.removeAttribute('usemap');
-      this.map = this.container = this.image = null;
+      if (null !== this._container)
+        this._container.removeChild(this._map);
+      if (null !== this._image)
+        this._image.removeAttribute('usemap');
+      this._map = this._container = this._image = null;
     }
 
     static specializeProperties(props, n) {
