@@ -39,29 +39,29 @@ var bitedit = (function() {
     
     constructor(id, group, center, cursor) {
       super(group, true);
-      this.id = id;
-      this.cursor = cursor;
-      this.addClass(this.className());
-      this._coords.x = center.x + this.lims().offset;
-      this._coords.y = center.y + this.lims().offset;
-      this._coords.width = this.lims().size;
-      this._coords.height = this.lims().size;
+      this._id = id;
+      this._cursor = cursor;
+      this.addClass(this.className);
+      this._coords.x = center.x + this.lims.offset;
+      this._coords.y = center.y + this.lims.offset;
+      this._coords.width = this.lims.size;
+      this._coords.height = this.lims.size;
       this.disable();
       this.draw();
     }
 
     reposition(center) {
-      this._coords.x = center.x + this.lims().offset;
-      this._coords.y = center.y + this.lims().offset;
+      this._coords.x = center.x + this.lims.offset;
+      this._coords.y = center.y + this.lims.offset;
       this.draw();
     }
 
-    getID() {
-      return this.id;
+    get id() {
+      return this._id;
     }
 
-    setID(id) {
-      this.id = id;
+    set id(id) {
+      this._id = id;
     }
 
     is(dom) {
@@ -70,27 +70,27 @@ var bitedit = (function() {
 
     enable() {
       this.removeClass(clsStatus.DISABLED);
-      this.addClass(this.cursor);
+      this.addClass(this._cursor);
     }
 
     disable() {
-      this.removeClass(this.cursor);
+      this.removeClass(this._cursor);
       this.addClass(clsStatus.DISABLED);
     }
 
-    setCursor(cursor) {
-      if (this.hasClass(this.cursor)) {
-        this.removeClass(this.cursor);
+    set cursor(cursor) {
+      if (this.hasClass(this._cursor)) {
+        this.removeClass(this._cursor);
         this.addClass(cursor);
       }
-      this.cursor = cursor;
+      this._cursor = cursor;
     }
 
-    className() {
+    get className() {
       return clsQualifiers.GRIP;
     }
 
-    lims() {
+    get lims() {
       const sz = 5;
       return {
         size : sz,
@@ -106,18 +106,18 @@ var bitedit = (function() {
 
   class Figure {
 
-    constructor(fig) {
+    constructor(figure) {
       if (this.constructor == Figure.constructor) {
         throw new Error('Invalid Figure generator constructor call: abstract class');
       }
-      this._figure = fig;
-      this.grips = [];
+      this._figure = figure;
+      this._grips = [];
       this.createGrips();
-      this.enabled = false;
+      this._enabled = false;
     }
 
-    is(fig) {
-      return (fig === this._figure) ? true : false;
+    is(figure) {
+      return (figure === this._figure) ? true : false;
     }
 
     markSelected() {
@@ -136,26 +136,26 @@ var bitedit = (function() {
 
     remove() {
       this.destroyGrips();
-      this._figure = this.grips = null;
+      this._figure = this._grips = null;
     }
 
     isEditable(grip) {
-      if (!this.enabled) return false;
+      if (!this._enabled) return false;
       if (!isGrip(grip)) return false;
       return (this.getGrip(grip) ? true : false);
     }
 
     enableEdition() {
-      if(!this.enabled) {
-        this.grips.forEach(e => e.enable());
-        this.enabled = true;
+      if(!this._enabled) {
+        this._grips.forEach(e => e.enable());
+        this._enabled = true;
       }
     }
 
     disableEdition() {
-      if (this.enabled) {
-        this.grips.forEach(e => e.disable());
-        this.enabled = false;
+      if (this._enabled) {
+        this._grips.forEach(e => e.disable());
+        this._enabled = false;
       }
     }
 
@@ -219,12 +219,12 @@ var bitedit = (function() {
     }
 
     destroyGrips() {
-      this.grips.forEach(e => e.remove());
-      this.grips.splice(0, this.grips.length);
+      this._grips.forEach(e => e.remove());
+      this._grips.splice(0, this._grips.length);
     }
 
     getGrip(dom) {
-      return this.grips.find(e => e.is(dom));
+      return this._grips.find(e => e.is(dom));
     }
 
     gripCoords(id, coords) {
@@ -238,7 +238,7 @@ var bitedit = (function() {
 
     repositionGrips(coords) {
       let c = coords || this._figure.coords;
-      this.grips.forEach(e => e.reposition(this.gripCoords(e.getID(), c)));
+      this._grips.forEach(e => e.reposition(this.gripCoords(e.id, c)));
     }
 
     // EDIT SECTION
@@ -345,8 +345,8 @@ var bitedit = (function() {
 
   class Rectangle extends Figure {
 
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     computeMoveDLims(wmax, hmax) {
@@ -399,14 +399,14 @@ var bitedit = (function() {
     }
 
     createGrips() {
-      this.grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
-      this.grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
-      this.grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
-      this.grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
-      this.grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
-      this.grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
-      this.grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
-      this.grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
+      this._grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
+      this._grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
+      this._grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
+      this._grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
+      this._grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
+      this._grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
+      this._grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
+      this._grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
     }
 
     computeEditDLims(id, wmax, hmax) {
@@ -422,7 +422,7 @@ var bitedit = (function() {
         't' : fRectangle.tEdit, 'b' : fRectangle.bEdit, 'l' : fRectangle.lEdit, 'r' : fRectangle.rEdit,  
         'tl' : fRectangle.tlEdit, 'tr' : fRectangle.trEdit, 'bl' : fRectangle.blEdit, 'br' : fRectangle.brEdit
       };
-      return (this.enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
+      return (this._enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
     }
 
     checkCoords(coords) {
@@ -464,8 +464,8 @@ var bitedit = (function() {
 
   class Square extends Rectangle {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     computeRotateCoords(direction, wmax, hmax) {
@@ -473,17 +473,17 @@ var bitedit = (function() {
     }
 
     createGrips() {
-      this.grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
-      this.grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
-      this.grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
-      this.grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
+      this._grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
+      this._grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
+      this._grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
+      this._grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
     }
 
     computeEditCoords(id, dx, dy) {
       const editCoords = {
         'tl' : fSquare.tlEdit, 'tr' : fSquare.trEdit, 'bl' : fSquare.blEdit, 'br' : fSquare.brEdit
       };
-      return (this.enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
+      return (this._enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
     }
 
   } // SQUARE EDITOR
@@ -494,15 +494,15 @@ var bitedit = (function() {
 
   class Rhombus extends Rectangle {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     createGrips() {
-      this.grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
-      this.grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
-      this.grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
-      this.grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
+      this._grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
+      this._grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
+      this._grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
+      this._grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
     }
 
   } // RHOMBUS EDITOR
@@ -539,8 +539,8 @@ var bitedit = (function() {
 
   class Circle extends Figure {
 
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     computeMoveDLims(wmax, hmax) {
@@ -575,7 +575,7 @@ var bitedit = (function() {
     }
 
     createGrips() {
-      this.grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
+      this._grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
     }
 
     computeEditDLims(id, wmax, hmax) {
@@ -585,7 +585,7 @@ var bitedit = (function() {
 
     computeEditCoords(id, dx, dy) {
       const editCoords = { 'r' : fCircle.rEdit };
-      return (this.enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
+      return (this._enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
     }
 
     checkCoords(coords) {
@@ -677,8 +677,8 @@ var bitedit = (function() {
 
   class CircleEx extends Circle {
 
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     gripCoords(id, coords) {
@@ -693,10 +693,10 @@ var bitedit = (function() {
     }
 
     createGrips() {
-      this.grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
-      this.grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
-      this.grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
-      this.grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
+      this._grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
+      this._grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
+      this._grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
+      this._grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
     }
 
     computeEditDLims(id, wmax, hmax) {
@@ -713,7 +713,7 @@ var bitedit = (function() {
         'r' : fCircleEx.rEdit, 'l' : fCircleEx.lEdit,
         't' : fCircleEx.tEdit, 'b' : fCircleEx.bEdit
       };
-      if (!this.enabled) {
+      if (!this._enabled) {
         return this._figure.coords;
       }
       let f = editCoords[id];
@@ -728,15 +728,15 @@ var bitedit = (function() {
 
   class Ellipse extends Rectangle {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     createGrips() {
-      this.grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
-      this.grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
-      this.grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
-      this.grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
+      this._grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
+      this._grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
+      this._grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
+      this._grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
     }
 
   } // ELLIPSE EDITOR
@@ -800,8 +800,8 @@ var bitedit = (function() {
 
   class IsoscelesTriangle extends Rectangle {
 
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     computeRotateCoords(direction, wmax, hmax) {
@@ -841,24 +841,24 @@ var bitedit = (function() {
     createGrips() {
       switch (this._figure.coords.tilt) {
       case bitarea.tilts.BOTTOM:
-        this.grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
-        this.grips.push(new Grip('bbl', this._figure.domParent, this.gripCoords('bbl'), this.gripCursor('bbl')));
-        this.grips.push(new Grip('bbr', this._figure.domParent, this.gripCoords('bbr'), this.gripCursor('bbr')));
+        this._grips.push(new Grip('t', this._figure.domParent, this.gripCoords('t'), this.gripCursor('t')));
+        this._grips.push(new Grip('bbl', this._figure.domParent, this.gripCoords('bbl'), this.gripCursor('bbl')));
+        this._grips.push(new Grip('bbr', this._figure.domParent, this.gripCoords('bbr'), this.gripCursor('bbr')));
         break;
       case bitarea.tilts.TOP:
-        this.grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
-        this.grips.push(new Grip('ttl', this._figure.domParent, this.gripCoords('ttl'), this.gripCursor('ttl')));
-        this.grips.push(new Grip('ttr', this._figure.domParent, this.gripCoords('ttr'), this.gripCursor('ttr')));
+        this._grips.push(new Grip('b', this._figure.domParent, this.gripCoords('b'), this.gripCursor('b')));
+        this._grips.push(new Grip('ttl', this._figure.domParent, this.gripCoords('ttl'), this.gripCursor('ttl')));
+        this._grips.push(new Grip('ttr', this._figure.domParent, this.gripCoords('ttr'), this.gripCursor('ttr')));
         break;
       case bitarea.tilts.LEFT:
-        this.grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
-        this.grips.push(new Grip('ltl', this._figure.domParent, this.gripCoords('ltl'), this.gripCursor('ltl')));
-        this.grips.push(new Grip('lbl', this._figure.domParent, this.gripCoords('lbl'), this.gripCursor('lbl')));
+        this._grips.push(new Grip('r', this._figure.domParent, this.gripCoords('r'), this.gripCursor('r')));
+        this._grips.push(new Grip('ltl', this._figure.domParent, this.gripCoords('ltl'), this.gripCursor('ltl')));
+        this._grips.push(new Grip('lbl', this._figure.domParent, this.gripCoords('lbl'), this.gripCursor('lbl')));
         break;
       case bitarea.tilts.RIGHT:
-        this.grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
-        this.grips.push(new Grip('rtr', this._figure.domParent, this.gripCoords('rtr'), this.gripCursor('rtr')));
-        this.grips.push(new Grip('rbr', this._figure.domParent, this.gripCoords('rbr'), this.gripCursor('rbr')));
+        this._grips.push(new Grip('l', this._figure.domParent, this.gripCoords('l'), this.gripCursor('l')));
+        this._grips.push(new Grip('rtr', this._figure.domParent, this.gripCoords('rtr'), this.gripCursor('rtr')));
+        this._grips.push(new Grip('rbr', this._figure.domParent, this.gripCoords('rbr'), this.gripCursor('rbr')));
         break;
       default:
       }
@@ -875,10 +875,10 @@ var bitedit = (function() {
         'bbl' : 'rbr', 'rbr' : 'ttr', 'ttr' : 'ltl', 'ltl' : 'bbl',
         'bbr' : 'rtr', 'rtr' : 'ttl', 'ttl' : 'lbl', 'lbl' : 'bbr'
       };
-      this.grips.forEach(e => {
-        let newId = (direction === directions.RCLK) ? rclkNext[e.getID()] : raclkNext[e.getID()];
-        e.setID(newId);
-        e.setCursor(this.gripCursor(newId));
+      this._grips.forEach(e => {
+        let newId = (direction === directions.RCLK) ? rclkNext[e.id] : raclkNext[e.id];
+        e.id = newId;
+        e.cursor = this.gripCursor(newId);
       });
     }
 
@@ -900,7 +900,7 @@ var bitedit = (function() {
         'ltl' : fIsoscelesTriangle.ltlEdit, 'lbl' : fIsoscelesTriangle.lblEdit,
         'rtr' : fIsoscelesTriangle.rtrEdit, 'rbr' : fIsoscelesTriangle.rbrEdit
       };
-      if (!this.enabled) {
+      if (!this._enabled) {
         return this._figure.coords;
       }
       let f = editCoords[id];
@@ -1135,8 +1135,8 @@ var fEquilateralTriangle = (function() {
 
   class EquilateralTriangle extends IsoscelesTriangle {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     gripCursor(id) {
@@ -1168,7 +1168,7 @@ var fEquilateralTriangle = (function() {
         'ltl' : fEquilateralTriangle.ltlEdit, 'lbl' : fEquilateralTriangle.lblEdit,
         'rtr' : fEquilateralTriangle.rtrEdit, 'rbr' : fEquilateralTriangle.rbrEdit
       };
-      return (this.enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
+      return (this._enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
     }
 
   } // EQUILATERAL TRIANGLE GENERATOR
@@ -1279,8 +1279,8 @@ var fEquilateralTriangle = (function() {
 
   class RectangleTriangle extends IsoscelesTriangle {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     gripCursor(id) {
@@ -1296,24 +1296,24 @@ var fEquilateralTriangle = (function() {
     createGrips() {
       switch (this._figure.coords.tilt) {
       case bitarea.tilts.BOTTOM:
-        this.grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
-        this.grips.push(new Grip('bbr', this._figure.domParent, this.gripCoords('bbr'), this.gripCursor('bbr')));
-        this.grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
+        this._grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
+        this._grips.push(new Grip('bbr', this._figure.domParent, this.gripCoords('bbr'), this.gripCursor('bbr')));
+        this._grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
         break;
       case bitarea.tilts.TOP:
-        this.grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
-        this.grips.push(new Grip('ttl', this._figure.domParent, this.gripCoords('ttl'), this.gripCursor('ttl')));
-        this.grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
+        this._grips.push(new Grip('tr', this._figure.domParent, this.gripCoords('tr'), this.gripCursor('tr')));
+        this._grips.push(new Grip('ttl', this._figure.domParent, this.gripCoords('ttl'), this.gripCursor('ttl')));
+        this._grips.push(new Grip('bl', this._figure.domParent, this.gripCoords('bl'), this.gripCursor('bl')));
         break;
       case bitarea.tilts.LEFT:
-        this.grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
-        this.grips.push(new Grip('lbl', this._figure.domParent, this.gripCoords('lbl'), this.gripCursor('lbl')));
-        this.grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
+        this._grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
+        this._grips.push(new Grip('lbl', this._figure.domParent, this.gripCoords('lbl'), this.gripCursor('lbl')));
+        this._grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
         break;
       case bitarea.tilts.RIGHT:
-        this.grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
-        this.grips.push(new Grip('rtr', this._figure.domParent, this.gripCoords('rtr'), this.gripCursor('rtr')));
-        this.grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
+        this._grips.push(new Grip('br', this._figure.domParent, this.gripCoords('br'), this.gripCursor('br')));
+        this._grips.push(new Grip('rtr', this._figure.domParent, this.gripCoords('rtr'), this.gripCursor('rtr')));
+        this._grips.push(new Grip('tl', this._figure.domParent, this.gripCoords('tl'), this.gripCursor('tl')));
         break;
       default:
       }
@@ -1328,10 +1328,10 @@ var fEquilateralTriangle = (function() {
         'bl' : 'br', 'br' : 'tr', 'tr' : 'tl', 'tl' : 'bl',
         'bbr' : 'rtr', 'rtr' : 'ttl', 'ttl' : 'lbl', 'lbl' : 'bbr'
       };
-      this.grips.forEach(e => {
-        let newId = (direction === directions.RCLK) ? rclkNext[e.getID()] : raclkNext[e.getID()];
-        e.setID(newId);
-        e.setCursor(this.gripCursor(newId));
+      this._grips.forEach(e => {
+        let newId = (direction === directions.RCLK) ? rclkNext[e.id] : raclkNext[e.id];
+        e.id = newId;
+        e.cursor = this.gripCursor(newId);
       });
     }
 
@@ -1353,7 +1353,7 @@ var fEquilateralTriangle = (function() {
         'lbl' : fRectangleTriangle.lblEdit,
         'rtr' : fRectangleTriangle.rtrEdit
       };
-      if (!this.enabled) {
+      if (!this._enabled) {
         return this._figure.coords;
       }
       let f = editCoords[id];
@@ -1370,7 +1370,7 @@ var fEquilateralTriangle = (function() {
 
     const F = Math.sqrt(3), R = F/2;
 
-    // GRABBER CONSTRAINTS
+    // GRIPS CONSTRAINTS
 
     function hrEditCns(obj, wmax, hmax) {
       let lims = this.computeMoveDLims(wmax, hmax);
@@ -1422,7 +1422,7 @@ var fEquilateralTriangle = (function() {
                 dxmin : 0, dxmax : 0 };
     }
 
-    // GRABBER EDITIONS
+    // GRIPS EDITIONS
 
     function SmEdit(ds, s, b, ls, lb) {
       return [s, s-ds, b - Math.round(ds*R/2), ls + ds, lb + Math.round(ds*R)];
@@ -1483,8 +1483,8 @@ var fEquilateralTriangle = (function() {
 
   class Hex extends Rectangle {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     gripCursor(id) {
@@ -1507,15 +1507,15 @@ var fEquilateralTriangle = (function() {
     createGrips() {
       let c = this._figure.coords;
       if (c.width > c.height) {
-        this.grips.push(new Grip('hl', this._figure.domParent, this.gripCoords('hl'), this.gripCursor('hl')));
-        this.grips.push(new Grip('hr', this._figure.domParent, this.gripCoords('hr'), this.gripCursor('hr')));
-        this.grips.push(new Grip('ht', this._figure.domParent, this.gripCoords('ht'), this.gripCursor('ht')));
-        this.grips.push(new Grip('hb', this._figure.domParent, this.gripCoords('hb'), this.gripCursor('hb')));
+        this._grips.push(new Grip('hl', this._figure.domParent, this.gripCoords('hl'), this.gripCursor('hl')));
+        this._grips.push(new Grip('hr', this._figure.domParent, this.gripCoords('hr'), this.gripCursor('hr')));
+        this._grips.push(new Grip('ht', this._figure.domParent, this.gripCoords('ht'), this.gripCursor('ht')));
+        this._grips.push(new Grip('hb', this._figure.domParent, this.gripCoords('hb'), this.gripCursor('hb')));
       } else {
-        this.grips.push(new Grip('vl', this._figure.domParent, this.gripCoords('vl'), this.gripCursor('vl')));
-        this.grips.push(new Grip('vr', this._figure.domParent, this.gripCoords('vr'), this.gripCursor('vr')));
-        this.grips.push(new Grip('vt', this._figure.domParent, this.gripCoords('vt'), this.gripCursor('vt')));
-        this.grips.push(new Grip('vb', this._figure.domParent, this.gripCoords('vb'), this.gripCursor('vb')));
+        this._grips.push(new Grip('vl', this._figure.domParent, this.gripCoords('vl'), this.gripCursor('vl')));
+        this._grips.push(new Grip('vr', this._figure.domParent, this.gripCoords('vr'), this.gripCursor('vr')));
+        this._grips.push(new Grip('vt', this._figure.domParent, this.gripCoords('vt'), this.gripCursor('vt')));
+        this._grips.push(new Grip('vb', this._figure.domParent, this.gripCoords('vb'), this.gripCursor('vb')));
       }
     }
 
@@ -1524,10 +1524,10 @@ var fEquilateralTriangle = (function() {
           'hl' : 'vl', 'hr' : 'vr', 'ht' : 'vt', 'hb' : 'vb',  
           'vl' : 'hl', 'vr' : 'hr', 'vt' : 'ht', 'vb' : 'hb'  
       };
-      this.grips.forEach(e => {
-        let newId = rNext[e.getID()];
-        e.setID(newId);
-        e.setCursor(this.gripCursor(newId));
+      this._grips.forEach(e => {
+        let newId = rNext[e.id];
+        e.id = newId;
+        e.cursor = this.gripCursor(newId);
       });
     }
 
@@ -1545,7 +1545,7 @@ var fEquilateralTriangle = (function() {
         'hl' : fHex.hlEdit, 'hr' : fHex.hrEdit, 'ht' : fHex.htEdit, 'hb' : fHex.hbEdit,
         'vl' : fHex.vlEdit, 'vr' : fHex.vrEdit, 'vt' : fHex.vtEdit, 'vb' : fHex.vbEdit
       };
-      if (!this.enabled) {
+      if (!this._enabled) {
         return this._figure.coords;
       }
       let f = editCoords[id];
@@ -1560,8 +1560,8 @@ var fEquilateralTriangle = (function() {
 
   class Polygon extends Figure {
     
-    constructor(fig) {
-      super(fig);
+    constructor(figure) {
+      super(figure);
     }
 
     computeMoveDLims(wmax, hmax) {
@@ -1601,7 +1601,7 @@ var fEquilateralTriangle = (function() {
 
     createGrips() {
       for (let i = 0; i < this._figure.coords.length; i++) {
-        this.grips.push(new Grip(i, this._figure.domParent, this.gripCoords(i), this.gripCursor(i)));
+        this._grips.push(new Grip(i, this._figure.domParent, this.gripCoords(i), this.gripCursor(i)));
       }
     }
 
@@ -1613,7 +1613,7 @@ var fEquilateralTriangle = (function() {
 
     computeEditCoords(id, dx, dy) {
       let coords = this._figure.copyCoords();
-      if (this.enabled) {
+      if (this._enabled) {
         coords[id].x += dx;
         coords[id].y += dy;
       }
@@ -1634,23 +1634,23 @@ var fEquilateralTriangle = (function() {
 
     constructor(g, figure, order) {
       let x, y;
-      this.g = g;
+      this._g = g;
       this._figure = figure;
-      this.order = order;
+      this._order = order;
       [x, y] = figure.center;
-      this.dom = document.createElementNS(NSSVG, 'text');
-      this.dom.textContent = order.toString();
-      this.dom.setAttribute('text-anchor', 'middle');
-      this.dom.setAttribute('alignment-baseline', 'middle');
-      this.dom.setAttribute('x', x);
-      this.dom.setAttribute('y', y);
-      this.dom.classList.add('order');
-      this.g.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'text');
+      this._dom.textContent = order.toString();
+      this._dom.setAttribute('text-anchor', 'middle');
+      this._dom.setAttribute('alignment-baseline', 'middle');
+      this._dom.setAttribute('x', x);
+      this._dom.setAttribute('y', y);
+      this._dom.classList.add('order');
+      this._g.appendChild(this._dom);
     }
 
     remove() {
-      this.g.removeChild(this.dom);
-      this.g = this.dom = this._figure = null;
+      this._g.removeChild(this._dom);
+      this._g = this._dom = this._figure = null;
     }
 
   } // ORDER DISPLAY
@@ -1677,14 +1677,14 @@ var fEquilateralTriangle = (function() {
     'gridHex'       : Hex
   };
 
-  function create(fig) {
-    if(!fig || null == fig) return null;
-    let figEdit = factory[fig.type];
+  function create(figure) {
+    if(!figure || null == figure) return null;
+    let figEdit = factory[figure.type];
     if (!figEdit) {
       console.log('ERROR - Editor mode not handled');
       return null;
     }
-    return new figEdit(fig);
+    return new figEdit(figure);
   }
 
   /*
@@ -1694,117 +1694,117 @@ var fEquilateralTriangle = (function() {
   class MultiSelector {
 
     constructor() {
-      this.selection = [];
+      this._selection = [];
     }
 
-    set(fig) {
-      let editor = this.find(fig);
-      if (1 === this.selection.length && editor === this.selection[0]) {
+    set(figure) {
+      let editor = this.find(figure);
+      if (1 === this._selection.length && editor === this._selection[0]) {
         return;
       }
-      editor = editor || create(fig);
-      let id = this.selection.indexOf(editor);
+      editor = editor || create(figure);
+      let id = this._selection.indexOf(editor);
       if (-1 === id) {
         this.empty();
         editor.markSelected();
-        this.selection.push(editor);
+        this._selection.push(editor);
         this.enableEdition();
       } else {
         if (0 !== id) {
           this.disableEdition();
-          this.selection.splice(0, id);
+          this._selection.splice(0, id);
         }
-        this.selection.splice(1, this.selection.length - 1);
+        this._selection.splice(1, this._selection.length - 1);
         this.enableEdition();
       }
     }
 
-    toggle(fig) {
-      let editor = this.find(fig) || create(fig);
-      let id = this.selection.indexOf(editor);
+    toggle(figure) {
+      let editor = this.find(figure) || create(figure);
+      let id = this._selection.indexOf(editor);
       if (-1 === id) {
         this.disableEdition();
         editor.markSelected();
-        this.selection.push(editor);
+        this._selection.push(editor);
         this.enableEdition();
       } else {
-        this.selection.splice(id, 1);
+        this._selection.splice(id, 1);
         editor.markUnselected();
         editor.remove();
         this.enableEdition();
       }
     }
 
-    add(fig) {
-      let editor = this.find(fig) || create(fig);
-      let id = this.selection.indexOf(editor);
+    add(figure) {
+      let editor = this.find(figure) || create(figure);
+      let id = this._selection.indexOf(editor);
       if (-1 === id) {
         this.disableEdition();
         editor.markSelected();
-        this.selection.push(editor);
+        this._selection.push(editor);
         this.enableEdition();
       }
     }
 
 /*
     remove(obj) {
-      let id = this.selection.indexOf(obj);
+      let id = this._selection.indexOf(obj);
       if (-1 === id) {
         return;
       }
       obj.markUnselected();
-      this.selection.splice(id, 1);
+      this._selection.splice(id, 1);
     }
 */
 
     empty() {
-      this.selection.forEach(e => { 
+      this._selection.forEach(e => { 
         e.markUnselected();
         e.remove();
       });
-      this.selection.splice(0, this.selection.length);
+      this._selection.splice(0, this._selection.length);
     }
 
-    has(fig) {
-      let editor = this.find(fig);
+    has(figure) {
+      let editor = this.find(figure);
       return (editor && null !== editor) ? true : false;
     }
 
-    find(fig) {
-      return this.selection.find(e => e.is(fig));
+    find(figure) {
+      return this._selection.find(e => e.is(figure));
     }
 
     get(id) {
-      return this.selection[id];
+      return this._selection[id];
     }
     
-    length() {
-      return this.selection.length;
+    get length() {
+      return this._selection.length;
     }
 
     enableEdition() {
-      if (1 == this.selection.length) {
-        this.selection[0].enableEdition();
+      if (1 == this._selection.length) {
+        this._selection[0].enableEdition();
       }
     }
 
     disableEdition() {
-      if (1 == this.selection.length) {
-        this.selection[0].disableEdition();
+      if (1 == this._selection.length) {
+        this._selection[0].disableEdition();
       }
     }
 
     forEach(f) {
-      return this.selection.forEach(f);
+      return this._selection.forEach(f);
     }
 
     sort(f) {
-      return this.selection.sort(f);
+      return this._selection.sort(f);
     }
 
 
     reduce(f, i) {
-      return this.selection.reduce(f, i);
+      return this._selection.reduce(f, i);
     }
 
   } // MULTI-SELECTOR
@@ -1890,43 +1890,43 @@ var fEquilateralTriangle = (function() {
   class Editor {
 
     constructor() {
-      this.selection = null;
-      this.id = '';
+      this._selection = null;
+      this._id = '';
       this.org = { x : 0, y : 0 };
       this.lims = { dxmin : 0, dxmax : 0, dymin : 0, dymax : 0 };
     }
 
     start(selection, target, pt, wmax, hmax) {
-      this.selection = selection;
-      this.id = this.selection.getGrip(target).getID();
+      this._selection = selection;
+      this._id = this._selection.getGrip(target).id;
       this.org.x = pt.x;
       this.org.y = pt.y;
-      this.setLims(this.selection, this.id, wmax, hmax);
+      this.setLims(this._selection, this._id, wmax, hmax);
     }
 
     progress(pt) {
       let d = this.constrain(pt.x - this.org.x, pt.y - this.org.y);
-      this.selection.drawModified(this.id, d.dx, d.dy);
+      this._selection.drawModified(this._id, d.dx, d.dy);
     }
 
     end(pt) {
       let d = this.constrain(pt.x - this.org.x, pt.y - this.org.y);
-      if(!this.selection.modify(this.id, d.dx, d.dy)) {
+      if(!this._selection.modify(this._id, d.dx, d.dy)) {
         alert('Invalid area dimensions!');
       }
       this.reset();
     }
 
     cancel() {
-      this.selection.drawToOffset(0, 0);
+      this._selection.drawToOffset(0, 0);
       this.reset();
     }
 
     reset() {
       this.org.x = this.org.y = 0;
       this.lims.dxmin = this.lims.dxmax = this.lims.dymin = this.lims.dymax = 0;
-      this.selection = null;
-      this.id = '';
+      this._selection = null;
+      this._id = '';
     }
 
     setLims(selection, id, wmax, hmax) {

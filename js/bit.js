@@ -1648,7 +1648,7 @@ var bit = (function() {
       var handlers = {
           
           onGridScopeChange : function(v) {
-            if (context.selected.length() === 1) {
+            if (context.selected.length === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridScope = v;
@@ -1657,7 +1657,7 @@ var bit = (function() {
           },
 
           onGridAlignChange : function(v) {
-            if (context.selected.length() === 1) {
+            if (context.selected.length === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridAlign = v;
@@ -1666,7 +1666,7 @@ var bit = (function() {
           },
 
           onGridSpaceChange : function(v) {
-            if (context.selected.length() === 1) {
+            if (context.selected.length === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridSpace = v;
@@ -1677,7 +1677,7 @@ var bit = (function() {
           onShowOrder : function(bShow) {
             if (bShow) {
               let list, fig;
-              if (context.selected.length() === 1) {
+              if (context.selected.length === 1) {
                 fig = context.selected.get(0).figure;
                 list = (fig.isGrid) ? [fig] : fig.copyBonds();
                 list.forEach(g => context.order.display(g.areas));
@@ -1688,7 +1688,7 @@ var bit = (function() {
           },
 
           onGridOrderChange : function(v) {
-            if (context.selected.length() === 1) {
+            if (context.selected.length === 1) {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridOrder = v;
@@ -1712,13 +1712,13 @@ var bit = (function() {
     }
 
     function onAreaEnter(e) {
-      if (context.selected.length() === 0) {
+      if (context.selected.length === 0) {
         tls.displayAreaProps(this);
       }
     }
 
     function onAreaLeave(e) {
-      if (context.selected.length() === 0) {
+      if (context.selected.length === 0) {
         tls.resetAreaProps();
       }
     }
@@ -1847,7 +1847,7 @@ var bit = (function() {
 
       function updateGridTools() {
         tls.blurAreaProps();
-        if (context.selected.length() === 1) {
+        if (context.selected.length === 1) {
           tls.enableGridTools(context.selected.get(0).figure);
         } else {
           tls.disableGridTools();
@@ -1956,7 +1956,7 @@ var bit = (function() {
         },
 
         onFreeze : function() {
-          if (context.selected.length() === 1) {
+          if (context.selected.length === 1) {
             let newSel = [];
             if (mdl.freezeGridArea(context.selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
               context.selected.empty();
@@ -2007,7 +2007,7 @@ var bit = (function() {
         },
 
         onRotate : function(parent, direction) {
-          if (1 < context.selected.length()) {
+          if (1 < context.selected.length) {
             alert('Rotation is supported for a single selected area!');
             return;
           }
@@ -2031,7 +2031,7 @@ var bit = (function() {
       var handlers = {
 
         prevent : function(e) {
-          if (0 === context.selected.length()) return true;
+          if (0 === context.selected.length) return true;
           if (!context.selected.get(0).isEditable(e.target)) return true;
           return false;
         },
