@@ -493,6 +493,11 @@ ul, ol {
   border: 2px dashed #f44;
 }
 
+input[type=text].error {
+  border: 2px solid #f44;
+	color: #f44;
+}
+
 #load-image-file {
   position: fixed;
   top: -100em;

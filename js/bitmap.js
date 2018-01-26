@@ -164,12 +164,12 @@ var bitmap = (function() {
       return areas.reduceRight((a,e) => a + create(e).htmlString, '');
     }
 
-    displayPreview(container, image, areas) {
+    displayPreview(container, image, areas, info) {
       this._container = container;
       this._image = image;
-      this._image.setAttribute('usemap', '#map');
+      this._image.setAttribute('usemap', '#'+info.name);
       this._map = document.createElement('map');
-      this._map.setAttribute('name', 'map');
+      this._map.setAttribute('name', info.name);
       this._container.appendChild(this._map);
       this._map.innerHTML = this.getInnerString(areas);
       let i, list;

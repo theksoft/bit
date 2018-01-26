@@ -72,6 +72,8 @@ var bit = (function() {
           mode : 'new',
           modified : false,
           filename : '',
+          name : '',
+          alt : '',
           areas : []
         };
     
@@ -105,6 +107,19 @@ var bit = (function() {
           return true;
         }
         return false;
+      },
+
+      setInfo(name, alt) {
+        context.name = name;
+        context.alt = alt;
+        context.modified = true;
+      },
+
+      getInfo() {
+        return {
+          name : context.name,
+          alt : context.alt
+        };
       },
 
       getAreas : function() {
@@ -1500,7 +1515,7 @@ var bit = (function() {
     function processFiles(files) {
       clear();
       if (1 < files.length || 0 == files.length || !mdl.validateImgFile(files[0])) {
-        error();
+        error(doms.dropZone);
         doms.btnSet.disabled = true;
       } else {
         context.file = files[0];
@@ -1520,8 +1535,8 @@ var bit = (function() {
       context.filename = '';
     }
 
-    function error() {
-      doms.dropZone.classList.add('error');
+    function error(obj) {
+      obj.classList.add('error');
     }
 
     function onDragOver(e) {
@@ -1538,7 +1553,7 @@ var bit = (function() {
       e.stopPropagation();
       e.preventDefault();
       processFiles(e.dataTransfer.files);
-      doms.inImageFile.value = "";
+      doms.inImageFile.value = '';
     }
 
     function onImageFileChange(e) {
@@ -1552,7 +1567,25 @@ var bit = (function() {
 
     function onSetClick(e) {
       e.preventDefault();
-      hide(doms.loader);
+      if(validate()) {
+        let data = {
+          filename  : context.filename,
+          file      : context.file,
+          name      : doms.inMapName.value,
+          alt       : doms.inMapAlt.value
+        };
+        if (!context.handlers.onNewMap(data)) {
+          console.log('ERROR - Invalid input management');
+        }
+        hide(doms.loader);
+        clear();
+      } else {
+        if (doms.inMapName.value === '') {
+          error(doms.inMapName);
+        } else {
+          error(doms.dropZone);
+        }
+      }
     }
 
     function onCancelClick(e) {
@@ -1578,6 +1611,7 @@ var bit = (function() {
 
       reset : function() {
         clear();
+        doms.inImageFile.value = doms.inImageFile.defaultValue = '';
         doms.inMapName.value = doms.inMapName.defaultValue = '';  
         doms.inMapAlt.value = doms.inMapAlt.defaultValue = '';  
         return this;
@@ -1599,9 +1633,6 @@ var bit = (function() {
 
     var doms = {
       newProjectBtn : $('new-project'),
-      fileDropZone  : $('file-drop-zone'),
-      loadFileLbl   : $('load-file-lbl'),
-      loadFileInput : $('load-file'),
       previewBtn    : $('preview')
     },
     context = {
@@ -1616,27 +1647,6 @@ var bit = (function() {
       context.handlers.onNewProject();
     }
 
-    function onFileDragOver(e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    
-    function onFileDragLeave(e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    
-    function onFileDrop(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      context.handlers.onNewFiles(e.dataTransfer.files);
-    }
-    
-    function onLoadFileInputChange(e) {
-      e.preventDefault();
-      context.handlers.onNewFiles(e.target.files);
-    }
-    
     function onPreviewBtnClick(e) {
       e.preventDefault();
       context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
@@ -1647,23 +1657,11 @@ var bit = (function() {
       init : function(handlers) {
         context.handlers = handlers;
         doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
-        doms.fileDropZone.draggable = true;
-        doms.fileDropZone.addEventListener('dragover', onFileDragOver, false);
-        doms.fileDropZone.addEventListener('dragleave', onFileDragLeave, false);
-        doms.fileDropZone.addEventListener('drop', onFileDrop, false);
-        doms.loadFileInput.addEventListener('change', onLoadFileInputChange, false);
         doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
         return this.reset();
       },
 
       reset : function() {
-        doms.loadFileInput.style.opacity = '0';
-        doms.loadFileInput.style.position = 'fixed';
-        doms.loadFileInput.style.top = '-100em';
-        doms.loadFileInput.value = '';
-        show(doms.loadFileInput);
-        show(doms.loadFileLbl);
-        show(doms.fileDropZone);
         hide(doms.previewBtn);
         doms.previewBtn.classList.remove('selected');
         return this;
@@ -1671,9 +1669,6 @@ var bit = (function() {
 
       switchToEditMode : function() {
         doms.previewBtn.classList.remove('selected');
-        hide(doms.fileDropZone);
-        hide(doms.loadFileInput);
-        hide(doms.loadFileLbl);
         show(doms.previewBtn);
         return this;
       }
@@ -1700,6 +1695,30 @@ var bit = (function() {
       mapper : new bitmap.Mapper()
     };
 
+    var loader = (function() {
+
+      var handlers = {
+
+        onNewMap : function(data) {
+          if (mdl.setFile(data.file)) {
+            mdl.setInfo(data);
+            mnu.switchToEditMode();
+            ftr.info(data.file);
+            wks.load(data.file);
+          } else {
+            ftr.error(data.file);
+          }
+          return true;
+        }
+
+      };
+      
+      return {
+        handlers
+      };
+
+    })();
+
     var menu = (function() {
 
       var handlers = {
@@ -1716,26 +1735,11 @@ var bit = (function() {
           ldr.show();
         },
 
-        onNewFiles : function(files) {
-          var selFile = files[0];
-          if (0 === files.length) {
-            ftr.reset();
-          } else if (1 < files.length) {
-            ftr.error(null);
-          } else if (mdl.setFile(selFile)) {
-            mnu.switchToEditMode();
-            ftr.info(selFile);
-            wks.load(selFile);
-          } else {
-            ftr.error(selFile);
-          }
-        },
-
         onPreview : function(activated) {
           if (activated) {
             let c, i;
             [c, i] = wks.switchToPreview();
-            context.mapper.displayPreview(c, i, mdl.getAreas());
+            context.mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
           } else {
             wks.switchToEdit();
             context.mapper.cancelPreview();
@@ -2196,10 +2200,10 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
+    ldr.init(loader.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);
-    ldr.init();
 
   })(); /* APPLICATION MANAGEMENT */
 
