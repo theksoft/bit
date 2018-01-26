@@ -53,24 +53,26 @@ var bitarea = (function() {
       if (this.constructor == Figure.constructor) {
         throw new Error('Invalid Figure constructor call: abstract class');
       }
-      this.type = type;
-      this.parent = this.domParent = parent;
-      this.dom = null;
-      this.bonds = [];
+      this._type = type;
+      this._parent = this._domParent = parent;
+      this._dom = null;
+      this._coords = {};
+      this._svgCoords = {};
+      this._bonds = [];
       if (!noGroup) {
-        this.domParent = document.createElementNS(NSSVG, 'g');
-        this.parent.appendChild(this.domParent);
+        this._domParent = document.createElementNS(NSSVG, 'g');
+        this._parent.appendChild(this._domParent);
       }
       this.createSVGElt();
-      this.properties = {};
+      this._properties = {};
     }
 
     createSVGElt() {
       console.log('createSVGElt() not defined');
     }
 
-    getType() {
-      return this.type;
+    get type() {
+      return this._type;
     }
 
     equalCoords(coords) {
@@ -78,42 +80,40 @@ var bitarea = (function() {
       return false;
     }
 
-    getCoords() {
-      console.log('getCoords() not defined');
+    get coords() {
+      return Object.assign({}, this._coords);
     }
 
-    setCoords(coords) {
-      console.log('setCoords() not defined');
+    set coords(coords) {
+      Object.assign(this._coords, coords);
     }
 
     copyCoords(coords) {
-      console.log('copyCoords() not defined');
-      return null;
+      return Object.assign({}, coords || this._coords);
     }
 
-    setSVGCoords(coords) {
-      console.log('setSVGCoords() not defined');
+    set svgCoords(coords) {
+      Object.assign(this._svgCoords, coords);
     }
 
-    getSVGCoords() {
-      console.log('getSVGCoords() not defined');
-      return this.getCoords();
+    get svgCoords() {
+      return Object.assign({}, this._svgCoords);
     }
 
     redraw(coords) {
-      let c = coords || this.getCoords();
+      let c = coords || this.coords;
       this.draw(c);
-      this.bonds.forEach(e => e.draw(e.getSVGCoords(), c));
+      this._bonds.forEach(e => e.draw(e.svgCoords, c));
     }
 
     is(dom) {
-      return (dom === this.dom) ? true : false;
+      return (dom === this._dom) ? true : false;
     }
 
     remove() {
       this.unbindAll();
-      this.parent.removeChild((this.parent === this.domParent) ? this.dom : this.domParent);
-      this.parent = this.domParent = this.dom = null;
+      this._parent.removeChild((this._parent === this._domParent) ? this._dom : this._domParent);
+      this._parent = this._domParent = this._dom = null;
     }
 
     within(coords) {
@@ -121,55 +121,63 @@ var bitarea = (function() {
       return false;
     }
 
-    getDom() {
-      return this.dom;
+    get dom() {
+      return this._dom;
     }
 
-    getDomParent() {
-      return this.domParent;
+    get parent() {
+      return this._parent;
+    }
+
+    get domParent() {
+      return this._domParent;
     }
 
     addClass(clsName) {
-      if(this.dom) {
-        this.dom.classList.add(clsName);
+      if(this._dom) {
+        this._dom.classList.add(clsName);
       }
     }
 
     removeClass(clsName) {
-      if(this.dom) {
-        this.dom.classList.remove(clsName);
+      if(this._dom) {
+        this._dom.classList.remove(clsName);
       }
     }
 
     hasClass(clsName) {
-      if(this.dom) {
-        return this.dom.classList.contains(clsName);
+      if(this._dom) {
+        return this._dom.classList.contains(clsName);
       }
       return false;
     }
 
     bindTo(bond, clsQualifier) {
-      this.bonds.push(bond);
-      this.dom.classList.add(clsQualifier);
+      this._bonds.push(bond);
+      this._dom.classList.add(clsQualifier);
     }
 
     unbindFrom(bond, clsQualifier) {
-      this.bonds.splice(this.bonds.indexOf(bond), 1);
-      if (0 === this.bonds.length) {
-        this.dom.classList.remove(clsQualifier);
+      this._bonds.splice(this._bonds.indexOf(bond), 1);
+      if (0 === this._bonds.length) {
+        this._dom.classList.remove(clsQualifier);
       }
     }
 
     unbindAll() {
-      this.bonds.forEach(e => { e.unbindFrom(this); });
+      this._bonds.forEach(e => { e.unbindFrom(this); });
     }
 
     hasBonds() {
-      return (this.bonds.length > 0) ? true : false;
+      return (this._bonds.length > 0) ? true : false;
     }
 
-    getBonds() {
-      return this.bonds.slice();
+    get bonds() {
+      return this._bonds;
+    }
+
+    copyBonds() {
+      return this._bonds.slice();
     }
 
     clone(parent, pt) {
@@ -182,17 +190,17 @@ var bitarea = (function() {
       return [];
     }
 
-    getCenter() {
-      console.log('getCenter() not defined');
+    get center() {
+      console.log('get center() not defined');
       return [100, 100];
     }
 
-    getAreaProperties() {
-      return Object.create(this.properties);
+    get areaProperties() {
+      return Object.assign({}, this._properties);
     }
 
-    setAreaProperties(p) {
-      Object.assign(this.properties, p);
+    set areaProperties(p) {
+      Object.assign(this._properties, p);
     }
 
   } // FIGURE
@@ -205,74 +213,39 @@ var bitarea = (function() {
 
     constructor(parent, noGroup) {
       super(types.RECTANGLE, parent, noGroup);
-      this.coords = { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT };
-      this.svgCoords = { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT };
+      Object.assign(this._coords, { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT });
+      Object.assign(this._svgCoords, { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT });
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'rect');
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'rect');
+      this._domParent.appendChild(this._dom);
     }
 
     equalCoords(coords) {
-      return (this.coords.x === coords.x &&
-              this.coords.y === coords.y &&
-              this.coords.width === coords.width &&
-              this.coords.height === coords.height &&
-              this.coords.tilt === coords.tilt) ? true : false;
-    }
-
-    getCoords() {
-      return Object.create(this.coords);
-    }
-
-    setCoords(coords) {
-      this.coords.x = coords.x;
-      this.coords.y = coords.y;
-      this.coords.width = coords.width;
-      this.coords.height = coords.height;
-      this.coords.tilt = coords.tilt;
-    }
-
-    copyCoords(coords) {
-      let c = {};
-      coords = coords || this.coords;
-      c.x = coords.x;
-      c.y = coords.y;
-      c.width = coords.width;
-      c.height = coords.height;
-      c.tilt = coords.tilt;
-      return c;
+      return (this._coords.x === coords.x &&
+              this._coords.y === coords.y &&
+              this._coords.width === coords.width &&
+              this._coords.height === coords.height &&
+              this._coords.tilt === coords.tilt) ? true : false;
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      if (this.dom) {
-        this.setSVGCoords(c);
-        this.dom.setAttribute('x', c.x);
-        this.dom.setAttribute('y', c.y);
-        this.dom.setAttribute('width', c.width);
-        this.dom.setAttribute('height', c.height);
+      let c = coords || this._coords;
+      if (this._dom) {
+        this.svgCoords = c;
+        this._dom.setAttribute('x', c.x);
+        this._dom.setAttribute('y', c.y);
+        this._dom.setAttribute('width', c.width);
+        this._dom.setAttribute('height', c.height);
       }
     }
 
-    setSVGCoords(coords) {
-      this.svgCoords.x = coords.x;
-      this.svgCoords.y = coords.y;
-      this.svgCoords.width = coords.width;
-      this.svgCoords.height = coords.height;
-      this.svgCoords.tilt = coords.tilt;
-    }
-
-    getSVGCoords() {
-      return this.svgCoords;
-    }
-
     within(coords) {
-      if (this.coords.x < coords.x) return false;
-      if (this.coords.x + this.coords.width > coords.x + coords.width) return false;
-      if (this.coords.y < coords.y) return false;
-      if (this.coords.y + this.coords.height > coords.y + coords.height) return false;
+      if (this._coords.x < coords.x) return false;
+      if (this._coords.x + this._coords.width > coords.x + coords.width) return false;
+      if (this._coords.y < coords.y) return false;
+      if (this._coords.y + this._coords.height > coords.y + coords.height) return false;
       return true;
     }
 
@@ -285,10 +258,10 @@ var bitarea = (function() {
       ];
     }
 
-    getCenter() {
+    get center() {
       return [
-        this.coords.x + Math.round(this.coords.width/2),
-        this.coords.y + Math.round(this.coords.height/2)
+        this._coords.x + Math.round(this._coords.width/2),
+        this._coords.y + Math.round(this._coords.height/2)
       ];
     }
 
@@ -302,19 +275,23 @@ var bitarea = (function() {
     
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.SQUARE;
+      this._type = types.SQUARE;
     }
 
     createSVGElt() {
       super.createSVGElt();
-      this.dom.classList.add(clsQualifiers.SQUARE);
+      this._dom.classList.add(clsQualifiers.SQUARE);
     }
 
-    setCoords(coords) {
+    get coords() {
+      return super.coords;
+    }
+
+    set coords(coords) {
       if(coords.width !== coords.height) {
         throw new Error('This is not a square: ' + coords.width + 'x' + coords.height);
       }
-      super.setCoords(coords);
+      super.coords = coords;
     }
 
     draw(coords) {
@@ -334,22 +311,22 @@ var bitarea = (function() {
 
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.RHOMBUS;
+      this._type = types.RHOMBUS;
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'polygon');
-      this.dom.classList.add(clsQualifiers.RHOMBUS);
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon');
+      this._dom.classList.add(clsQualifiers.RHOMBUS);
+      this._domParent.appendChild(this._dom);
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      if (this.dom) {
+      let c = coords || this._coords;
+      if (this._dom) {
         let points = this.getPoints(c);
         let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-        this.setSVGCoords(c);
-        this.dom.setAttribute('points', attrVal);
+        this.svgCoords = c;
+        this._dom.setAttribute('points', attrVal);
       }
     }
 
@@ -374,70 +351,41 @@ var bitarea = (function() {
 
     constructor(parent, noGroup) {
       super(types.CIRCLECTR, parent, noGroup);
-      this.coords = { x : 0, y : 0, r : 0 };
-      this.svgCoords = { x : 0, y : 0, r : 0 };
+      Object.assign(this._coords, { x : 0, y : 0, r : 0 });
+      Object.assign(this._svgCoords, { x : 0, y : 0, r : 0 });
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'circle');
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'circle');
+      this._domParent.appendChild(this._dom);
     }
 
     equalCoords(coords) {
-      return (this.coords.x === coords.x &&
-              this.coords.y === coords.y &&
-              this.coords.r === coords.r) ? true : false;
-    }
-
-    getCoords() {
-      return Object.create(this.coords);
-    }
-
-    setCoords(coords) {
-      this.coords.x = coords.x;
-      this.coords.y = coords.y;
-      this.coords.r = coords.r;
-    }
-
-    copyCoords(coords) {
-      let c = {};
-      coords = coords || this.coords;
-      c.x = coords.x;
-      c.y = coords.y;
-      c.r = coords.r;
-      return c;
-    }
-
-    setSVGCoords(coords) {
-      this.svgCoords.x = coords.x;
-      this.svgCoords.y = coords.y;
-      this.svgCoords.r = coords.r;
-    }
-
-    getSVGCoords() {
-      return this.svgCoords;
+      return (this._coords.x === coords.x &&
+              this._coords.y === coords.y &&
+              this._coords.r === coords.r) ? true : false;
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      if (this.dom) {
-        this.setSVGCoords(c);
-        this.dom.setAttribute('cx', c.x);
-        this.dom.setAttribute('cy', c.y);
-        this.dom.setAttribute('r', c.r);
+      let c = coords || this._coords;
+      if (this._dom) {
+        this.svgCoords = c;
+        this._dom.setAttribute('cx', c.x);
+        this._dom.setAttribute('cy', c.y);
+        this._dom.setAttribute('r', c.r);
       }
     }
 
     within(coords) {
-      if (this.coords.x - this.coords.r < coords.x) return false;
-      if (this.coords.x + this.coords.r > coords.x + coords.width) return false;
-      if (this.coords.y - this.coords.r < coords.y) return false;
-      if (this.coords.y + this.coords.r > coords.y + coords.height) return false;
+      if (this._coords.x - this._coords.r < coords.x) return false;
+      if (this._coords.x + this._coords.r > coords.x + coords.width) return false;
+      if (this._coords.y - this._coords.r < coords.y) return false;
+      if (this._coords.y + this._coords.r > coords.y + coords.height) return false;
       return true;
     }
 
-    getCenter() {
-      return [this.svgCoords.x, this.svgCoords.y];
+    get center() {
+      return [this._svgCoords.x, this._svgCoords.y];
     }
 
   } // CIRCLE CLASS (from CENTER)
@@ -450,12 +398,12 @@ var bitarea = (function() {
 
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.CIRCLEDTR;
+      this._type = types.CIRCLEDTR;
     }
 
     createSVGElt() {
       super.createSVGElt();
-      this.dom.classList.add(clsQualifiers.EXTENDED);
+      this._dom.classList.add(clsQualifiers.EXTENDED);
     }
 
   } // CIRCLE CLASS (from DIAMETER)
@@ -468,24 +416,24 @@ var bitarea = (function() {
 
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.ELLIPSE;
+      this._type = types.ELLIPSE;
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'ellipse');
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'ellipse');
+      this._domParent.appendChild(this._dom);
     }
 
     draw(coords) {
-      let c = coords || this.coords;
+      let c = coords || this._coords;
       let rx = Math.round(c.width/2),
           ry = Math.round(c.height/2);
-      if (this.dom) {
-        this.setSVGCoords(c);
-        this.dom.setAttribute('cx', c.x + rx);
-        this.dom.setAttribute('cy', c.y + ry);
-        this.dom.setAttribute('rx', rx);
-        this.dom.setAttribute('ry', ry);
+      if (this._dom) {
+        this.svgCoords = c;
+        this._dom.setAttribute('cx', c.x + rx);
+        this._dom.setAttribute('cy', c.y + ry);
+        this._dom.setAttribute('rx', rx);
+        this._dom.setAttribute('ry', ry);
       }
     }
 
@@ -510,23 +458,23 @@ var bitarea = (function() {
     
     constructor(parent, noGroup, tilt) {
       super(parent, noGroup);
-      this.type = types.TRIANGLEISC;
-      this.coords.tilt = tilt;
+      this._type = types.TRIANGLEISC;
+      this._coords.tilt = tilt;
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'polygon');
-      this.dom.classList.add(clsQualifiers.ISOSCELES);
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon');
+      this._dom.classList.add(clsQualifiers.ISOSCELES);
+      this._domParent.appendChild(this._dom);
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      if (this.dom) {
-        this.setSVGCoords(c);
+      let c = coords || this._coords;
+      if (this._dom) {
+        this.svgCoords = c;
         let points = this.getPoints(c);
         let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-        this.dom.setAttribute('points', attrVal);
+        this._dom.setAttribute('points', attrVal);
       }
     }
 
@@ -570,13 +518,13 @@ var bitarea = (function() {
     
     constructor(parent, noGroup, tilt) {
       super(parent, noGroup, tilt);
-      this.type = types.TRIANGLEEQL;
+      this._type = types.TRIANGLEEQL;
     }
 
     createSVGElt() {
       super.createSVGElt();
-      this.dom.classList.remove(clsQualifiers.ISOSCELES);
-      this.dom.classList.add(clsQualifiers.EQUILATERAL);
+      this._dom.classList.remove(clsQualifiers.ISOSCELES);
+      this._dom.classList.add(clsQualifiers.EQUILATERAL);
     }
 
     checkDims(coords) {
@@ -594,14 +542,18 @@ var bitarea = (function() {
       default:
         r = 0;
       }
-      return (Math.abs(Math.round(dmax - r * dmin)) <= 1) ? true : false;
+      return (Math.abs(Math.round(dmax - r * dmin)) <= 3) ? true : false;
      }
 
-    setCoords(coords) {
+    get coords() {
+      return super.coords;
+    }
+
+    set coords(coords) {
       if(!this.checkDims(coords)) {
         throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height);
       }
-      super.setCoords(coords);
+      super.coords = coords;
     }
 
     draw(coords) {
@@ -621,13 +573,13 @@ var bitarea = (function() {
 
     constructor(parent, noGroup, tilt) {
       super(parent, noGroup, tilt);
-      this.type = types.TRIANGLERCT;
+      this._type = types.TRIANGLERCT;
     }
 
     createSVGElt() {
       super.createSVGElt();
-      this.dom.classList.remove(clsQualifiers.ISOSCELES);
-      this.dom.classList.add(clsQualifiers.RIGHTANGLE);
+      this._dom.classList.remove(clsQualifiers.ISOSCELES);
+      this._dom.classList.add(clsQualifiers.RIGHTANGLE);
     }
 
     getPoints(c) {
@@ -670,13 +622,13 @@ var bitarea = (function() {
     
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.HEXRCT;
+      this._type = types.HEXRCT;
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'polygon');
-      this.dom.classList.add(clsQualifiers.HEX);
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon');
+      this._dom.classList.add(clsQualifiers.HEX);
+      this._domParent.appendChild(this._dom);
     }
 
     getSBPt(s, b, ls, lb) {
@@ -686,12 +638,12 @@ var bitarea = (function() {
     }
 
     draw(coords) {
-      let c = coords || this.coords;
-      if (this.dom) {
-        this.setSVGCoords(c);
+      let c = coords || this._coords;
+      if (this._dom) {
+        this.svgCoords = c;
         let pts = this.getPoints(c);
         let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
-        this.dom.setAttribute('points', attrVal);
+        this._dom.setAttribute('points', attrVal);
       }
     }
 
@@ -725,12 +677,12 @@ var bitarea = (function() {
     
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.HEXDTR;
+      this._type = types.HEXDTR;
     }
 
     createSVGElt() {
       super.createSVGElt();
-      this.dom.classList.add(clsQualifiers.EXTENDED);
+      this._dom.classList.add(clsQualifiers.EXTENDED);
     }
 
   } // HEX (from DIAMETER)
@@ -743,44 +695,45 @@ var bitarea = (function() {
     
     constructor(parent, noGroup) {
       super(types.POLYGON, parent, noGroup);
-      this.coords = [{ x : 0, y : 0}];
-      this.type = types.POLYGON;
+      this._coords = [{ x : 0, y : 0}];
+      this._type = types.POLYGON;
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'polygon');
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon');
+      this._domParent.appendChild(this._dom);
     }
 
-    getCoords() {
-      return this.copyCoords(this.coords);
+    get coords() {
+      return this.copyCoords();
     }
 
-    setCoords(coords) {
-      this.coords.splice(0, this.coords.length);
-      this.coords = this.copyCoords(coords);
+    set coords(coords) {
+      this._coords.splice(0, this._coords.length);
+      this._coords = this.copyCoords(coords);
     }
 
     copyCoords(coords) {
       let rtn = [];
+      coords = coords || this._coords;
       coords.forEach(e => rtn.push({ x : e.x, y : e.y }));
       return rtn;
     }
 
     draw(coords) {
-      if (this.dom) {
-        let c = coords || this.coords;
+      if (this._dom) {
+        let c = coords || this._coords;
         let attrVal = c.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-        this.dom.setAttribute('points', attrVal);
+        this._dom.setAttribute('points', attrVal);
       }
     }
 
     within(coords) {
-      return this.coords.reduce((r, e) => r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height), true);
+      return this._coords.reduce((r, e) => r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height), true);
     }
 
-    getCenter() {
-      return [this.coords[0].x, this.coords[0].y];
+    get center() {
+      return [this._coords[0].x, this._coords[0].y];
     }
 
   } // POLYGON
@@ -793,16 +746,16 @@ var bitarea = (function() {
     
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.type = types.POLYLINE;
+      this._type = types.POLYLINE;
     }
 
     createSVGElt() {
-      this.dom = document.createElementNS(NSSVG, 'polyline');
-      this.domParent.appendChild(this.dom);
+      this._dom = document.createElementNS(NSSVG, 'polyline');
+      this._domParent.appendChild(this._dom);
     }
 
     add(point)  {
-      this.coords.push({ x : point.x, y : point.y });
+      this._coords.push({ x : point.x, y : point.y });
     }
 
   }

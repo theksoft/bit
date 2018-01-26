@@ -20,7 +20,7 @@ var bitgen = (function() {
       if (this.constructor == Figure.constructor) {
         throw new Error('Invalid Figure generator constructor call: abstract class');
       }
-      this.figure = null;
+      this._figure = null;
     }
 
     start(point) {
@@ -37,13 +37,13 @@ var bitgen = (function() {
     }
     
     cancel() {
-      if (this.figure) {
-        this.figure.remove();
+      if (this._figure) {
+        this._figure.remove();
       }
     }
 
-    getFigure() {
-      return this.figure;
+    get figure() {
+      return this._figure;
     }
 
   }
@@ -56,25 +56,25 @@ var bitgen = (function() {
 
     constructor(parent, noGroup, alt) {
       super();
-      this.org = { x : 0, y : 0 };
-      this.figure = null;
+      this._org = { x : 0, y : 0 };
+      this._figure = null;
       this.createFigure(parent, noGroup, alt);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Rectangle(parent, noGroup);
+      this._figure = new bitarea.Rectangle(parent, noGroup);
     }
 
     start(point) {
-      let coords = this.figure.getCoords();
-      this.org.x = coords.x = point.x;
-      this.org.y = coords.y = point.y;
-      this.figure.setCoords(coords);
-      this.figure.redraw();
+      let coords = this._figure.coords;
+      this._org.x = coords.x = point.x;
+      this._org.y = coords.y = point.y;
+      this._figure.coords = coords;
+      this._figure.redraw();
     }
 
     progress(point) {
-      this.figure.redraw(this.computeCoords(point));
+      this._figure.redraw(this.computeCoords(point));
     }
 
     end(point) {
@@ -84,20 +84,20 @@ var bitgen = (function() {
         return 'error';
       }
 
-      this.figure.setCoords(coords);
-      this.figure.redraw();
+      this._figure.coords = coords;
+      this._figure.redraw();
       return 'done';
     }
 
     computeCoords(point) {
-      let width = point.x - this.org.x;
-      let height = point.y - this.org.y;
+      let width = point.x - this._org.x;
+      let height = point.y - this._org.y;
       return {
-        x : (width < 0) ? point.x : this.org.x,
-        y : (height < 0) ? point.y : this.org.y,
+        x : (width < 0) ? point.x : this._org.x,
+        y : (height < 0) ? point.y : this._org.y,
         width : (width < 0) ? -width : width,
         height : (height < 0) ? -height : height,
-        tilt : this.figure.coords.tilt
+        tilt : this._figure.coords.tilt
       };
     }
 
@@ -114,23 +114,23 @@ var bitgen = (function() {
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Square(parent, noGroup);
+      this._figure = new bitarea.Square(parent, noGroup);
     }
 
     computeCoords(point) {
-      let width = point.x - this.org.x;
-      let height = point.y - this.org.y;
+      let width = point.x - this._org.x;
+      let height = point.y - this._org.y;
       let coords = super.computeCoords(point);
       let delta = coords.width - coords.height;
       if (delta > 0) {
         coords.width = coords.height;
-        if (point.x < this.org.x) {
-          coords.x = this.org.x - coords.width;
+        if (point.x < this._org.x) {
+          coords.x = this._org.x - coords.width;
         }
       } else if (delta < 0){
         coords.height = coords.width;
-        if (point.y < this.org.y) {
-          coords.y = this.org.y - coords.height;
+        if (point.y < this._org.y) {
+          coords.y = this._org.y - coords.height;
         }
       }
       return coords;
@@ -146,16 +146,16 @@ var bitgen = (function() {
 
     constructor(parent, noGroup) {
       super(parent, noGroup);
-      this.figure.addClass(clsTypes.TRACKER);
+      this._figure.addClass(clsTypes.TRACKER);
     }
     
     progress(point) {
-      this.figure.setCoords(this.computeCoords(point));
-      this.figure.redraw();
+      this._figure.coords = this.computeCoords(point);
+      this._figure.redraw();
     }
 
-    getCoords() {
-      return this.figure.getCoords();
+    get coords() {
+      return this._figure.coords;
     }
 
   } //TRACKER
@@ -168,38 +168,38 @@ var bitgen = (function() {
 
     constructor(parent, noGroup, alt) {
       super(parent, noGroup, alt);
-      this.tracker = new Tracker(parent);
+      this._tracker = new Tracker(parent);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Rhombus(parent, noGroup);
+      this._figure = new bitarea.Rhombus(parent, noGroup);
     }
 
     start(point) {
       super.start(point);
-      this.tracker.start(point);
+      this._tracker.start(point);
     }
 
     progress(point) {
       super.progress(point);
-      if (this.tracker) {
-        this.tracker.progress(point);
+      if (this._tracker) {
+        this._tracker.progress(point);
       }
     }
 
     end(point) {
       let rtn = super.end(point);
       if ('continue' !== rtn) { 
-        this.tracker.cancel();
-        this.tracker = null;
+        this._tracker.cancel();
+        this._tracker = null;
       }
       return rtn;
     }
 
     cancel() {
       super.cancel();
-      if (this.tracker) {
-        this.tracker.cancel();
+      if (this._tracker) {
+        this._tracker.cancel();
       }
     }
 
@@ -213,25 +213,25 @@ var bitgen = (function() {
 
     constructor(parent, noGroup, alt) {
       super();
-      this.org = { x : 0, y : 0 };
-      this.figure = null;
+      this._org = { x : 0, y : 0 };
+      this._figure = null;
       this.createFigure(parent, noGroup, alt);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Circle(parent, noGroup);
+      this._figure = new bitarea.Circle(parent, noGroup);
     }
 
     start(point) {
-      let coords = this.figure.getCoords();
-      this.org.x = coords.x = point.x;
-      this.org.y = coords.y = point.y;
-      this.figure.setCoords(coords);
-      this.figure.redraw();
+      let coords = this._figure.coords;
+      this._org.x = coords.x = point.x;
+      this._org.y = coords.y = point.y;
+      this._figure.coords = coords;
+      this._figure.redraw();
     }
 
     progress(point) {
-      this.figure.redraw(this.computeCoords(point));
+      this._figure.redraw(this.computeCoords(point));
     }
 
     end(point) {
@@ -241,17 +241,17 @@ var bitgen = (function() {
         return 'error';
       }
 
-      this.figure.setCoords(coords);
-      this.figure.redraw();
+      this._figure.coords = coords;
+      this._figure.redraw();
       return 'done';
     }
 
     computeCoords(point) {
-      let dx = point.x - this.org.x,
-          dy = point.y - this.org.y; 
+      let dx = point.x - this._org.x,
+          dy = point.y - this._org.y; 
       return {
-        x : this.org.x,
-        y : this.org.y,
+        x : this._org.x,
+        y : this._org.y,
         r : Math.round(Math.sqrt(dx*dx + dy*dy))
       };
     }
@@ -269,15 +269,15 @@ var bitgen = (function() {
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.CircleEx(parent, noGroup);
+      this._figure = new bitarea.CircleEx(parent, noGroup);
     }
 
     computeCoords(point) {
-      let dx = point.x - this.org.x,
-          dy = point.y - this.org.y; 
+      let dx = point.x - this._org.x,
+          dy = point.y - this._org.y; 
       return {
-        x : this.org.x + Math.round(dx/2),
-        y : this.org.y + Math.round(dy/2),
+        x : this._org.x + Math.round(dx/2),
+        y : this._org.y + Math.round(dy/2),
         r : Math.round(Math.sqrt(dx*dx + dy*dy)/2)
       };
     }
@@ -292,38 +292,38 @@ var bitgen = (function() {
     
     constructor(parent, noGroup, alt) {
       super(parent, noGroup, alt);
-      this.tracker = new Tracker(parent);
+      this._tracker = new Tracker(parent);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Ellipse(parent, noGroup);
+      this._figure = new bitarea.Ellipse(parent, noGroup);
     }
 
     start(point) {
       super.start(point);
-      this.tracker.start(point);
+      this._tracker.start(point);
     }
 
     progress(point) {
       super.progress(point);
-      if (this.tracker) {
-        this.tracker.progress(point);
+      if (this._tracker) {
+        this._tracker.progress(point);
       }
     }
 
     end(point) {
       let rtn = super.end(point);
       if ('continue' !== rtn) { 
-        this.tracker.cancel();
-        this.tracker = null;
+        this._tracker.cancel();
+        this._tracker = null;
       }
       return rtn;
     }
 
     cancel() {
       super.cancel();
-      if (this.tracker) {
-        this.tracker.cancel();
+      if (this._tracker) {
+        this._tracker.cancel();
       }
     }
 
@@ -337,11 +337,11 @@ var bitgen = (function() {
     
     constructor(parent, noGroup, alt) {
       super(parent, noGroup, alt);
-      this.tracker = new Tracker(parent);
+      this._tracker = new Tracker(parent);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.IsoscelesTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
+      this._figure = new bitarea.IsoscelesTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
     }
 
     computeCoords(point) {
@@ -349,11 +349,11 @@ var bitgen = (function() {
       switch(coords.tilt) {
       case bitarea.tilts.TOP:
       case bitarea.tilts.BOTTOM:
-        coords.tilt = (point.y < this.org.y) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
+        coords.tilt = (point.y < this._org.y) ? bitarea.tilts.BOTTOM : bitarea.tilts.TOP;
         break;
       case bitarea.tilts.LEFT:
       case bitarea.tilts.RIGHT:
-        coords.tilt = (point.x < this.org.x) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
+        coords.tilt = (point.x < this._org.x) ? bitarea.tilts.RIGHT : bitarea.tilts.LEFT;
         break;
       }
       return coords;
@@ -361,29 +361,29 @@ var bitgen = (function() {
 
     start(point) {
       super.start(point);
-      this.tracker.start(point);
+      this._tracker.start(point);
     }
 
     progress(point) {
       super.progress(point);
-      if (this.tracker) {
-        this.tracker.progress(point);
+      if (this._tracker) {
+        this._tracker.progress(point);
       }
     }
 
     end(point) {
       let rtn = super.end(point);
       if ('continue' !== rtn) { 
-        this.tracker.cancel();
-        this.tracker = null;
+        this._tracker.cancel();
+        this._tracker = null;
       }
       return rtn;
     }
 
     cancel() {
       super.cancel();
-      if (this.tracker) {
-        this.tracker.cancel();
+      if (this._tracker) {
+        this._tracker.cancel();
       }
     }
 
@@ -400,7 +400,7 @@ var bitgen = (function() {
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.EquilateralTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
+      this._figure = new bitarea.EquilateralTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
     }
 
     computeCoords(point) {
@@ -413,13 +413,13 @@ var bitgen = (function() {
         delta = Math.round(coords.width - r * coords.height);
         if (delta > 0) {
           coords.width = Math.round(r * coords.height);
-          if (point.x < this.org.x) {
-            coords.x = this.org.x - coords.width;
+          if (point.x < this._org.x) {
+            coords.x = this._org.x - coords.width;
           }
         } else if (delta < 0) {
           coords.height = Math.round(coords.width / r);
-          if (point.y < this.org.y) {
-            coords.y = this.org.y - coords.height;
+          if (point.y < this._org.y) {
+            coords.y = this._org.y - coords.height;
           }
         }
         break;
@@ -428,13 +428,13 @@ var bitgen = (function() {
         delta = Math.round(coords.height - r * coords.width);
         if (delta > 0) {
           coords.height = Math.round(r * coords.width);
-          if (point.y < this.org.y) {
-            coords.y = this.org.y - coords.height;
+          if (point.y < this._org.y) {
+            coords.y = this._org.y - coords.height;
           }
         } else if (delta < 0) {
           coords.width = Math.round(coords.height / r);
-          if (point.x < this.org.x) {
-            coords.x = this.org.x - coords.width;
+          if (point.x < this._org.x) {
+            coords.x = this._org.x - coords.width;
           }
         }
         break;
@@ -456,16 +456,16 @@ var bitgen = (function() {
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.RectangleTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
+      this._figure = new bitarea.RectangleTriangle(parent, noGroup, (alt) ? bitarea.tilts.LEFT : bitarea.tilts.DEFAULT);
     }
 
     computeCoords(point) {
       let coords = super.computeCoords(point);
-      if (point.x <= this.org.x && point.y <= this.org.y) {
+      if (point.x <= this._org.x && point.y <= this._org.y) {
         coords.tilt = bitarea.tilts.RIGHT;
-      } else if (point.x <= this.org.x && point.y > this.org.y) {
+      } else if (point.x <= this._org.x && point.y > this._org.y) {
         coords.tilt = bitarea.tilts.BOTTOM;
-      } else if (point.x > this.org.x && point.y <= this.org.y) {
+      } else if (point.x > this._org.x && point.y <= this._org.y) {
         coords.tilt = bitarea.tilts.TOP;
       } else {
         coords.tilt = bitarea.tilts.LEFT;
@@ -483,11 +483,11 @@ var bitgen = (function() {
     
     constructor(parent, noGroup, alt) {
       super(parent, noGroup, alt);
-      this.tracker = new Tracker(parent);
+      this._tracker = new Tracker(parent);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Hex(parent, noGroup);
+      this._figure = new bitarea.Hex(parent, noGroup);
     }
 
     computeCoords(point) {
@@ -503,36 +503,36 @@ var bitgen = (function() {
       dh = coords.height - h;
       coords.width = w;
       coords.height = h;
-      if (point.x < this.org.x) { coords.x += dw; }
-      if (point.y < this.org.y) { coords.y += dh; }
+      if (point.x < this._org.x) { coords.x += dw; }
+      if (point.y < this._org.y) { coords.y += dh; }
       return coords;
     }
 
     start(point) {
       super.start(point);
-      this.tracker.start(point);
+      this._tracker.start(point);
     }
 
     progress(point) {
       super.progress(point);
-      if (this.tracker) {
-        this.tracker.progress(point);
+      if (this._tracker) {
+        this._tracker.progress(point);
       }
     }
 
     end(point) {
       let rtn = super.end(point);
       if ('continue' !== rtn) { 
-        this.tracker.cancel();
-        this.tracker = null;
+        this._tracker.cancel();
+        this._tracker = null;
       }
       return rtn;
     }
 
     cancel() {
       super.cancel();
-      if (this.tracker) {
-        this.tracker.cancel();
+      if (this._tracker) {
+        this._tracker.cancel();
       }
     }
 
@@ -549,7 +549,7 @@ var bitgen = (function() {
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.HexEx(parent, noGroup);
+      this._figure = new bitarea.HexEx(parent, noGroup);
     }
 
     computeCoords(point, wmax, hmax) {
@@ -614,22 +614,22 @@ var bitgen = (function() {
       }
 
       let dx = 0, dy = 0, type = 0;
-      let coords = Object.create(this.figure.coords);
-      [dx, dy, type] = fixTilt(this.org.x, this.org.y, point.x, point.y, wmax, hmax);
+      let coords = Object.create(this._figure.coords);
+      [dx, dy, type] = fixTilt(this._org.x, this._org.y, point.x, point.y, wmax, hmax);
       switch(type) {
       case 0:
-        [coords.y, coords.x, coords.height, coords.width] = computeCoordsOrth(this.org.y, this.org.x, dy, dx);
+        [coords.y, coords.x, coords.height, coords.width] = computeCoordsOrth(this._org.y, this._org.x, dy, dx);
         break;
       case 1:
       case 5:
-        [coords.x, coords.y, coords.width, coords.height] = computeCoordsTilt(this.org.x, this.org.y, dx, dy);
+        [coords.x, coords.y, coords.width, coords.height] = computeCoordsTilt(this._org.x, this._org.y, dx, dy);
         break;
       case 2:
       case 4:
-        [coords.y, coords.x, coords.height, coords.width] = computeCoordsTilt(this.org.y, this.org.x, dy, dx);
+        [coords.y, coords.x, coords.height, coords.width] = computeCoordsTilt(this._org.y, this._org.x, dy, dx);
         break;
       case 3:
-        [coords.x, coords.y, coords.width, coords.height] = computeCoordsOrth(this.org.x, this.org.y, dx, dy);
+        [coords.x, coords.y, coords.width, coords.height] = computeCoordsOrth(this._org.x, this._org.y, dx, dy);
         break;
       default:
       }
@@ -637,7 +637,7 @@ var bitgen = (function() {
     }
 
     progress(point, wmax, hmax) {
-      this.figure.redraw(this.computeCoords(point, wmax, hmax));
+      this._figure.redraw(this.computeCoords(point, wmax, hmax));
     }
 
     end(point, wmax, hmax) {
@@ -647,8 +647,8 @@ var bitgen = (function() {
         return 'error';
       }
 
-      this.figure.setCoords(coords);
-      this.figure.redraw();
+      this._figure.coords = coords;
+      this._figure.redraw();
       return 'done';
     }
 
@@ -662,40 +662,40 @@ var bitgen = (function() {
     
     constructor(parent, noGroup, alt) {
       super();
-      this.org = { x : 0, y : 0 };
-      this.closeGap = 3;
-      this.context = { 'parent' : parent, 'noGroup' : noGroup };
-      this.figure = null;
+      this._org = { x : 0, y : 0 };
+      this._closeGap = 3;
+      this._context = { 'parent' : parent, 'noGroup' : noGroup };
+      this._figure = null;
       this.createFigure(parent, noGroup, alt);
     }
 
     createFigure(parent, noGroup, alt) {
-      this.figure = new bitarea.Polyline(parent, noGroup);
+      this._figure = new bitarea.Polyline(parent, noGroup);
     }
 
     closure(point) {
-      let d = point.x - this.org.x;
-      if (d < -this.closeGap || d > this.closeGap) {
+      let d = point.x - this._org.x;
+      if (d < -this._closeGap || d > this._closeGap) {
         return false;
       }
-      d = point.y - this.org.y;
-      if (d < -this.closeGap || d > this.closeGap) {
+      d = point.y - this._org.y;
+      if (d < -this._closeGap || d > this._closeGap) {
         return false;
       }
       return true;
     }
 
     start(point) {
-      let coords = this.figure.getCoords();
-      coords[0].x = this.org.x = point.x;
-      coords[0].y = this.org.y = point.y;
+      let coords = this._figure.coords;
+      coords[0].x = this._org.x = point.x;
+      coords[0].y = this._org.y = point.y;
       coords.push({ x : point.x, y : point.y });
-      this.figure.setCoords(coords);
-      this.figure.redraw();
+      this._figure.coords = coords;
+      this._figure.redraw();
     }
 
     progress(point) {
-      this.figure.redraw(this.computeCoords(point));
+      this._figure.redraw(this.computeCoords(point));
     }
 
     end(point) {
@@ -707,18 +707,18 @@ var bitgen = (function() {
           return 'error';
         }
         this.cancel();
-        this.figure = new bitarea.Polygon(this.context.parent, this.context.noGroup);
-        this.figure.setCoords(coords);
-        this.figure.redraw();
+        this._figure = new bitarea.Polygon(this._context.parent, this._context.noGroup);
+        this._figure.coords = coords;
+        this._figure.redraw();
         return 'done';
       }
       coords.push({ x : point.x, y : point.y });
-      this.figure.setCoords(coords);
+      this._figure.coords = coords;
       return 'continue';
     }
 
     computeCoords(point) {
-      let coords = this.figure.copyCoords(this.figure.coords);
+      let coords = this._figure.copyCoords();
       let last = coords.length - 1;
       coords[last].x = point.x;
       coords[last].y = point.y;
@@ -740,7 +740,7 @@ var bitgen = (function() {
 
     createFigure(parent, bond, gridParent, scope, align, space, order) {
       if (bond) {
-        this.figure = new bitgrid.Rectangle(parent, bond, gridParent, scope, align, space, order);
+        this._figure = new bitgrid.Rectangle(parent, bond, gridParent, scope, align, space, order);
       }
     }
 
@@ -759,7 +759,7 @@ var bitgen = (function() {
 
     createFigure(parent, bond, gridParent, scope, align, space, order) {
       if (bond) {
-        this.figure = new bitgrid.Circle(parent, bond, gridParent, scope, align, space, order);
+        this._figure = new bitgrid.Circle(parent, bond, gridParent, scope, align, space, order);
       }
     }
 
@@ -778,7 +778,7 @@ var bitgen = (function() {
 
     createFigure(parent, bond, gridParent, scope, align, space, order) {
       if (bond) {
-        this.figure = new bitgrid.Hex(parent, bond, gridParent, scope, align, space, order);
+        this._figure = new bitgrid.Hex(parent, bond, gridParent, scope, align, space, order);
       }
     }
 
