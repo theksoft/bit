@@ -21,7 +21,7 @@
         <label id="load-file-lbl" for="load-file">Load image file</label>
         <input type="file" id="load-file" accept="image/jpeg,image/png,image/gif" />
         <ul>
-          <li id="preview" style="display:none;"><a href="#">Preview</a></li>
+          <li id="preview"><a href="#">Preview</a></li>
         </ul>
       </nav>
     </header>
@@ -68,25 +68,25 @@
         <div>
           <span id="grid-scope" class="toggle">
             <img id="grid-scope-inner" src="icons/grid_inner.png" width="32" height="32" alt="" title="Inner scope only" class="on" />
-            <img id="grid-scope-outer" src="icons/grid_outer.png" width="32" height="32" alt="" title="Includes grid boundaries crossing areas" class="off" style="display:none;" />
+            <img id="grid-scope-outer" src="icons/grid_outer.png" width="32" height="32" alt="" title="Includes grid boundaries crossing areas" class="off" />
           </span>
           <span id="grid-alignment" class="toggle">
             <img id="grid-algn-std" src="icons/grid_alg.png" width="32" height="32" alt="" title="Regular alignment" class="on" />
-            <img id="grid-algn-alt" src="icons/grid_alt.png" width="32" height="32" alt="" title="Horizontal alternate alignment" class="off" style="display:none;" />
-            <img id="grid-algn-alt2" src="icons/grid_alt2.png" width="32" height="32" alt="" title="Vertical alternate alignment" class="off" style="display:none;" />
+            <img id="grid-algn-alt" src="icons/grid_alt.png" width="32" height="32" alt="" title="Horizontal alternate alignment" class="off" />
+            <img id="grid-algn-alt2" src="icons/grid_alt2.png" width="32" height="32" alt="" title="Vertical alternate alignment" class="off" />
           </span>
         </div>
         <div>
           <img id="show-order" src="icons/order.png" width="32" height="32" alt="" title="Show grid areas ordering" />
           <span id="grid-order" class="toggle">
             <img id="grid-order-tl" src="icons/ordering-1.png" width="32" height="32" alt="" title="Area ordering from left to right starting from top side" class="on" />
-            <img id="grid-order-lt" src="icons/ordering-2.png" width="32" height="32" alt="" title="Area ordering from top to bottom starting from left side" class="off" style="display:none;" />
-            <img id="grid-order-lb" src="icons/ordering-3.png" width="32" height="32" alt="" title="Area ordering from bottom to top starting from left side" class="off" style="display:none;" />
-            <img id="grid-order-bl" src="icons/ordering-4.png" width="32" height="32" alt="" title="Area ordering from left to right starting from bottom side" class="off" style="display:none;" />
-            <img id="grid-order-br" src="icons/ordering-5.png" width="32" height="32" alt="" title="Area ordering from right to left starting from bottom side" class="off" style="display:none;" />
-            <img id="grid-order-rb" src="icons/ordering-6.png" width="32" height="32" alt="" title="Area ordering from bottom to top starting from right side" class="off" style="display:none;" />
-            <img id="grid-order-rt" src="icons/ordering-7.png" width="32" height="32" alt="" title="Area ordering from top to bottom starting from right side" class="off" style="display:none;" />
-            <img id="grid-order-tr" src="icons/ordering-8.png" width="32" height="32" alt="" title="Area ordering from right to left starting from top side"  class="off" style="display:none;" />
+            <img id="grid-order-lt" src="icons/ordering-2.png" width="32" height="32" alt="" title="Area ordering from top to bottom starting from left side" class="off" />
+            <img id="grid-order-lb" src="icons/ordering-3.png" width="32" height="32" alt="" title="Area ordering from bottom to top starting from left side" class="off" />
+            <img id="grid-order-bl" src="icons/ordering-4.png" width="32" height="32" alt="" title="Area ordering from left to right starting from bottom side" class="off" />
+            <img id="grid-order-br" src="icons/ordering-5.png" width="32" height="32" alt="" title="Area ordering from right to left starting from bottom side" class="off" />
+            <img id="grid-order-rb" src="icons/ordering-6.png" width="32" height="32" alt="" title="Area ordering from bottom to top starting from right side" class="off" />
+            <img id="grid-order-rt" src="icons/ordering-7.png" width="32" height="32" alt="" title="Area ordering from top to bottom starting from right side" class="off" />
+            <img id="grid-order-tr" src="icons/ordering-8.png" width="32" height="32" alt="" title="Area ordering from right to left starting from top side"  class="off" />
           </span>
         </div>
         <div>
@@ -126,9 +126,9 @@
     </footer>
   </div>
 
-  <!-- Image map loader -->
-  <form id="image-map-loader" style="display:none;">
-    <fieldset id="map-attributes"><legend>Image map attributes:</legend>
+  <!-- Map attributes and image loader -->
+  <form id="image-map-loader">
+    <fieldset id="map-attributes"><legend>Image map attributes</legend>
       <p>
        <label for="map-name">name:</label>
        <input type="text" id="map-name" placeholder="map" value="" title="'name' attribute of the image map" />
@@ -138,11 +138,11 @@
        <input type="text" id="map-alt" value="" title="'alt' attribute of the image map" />
       </p>
     </fieldset>
-    <fieldset id="map-image"><legend>Image file:</legend>
+    <fieldset id="map-image"><legend>Image file</legend>
       <div>
 	      <label>Drop image file here</label>
 		    <div id="image-drop-zone">
-	        <img src="" alt="Preview" id="load-image-preview" />
+	        <img src="" alt="Preview selected image" id="image-preview" />
 	      </div>
       </div>
 	    <p>
@@ -151,7 +151,7 @@
 	    </p>
     </fieldset>
     <div id="image-map-loader-buttons">
-      <button id="map-set">OK</button>
+      <button id="map-set" disabled>OK</button>
       <button id="map-cancel">Cancel</button>
     </div>
   </form>

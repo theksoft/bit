@@ -183,6 +183,10 @@ ul, ol {
   opacity: 0;
 }
 
+#preview {
+	display: none;
+}
+
 /* WORKAREA ELEMENTS */
 
 #wks-wrap section {
@@ -287,6 +291,7 @@ ul, ol {
 #tools img.off {
   background-color: #fff1ea;
   border: 2px solid #ffba99;
+  display: none;
 }
 
 /* TOOLS PROPERTIES FORM */
@@ -423,6 +428,7 @@ ul, ol {
 	color: #bbb;
   margin: 0 auto;
   text-align: center;
+  display: none;
 }
 
 #image-map-loader fieldset {
@@ -479,7 +485,12 @@ ul, ol {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
+  margin: 5px auto;
   display: none;
+}
+
+.error#image-drop-zone {
+  border: 2px dashed #f44;
 }
 
 #load-image-file {
@@ -506,6 +517,11 @@ ul, ol {
 
 #image-map-loader-buttons button:active, #load-image-file-lbl:active {
   background-color: #337;
+}
+
+#image-map-loader-buttons button:disabled {
+  background-color: #333;
+  color: #888;
 }
 
 #image-map-loader-buttons {

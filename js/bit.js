@@ -97,6 +97,7 @@ var bit = (function() {
         return this;
       },
 
+      validateImgFile,
       setFile : function(f) {
         if (validateImgFile(f)) {
           context.filename = f.name;
@@ -1474,16 +1475,112 @@ var bit = (function() {
   var ldr = (function() {
 
     var doms = {
-      loader : $('image-map-loader')
+      loader        : $('image-map-loader'),
+      btnSet        : $('map-set'),
+      btnCancel     : $('map-cancel'),
+      dropZone      : $('image-drop-zone'),
+      imagePreview  : $('image-preview'),
+      inImageFile   : $('load-image-file'),
+      inMapName     : $('map-name'),
+      inMapAlt      : $('map-alt')
+    },
+    context = {
+      handlers : null,
+      file     : null,
+      filename : ''
     };
 
     var hide = (obj) => obj.style.display = 'none';
     var show = (obj) => obj.style.display = 'block';
 
+    function validate() {
+      return (doms.inMapName.value !== '' && context.filename !== '');
+    }
+
+    function processFiles(files) {
+      clear();
+      if (1 < files.length || 0 == files.length || !mdl.validateImgFile(files[0])) {
+        error();
+        doms.btnSet.disabled = true;
+      } else {
+        context.file = files[0];
+        context.filename = window.URL.createObjectURL(context.file);
+        doms.imagePreview.src = context.filename;
+        show(doms.imagePreview);
+        doms.btnSet.disabled = !validate();
+      }
+    }
+
+    function clear() {
+      hide(doms.imagePreview);
+      doms.imagePreview.src = '';
+      doms.dropZone.classList.remove('error');
+      doms.btnSet.disabled = true;
+      context.file = null;
+      context.filename = '';
+    }
+
+    function error() {
+      doms.dropZone.classList.add('error');
+    }
+
+    function onDragOver(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    
+    function onDragLeave(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    
+    function onDrop(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      processFiles(e.dataTransfer.files);
+      doms.inImageFile.value = "";
+    }
+
+    function onImageFileChange(e) {
+      e.preventDefault();
+      processFiles(e.target.files);
+    }
+
+    function onNameInput(e) {
+      doms.btnSet.disabled = !validate();
+    }
+
+    function onSetClick(e) {
+      e.preventDefault();
+      hide(doms.loader);
+    }
+
+    function onCancelClick(e) {
+      e.preventDefault();
+      hide(doms.loader);
+      clear();
+    }
+
     return {
 
+      init : function(handlers) {
+        context.handlers = handlers;
+        doms.btnSet.addEventListener('click', onSetClick, false);
+        doms.btnCancel.addEventListener('click', onCancelClick, false);
+        doms.dropZone.draggable = true;
+        doms.dropZone.addEventListener('dragover', onDragOver, false);
+        doms.dropZone.addEventListener('dragleave', onDragLeave, false);
+        doms.dropZone.addEventListener('drop', onDrop, false);
+        doms.inImageFile.addEventListener('change', onImageFileChange, false);
+        doms.inMapName.addEventListener('input', onNameInput, false);
+        return this.reset();
+      },
+
       reset : function() {
-        
+        clear();
+        doms.inMapName.value = doms.inMapName.defaultValue = '';  
+        doms.inMapAlt.value = doms.inMapAlt.defaultValue = '';  
+        return this;
       },
 
       show : function() {
@@ -2102,6 +2199,7 @@ var bit = (function() {
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);
+    ldr.init();
 
   })(); /* APPLICATION MANAGEMENT */
 
