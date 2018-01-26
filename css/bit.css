@@ -405,3 +405,123 @@ ul, ol {
   font-size: 12px;
   padding: 5px 10px;
 }
+
+/* IMAGE MAP LOADER FORM */
+
+#image-map-loader {
+	position: absolute;
+	top: 10%;
+	left: 30%;
+	width: 30%;
+	min-width: 300px;
+	z-index: 10;
+	background: rgba(0,0,0,0.9);
+	border-radius: 5px;
+	padding: 10px;
+	box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+	font-size: 12px;
+	color: #bbb;
+  margin: 0 auto;
+  text-align: center;
+}
+
+#image-map-loader fieldset {
+  border: 2px #555 solid;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px;
+}
+
+#image-map-loader legend {
+	color: #77b;
+	font-size: 14px;
+}
+
+#image-map-loader label {
+  display: inline-block;
+}
+
+#image-map-loader input[type=text] {
+  background-color: #ccc;
+  color: #333;
+  border: 2px solid #555;
+  border-radius: 3px;
+  width: 120px;
+  padding: 2px 5px;
+  margin: 4px 12px 1px 1px;
+}
+
+#map-attributes label {
+  width: 50px;
+  text-align: right;
+}
+
+#map-image label {
+  margin: 5px auto;
+  text-align: center;
+}
+
+#image-drop-zone {
+  width: 80%;
+  height: 200px;
+	border: 2px dashed #999;
+  border-radius: 5px;
+  padding: 12px 10px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAiCAYAAADCp/A1AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAApjAAAKYwGDMomsAAAAB3RJTUUH3AkYCxg3B2a5QgAAAKtJREFUWMPt17sNgDAMRdE8tsj+w2UM6CiQEv9jIvm1COl0uUZbbIxxt03rvWP27WoHrJCFLGQhC1nIQr7DzohQI3fXjqaOkJFl0nxDVj9K+hKZocsNYGQXOafQ8YfTgTohcMKNA+rnHdAVkIWMhlJANjIKygGKkN5QLlCM9IJKgCqkFSoFqpFaqAZoQkqhWqAZyYVagC5ICmoFuiFnUA+gK/IL9QKGLOJlegBB2VeWydvIHgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
+  font-size: 12px;
+  color: #558;
+  vertical-align: middle;
+  margin: 5px auto;
+  text-align: center;
+}
+
+#image-drop-zone img {
+  max-width: 100%;
+  max-height: 100%;
+  vertical-align: middle;
+  display: none;
+}
+
+#load-image-file {
+  position: fixed;
+  top: -100em;
+  opacity: 0;
+}
+
+#image-map-loader-buttons button, #load-image-file-lbl {
+  background-color: #004;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #ccc;
+  font-size: 12px;
+  vertical-align: middle;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+}
+
+#image-map-loader-buttons button:hover, #load-image-file-lbl:hover {
+  background-color: #226;
+}
+
+#image-map-loader-buttons button:active, #load-image-file-lbl:active {
+  background-color: #337;
+}
+
+#image-map-loader-buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+}
+
+#map-set {
+  order: 1;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#map-cancel {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}

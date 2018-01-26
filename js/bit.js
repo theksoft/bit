@@ -1466,7 +1466,34 @@ var bit = (function() {
     };
 
   })(); /* FOOTER DISPLAY MANAGEMENT */
-  
+
+  /*
+   *  IMAGE LOADER MANAGEMENT
+   */
+
+  var ldr = (function() {
+
+    var doms = {
+      loader : $('image-map-loader')
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    return {
+
+      reset : function() {
+        
+      },
+
+      show : function() {
+        show(doms.loader);
+      }
+
+    }
+
+  })();
+
   /*
    * MENU MANAGEMENT
    */
@@ -1587,8 +1614,9 @@ var bit = (function() {
             tls.reset();
             mnu.reset();
             mdl.reset();
+            ldr.reset();
           }
-
+          ldr.show();
         },
 
         onNewFiles : function(files) {
@@ -1625,7 +1653,7 @@ var bit = (function() {
 
     })();
 
-    var dragger = (function(){
+    var dragger = (function() {
 
       var handlers = {
           

@@ -96,20 +96,20 @@
         <hr>
         <form id="area-props">
           <p>
-	          <label for="href-prop">href:</label>
-		        <input type="text" id="href-prop" value="..." disabled title="'href' attribute of area within the image map" />
+           <label for="href-prop">href:</label>
+	         <input type="text" id="href-prop" value="..." disabled title="'href' attribute of area within the image map" />
 	        </p>
           <p>
-            <label for="alt-prop">alt:</label>
-            <input type="text" id="alt-prop" value="..." disabled title="'alt' attribute of area within the image map" />
+           <label for="alt-prop">alt:</label>
+           <input type="text" id="alt-prop" value="..." disabled title="'alt' attribute of area within the image map" />
           </p>
           <p>
-            <label for="title-prop">title:</label>
-            <input type="text" id="title-prop" value="..." disabled title="'title' attribute of area within the image map" />
+           <label for="title-prop">title:</label>
+           <input type="text" id="title-prop" value="..." disabled title="'title' attribute of area within the image map" />
           </p>
           <p>
-            <label for="id-prop">id:</label>
-            <input type="text" id="id-prop" value="..." disabled title="'id' attribute of area within the image map" />
+           <label for="id-prop">id:</label>
+           <input type="text" id="id-prop" value="..." disabled title="'id' attribute of area within the image map" />
           </p>
           <div id="area-props-btn">
 		        <button id="area-props-save" disabled>Save</button>
@@ -125,6 +125,37 @@
       <div id="coordinates"></div>
     </footer>
   </div>
+
+  <!-- Image map loader -->
+  <form id="image-map-loader" style="display:none;">
+    <fieldset id="map-attributes"><legend>Image map attributes:</legend>
+      <p>
+       <label for="map-name">name:</label>
+       <input type="text" id="map-name" placeholder="map" value="" title="'name' attribute of the image map" />
+      </p>
+      <p>
+       <label for="map-alt">alt:</label>
+       <input type="text" id="map-alt" value="" title="'alt' attribute of the image map" />
+      </p>
+    </fieldset>
+    <fieldset id="map-image"><legend>Image file:</legend>
+      <div>
+	      <label>Drop image file here</label>
+		    <div id="image-drop-zone">
+	        <img src="" alt="Preview" id="load-image-preview" />
+	      </div>
+      </div>
+	    <p>
+	     <label for="load-image-file" id="load-image-file-lbl">Load image file</label>
+	     <input type="file" id="load-image-file" accept="image/jpeg,image/png,image/gif" />
+	    </p>
+    </fieldset>
+    <div id="image-map-loader-buttons">
+      <button id="map-set">OK</button>
+      <button id="map-cancel">Cancel</button>
+    </div>
+  </form>
+
   <script type="text/javascript" src="js/bitarea.js"></script>
   <script type="text/javascript" src="js/bitgrid.js"></script>
   <script type="text/javascript" src="js/bitgen.js"></script>
