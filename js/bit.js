@@ -72,6 +72,8 @@ var bit = (function() {
           mode : 'new',
           modified : false,
           filename : '',
+          name : '',
+          alt : '',
           areas : []
         };
     
@@ -97,6 +99,7 @@ var bit = (function() {
         return this;
       },
 
+      validateImgFile,
       setFile : function(f) {
         if (validateImgFile(f)) {
           context.filename = f.name;
@@ -104,6 +107,23 @@ var bit = (function() {
           return true;
         }
         return false;
+      },
+
+      setInfo(name, alt) {
+        context.name = name;
+        context.alt = alt;
+        context.modified = true;
+      },
+
+      getInfo() {
+        return {
+          name : context.name,
+          alt : context.alt
+        };
+      },
+
+      getAreas : function() {
+        return context.areas.slice();
       },
 
       addArea : function(area) {
@@ -117,7 +137,7 @@ var bit = (function() {
             if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
               return;
             }
-            let bonds = area.getBonds();
+            let bonds = area.copyBonds();
             bonds.forEach(e => {
               let j = context.areas.indexOf(e);
               e.remove();
@@ -140,13 +160,13 @@ var bit = (function() {
 
       forEachArea : f => context.areas.forEach(f),
 
-      freezeGridArea : function(grid, areas) {
+      freezeGridArea : function(grid, areas, specialize) {
         if (!grid.isGrid ||
             false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
           return false;
         }
         let i = context.areas.indexOf(grid);
-        grid.freezeTo(areas);
+        grid.freezeTo(areas, specialize);
         grid.remove();
         context.areas.splice(i, 1);
         areas.forEach(e => context.areas.push(e));
@@ -185,11 +205,11 @@ var bit = (function() {
         MOVING    : 'moving',
         MOVED     : 'moved',
         EDITING   : 'editing',
-        EDITED    : 'edited'
+        EDITED    : 'edited',
+        PREVIEW   : 'preview'
       };
 
     var context = {
-      mode : 'new',
       state : states.OPEN,
       offset : { x : 0, y : 0 },
       iDrg : null, aDrw : null, aSel : null, aMov : null, aEdt : null
@@ -217,11 +237,17 @@ var bit = (function() {
         },
 
         setViewDims : function() {
-          var fc = doms.footer.getBoundingClientRect(),
-              ac = doms.aside.getBoundingClientRect(),
-              wc = doms.wks.getBoundingClientRect();
-          var width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5),
-              height = Math.floor(fc.top - wc.top - 5);
+          let fc, ac, wc, width, height;
+          fc = doms.footer.getBoundingClientRect();
+          wc = doms.wks.getBoundingClientRect();
+          if (states.PREVIEW !== context.state) {
+            ac = doms.aside.getBoundingClientRect();
+            width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
+            height = Math.floor(fc.top - wc.top - 5);
+          } else {
+            width = Math.floor(fc.right - wc.left - 5);
+            height = Math.floor(fc.top - wc.top - 5);
+          }
           doms.workarea.style.width = width + 'px';
           doms.workarea.style.height = height + 'px';
           return this;
@@ -403,7 +429,7 @@ var bit = (function() {
         rmWel('mousemove', onDrawProgress);
         addWel('click', onDrawStart);
         document.removeEventListener('keydown', onDrawCancel);
-        context.state = states.READY; // TODO: Edit data on selected area ? or edit in tools ?
+        context.state = states.READY;
       }
 
       function onDrawStart(e) {
@@ -865,7 +891,9 @@ var bit = (function() {
         doms.image.src = '';
         hide(doms.workarea);
         hide(doms.aside);
-        context.mode = 'new';
+        show(doms.drawarea);
+        show(doms.gridarea);
+        context.state = states.OPEN;
       },
 
       load : function(f) {
@@ -873,6 +901,33 @@ var bit = (function() {
         doms.image.onload = onLoadImage;
         doms.image.src = window.URL.createObjectURL(f);
         return this;
+      },
+
+      switchToPreview : function() {
+        hide(doms.aside);
+        hide(doms.drawarea);
+        hide(doms.gridarea);
+        areaDrawer.disable();
+        areaMover.disable();
+        areaEditor.disable();
+        areaSelector.disable();
+        context.state = states.PREVIEW;
+        viewport.setWorkingDims(doms.image.width, doms.image.height)
+                .resize();
+        return [doms.container, doms.image];
+      },
+
+      switchToEdit : function() {
+        show(doms.aside);
+        show(doms.drawarea);
+        show(doms.gridarea);
+        areaDrawer.enable();
+        areaMover.enable();
+        areaEditor.enable();
+        areaSelector.enable();
+        context.state = states.READY;
+        viewport.setWorkingDims(doms.image.width, doms.image.height)
+                .resize();
       }
 
     };
@@ -889,6 +944,7 @@ var bit = (function() {
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
     const orders = bitgrid.orders;
+    const properties = bitmap.properties;
 
     const btnsMode = [
       { dom : $('hex-d'),             mode : modes.HEXDTR },
@@ -933,16 +989,11 @@ var bit = (function() {
       { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
     ];
 
-    const properties = {
-      HREF  : 'href',
-      ALT   : 'alt',
-      TITLE : 'title'
-    };
-
     const inForm = [
       { dom : $('href-prop'),         prop  : properties.HREF },
       { dom : $('alt-prop'),          prop  : properties.ALT },
-      { dom : $('title-prop'),        prop  : properties.TITLE }
+      { dom : $('title-prop'),        prop  : properties.TITLE },
+      { dom : $('id-prop'),           prop  : properties.ID }
     ];
 
     const doms = {
@@ -1198,10 +1249,10 @@ var bit = (function() {
     function updateGridParams(obj) {
       if (obj && obj.isGrid) {
         context.gParam = false;
-        setGridScope(obj.getGridScope());
-        setGridAlign(obj.getGridAlign());
-        setGridSpace(obj.getGridSpace());
-        setGridOrder(obj.getGridOrder());
+        setGridScope(obj.gridScope);
+        setGridAlign(obj.gridAlign);
+        setGridSpace(obj.gridSpace);
+        setGridOrder(obj.gridOrder);
       } else {
         context.gParam = true;
         setGridScope();
@@ -1216,7 +1267,7 @@ var bit = (function() {
     var resetAreaProps = () => inForm.forEach(e => e.dom.defaultValue = e.dom.value = "...");
 
     function displayAreaProps(obj) {
-      let props = obj.getAreaProperties();
+      let props = obj.areaProperties;
       inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "");
     }
 
@@ -1253,7 +1304,7 @@ var bit = (function() {
     }
 
     function saveAreaProps(obj, p) {
-      obj.setAreaProperties(p);
+      obj.areaProperties = p;
       inForm.forEach(e => e.dom.defaultValue = e.dom.value);
       doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
@@ -1431,7 +1482,149 @@ var bit = (function() {
     };
 
   })(); /* FOOTER DISPLAY MANAGEMENT */
-  
+
+  /*
+   *  IMAGE LOADER MANAGEMENT
+   */
+
+  var ldr = (function() {
+
+    var doms = {
+      loader        : $('image-map-loader'),
+      btnSet        : $('map-set'),
+      btnCancel     : $('map-cancel'),
+      dropZone      : $('image-drop-zone'),
+      imagePreview  : $('image-preview'),
+      inImageFile   : $('load-image-file'),
+      inMapName     : $('map-name'),
+      inMapAlt      : $('map-alt')
+    },
+    context = {
+      handlers : null,
+      file     : null,
+      filename : ''
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function validate() {
+      return (doms.inMapName.value !== '' && context.filename !== '');
+    }
+
+    function processFiles(files) {
+      clear();
+      if (1 < files.length || 0 == files.length || !mdl.validateImgFile(files[0])) {
+        error(doms.dropZone);
+        doms.btnSet.disabled = true;
+      } else {
+        context.file = files[0];
+        context.filename = window.URL.createObjectURL(context.file);
+        doms.imagePreview.src = context.filename;
+        show(doms.imagePreview);
+        doms.btnSet.disabled = !validate();
+      }
+    }
+
+    function clear() {
+      hide(doms.imagePreview);
+      doms.imagePreview.src = '';
+      doms.dropZone.classList.remove('error');
+      doms.btnSet.disabled = true;
+      context.file = null;
+      context.filename = '';
+    }
+
+    function error(obj) {
+      obj.classList.add('error');
+    }
+
+    function onDragOver(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    
+    function onDragLeave(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    
+    function onDrop(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      processFiles(e.dataTransfer.files);
+      doms.inImageFile.value = '';
+    }
+
+    function onImageFileChange(e) {
+      e.preventDefault();
+      processFiles(e.target.files);
+    }
+
+    function onNameInput(e) {
+      doms.btnSet.disabled = !validate();
+    }
+
+    function onSetClick(e) {
+      e.preventDefault();
+      if(validate()) {
+        let data = {
+          filename  : context.filename,
+          file      : context.file,
+          name      : doms.inMapName.value,
+          alt       : doms.inMapAlt.value
+        };
+        if (!context.handlers.onNewMap(data)) {
+          console.log('ERROR - Invalid input management');
+        }
+        hide(doms.loader);
+        clear();
+      } else {
+        if (doms.inMapName.value === '') {
+          error(doms.inMapName);
+        } else {
+          error(doms.dropZone);
+        }
+      }
+    }
+
+    function onCancelClick(e) {
+      e.preventDefault();
+      hide(doms.loader);
+      clear();
+    }
+
+    return {
+
+      init : function(handlers) {
+        context.handlers = handlers;
+        doms.btnSet.addEventListener('click', onSetClick, false);
+        doms.btnCancel.addEventListener('click', onCancelClick, false);
+        doms.dropZone.draggable = true;
+        doms.dropZone.addEventListener('dragover', onDragOver, false);
+        doms.dropZone.addEventListener('dragleave', onDragLeave, false);
+        doms.dropZone.addEventListener('drop', onDrop, false);
+        doms.inImageFile.addEventListener('change', onImageFileChange, false);
+        doms.inMapName.addEventListener('input', onNameInput, false);
+        return this.reset();
+      },
+
+      reset : function() {
+        clear();
+        doms.inImageFile.value = doms.inImageFile.defaultValue = '';
+        doms.inMapName.value = doms.inMapName.defaultValue = '';  
+        doms.inMapAlt.value = doms.inMapAlt.defaultValue = '';  
+        return this;
+      },
+
+      show : function() {
+        show(doms.loader);
+      }
+
+    }
+
+  })();
+
   /*
    * MENU MANAGEMENT
    */
@@ -1440,9 +1633,7 @@ var bit = (function() {
 
     var doms = {
       newProjectBtn : $('new-project'),
-      fileDropZone : $('file-drop-zone'),
-      loadFileLbl : $('load-file-lbl'),
-      loadFileInput : $('load-file')
+      previewBtn    : $('preview')
     },
     context = {
       handlers : null
@@ -1456,55 +1647,29 @@ var bit = (function() {
       context.handlers.onNewProject();
     }
 
-    function onFileDragOver(e) {
-      e.stopPropagation();
+    function onPreviewBtnClick(e) {
       e.preventDefault();
+      context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
     }
-    
-    function onFileDragLeave(e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    
-    function onFileDrop(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      context.handlers.onNewFiles(e.dataTransfer.files);
-    }
-    
-    function onLoadFileInputChange(e) {
-      e.preventDefault();
-      context.handlers.onNewFiles(e.target.files);
-    }
-    
+
     return {
 
       init : function(handlers) {
         context.handlers = handlers;
         doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
-        doms.fileDropZone.draggable = true;
-        doms.fileDropZone.addEventListener('dragover', onFileDragOver, false);
-        doms.fileDropZone.addEventListener('dragleave', onFileDragLeave, false);
-        doms.fileDropZone.addEventListener('drop', onFileDrop, false);
-        doms.loadFileInput.addEventListener('change', onLoadFileInputChange, false);
+        doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
         return this.reset();
       },
 
       reset : function() {
-        doms.loadFileInput.style.opacity = '0';
-        doms.loadFileInput.style.position = 'fixed';
-        doms.loadFileInput.style.top = '-100em';
-        doms.loadFileInput.value = '';
-        show(doms.loadFileInput);
-        show(doms.loadFileLbl);
-        show(doms.fileDropZone);
+        hide(doms.previewBtn);
+        doms.previewBtn.classList.remove('selected');
         return this;
       },
 
       switchToEditMode : function() {
-        hide(doms.fileDropZone)
-        hide(doms.loadFileInput)
-        hide(doms.loadFileLbl)
+        doms.previewBtn.classList.remove('selected');
+        show(doms.previewBtn);
         return this;
       }
 
@@ -1526,75 +1691,114 @@ var bit = (function() {
       selected : new bitedit.MultiSelector(),
       mover : new bitedit.Mover(),
       editor : new bitedit.Editor(),
-      order : new bitedit.Order()
-    },
-
-    mnuHandlers = {
-
-      onNewProject : function() {
-        if (!mdl.isModified() || confirm('Discard all changes?')) {
-          ftr.reset();
-          wks.reset();
-          tls.reset();
-          mnu.reset();
-          mdl.reset();
-        }
-      },
-
-      onNewFiles : function(files) {
-        var selFile = files[0];
-        if (0 === files.length) {
-          ftr.reset();
-        } else if (1 < files.length) {
-          ftr.error(null);
-        } else if (mdl.setFile(selFile)) {
-          mnu.switchToEditMode();
-          ftr.info(selFile);
-          wks.load(selFile);
-        } else {
-          ftr.error(selFile);
-        }
-      }
-
-    },
-    
-    dragHandlers = {
-
-      prevent : function(e) {
-        if (!tls.none()) return true;
-        if (mdl.findArea(e.target)) return true;
-        return false;
-      }
-
+      order : new bitedit.Order(),
+      mapper : new bitmap.Mapper()
     };
 
-    var tools = (function() {
+    var loader = (function() {
+
+      var handlers = {
+
+        onNewMap : function(data) {
+          if (mdl.setFile(data.file)) {
+            mdl.setInfo(data);
+            mnu.switchToEditMode();
+            ftr.info(data.file);
+            wks.load(data.file);
+          } else {
+            ftr.error(data.file);
+          }
+          return true;
+        }
+
+      };
+      
+      return {
+        handlers
+      };
+
+    })();
+
+    var menu = (function() {
+
+      var handlers = {
+          
+        onNewProject : function() {
+          if (!mdl.isModified() || confirm('Discard all changes?')) {
+            ftr.reset();
+            wks.reset();
+            tls.reset();
+            mnu.reset();
+            mdl.reset();
+            ldr.reset();
+          }
+          ldr.show();
+        },
+
+        onPreview : function(activated) {
+          if (activated) {
+            let c, i;
+            [c, i] = wks.switchToPreview();
+            context.mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
+          } else {
+            wks.switchToEdit();
+            context.mapper.cancelPreview();
+          }
+        }
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
+
+    var dragger = (function() {
+
+      var handlers = {
+          
+        prevent : function(e) {
+          if (!tls.none()) return true;
+          if (mdl.findArea(e.target)) return true;
+          return false;
+        }
+
+      };
+
+      return {
+        handlers
+      };
+
+    })();
+
+    var tooler = (function() {
 
       var handlers = {
           
           onGridScopeChange : function(v) {
-            if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+            if (context.selected.length === 1) {
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridScope(v);
+                area.gridScope = v;
               }
             }
           },
 
           onGridAlignChange : function(v) {
-            if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+            if (context.selected.length === 1) {
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridAlign(v);
+                area.gridAlign = v;
               }
             }
           },
 
           onGridSpaceChange : function(v) {
-            if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+            if (context.selected.length === 1) {
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridSpace(v);
+                area.gridSpace = v;
               }
             }
           },
@@ -1602,10 +1806,10 @@ var bit = (function() {
           onShowOrder : function(bShow) {
             if (bShow) {
               let list, fig;
-              if (context.selected.length() === 1) {
-                fig = context.selected.get(0).getFigure();
-                list = (fig.isGrid) ? [fig] : fig.getBonds();
-                list.forEach(g => context.order.display(g.getElts()));
+              if (context.selected.length === 1) {
+                fig = context.selected.get(0).figure;
+                list = (fig.isGrid) ? [fig] : fig.copyBonds();
+                list.forEach(g => context.order.display(g.areas));
               }
             } else {
               context.order.hide();
@@ -1613,16 +1817,16 @@ var bit = (function() {
           },
 
           onGridOrderChange : function(v) {
-            if (context.selected.length() === 1) {
-              let area = context.selected.get(0).getFigure();
+            if (context.selected.length === 1) {
+              let area = context.selected.get(0).figure;
               if (area.isGrid) {
-                area.setGridOrder(v);
+                area.gridOrder = v;
               }
             }
           },
 
-          onPropsSave : (p) => tls.saveAreaProps(context.selected.get(0).getFigure(), p),
-          onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).getFigure())
+          onPropsSave : (p) => tls.saveAreaProps(context.selected.get(0).figure, p),
+          onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).figure)
 
       };
 
@@ -1637,18 +1841,18 @@ var bit = (function() {
     }
 
     function onAreaEnter(e) {
-      if (context.selected.length() === 0) {
+      if (context.selected.length === 0) {
         tls.displayAreaProps(this);
       }
     }
 
     function onAreaLeave(e) {
-      if (context.selected.length() === 0) {
+      if (context.selected.length === 0) {
         tls.resetAreaProps();
       }
     }
 
-    var draw = (function() {
+    var drawer = (function() {
 
       var factory = {
         'rectangle'   : bitgen.Rectangle,
@@ -1701,7 +1905,7 @@ var bit = (function() {
         },
 
         onStart : function(parent, pt, alt, gridParent) {
-          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).getFigure() : null; 
+          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).figure : null; 
           context.selected.empty();
           if (null === bondElt) {
             generator = create(parent, alt);
@@ -1731,13 +1935,13 @@ var bit = (function() {
           let height = parent.getAttribute('height');
           switch(generator.end(pt, width, height)) {
           case 'done':
-            let fig = generator.getFigure();
+            let fig = generator.figure;
             mdl.addArea(fig);
             context.selected.set(fig);
             tls.release();
             tls.enableGridTools(fig);
-            fig.getDom().addEventListener('mouseover', onAreaEnter.bind(fig), false);
-            fig.getDom().addEventListener('mouseleave', onAreaLeave.bind(fig), false);
+            fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
+            fig.dom.addEventListener('mouseleave', onAreaLeave.bind(fig), false);
             generator = null;
             break;
           case 'error':
@@ -1772,8 +1976,8 @@ var bit = (function() {
 
       function updateGridTools() {
         tls.blurAreaProps();
-        if (context.selected.length() === 1) {
-          tls.enableGridTools(context.selected.get(0).getFigure());
+        if (context.selected.length === 1) {
+          tls.enableGridTools(context.selected.get(0).figure);
         } else {
           tls.disableGridTools();
         }
@@ -1782,7 +1986,7 @@ var bit = (function() {
       function areaSelect(area) {
         tls.blurAreaProps();
         context.selected.set(mdl.findArea(area));
-        tls.enableGridTools(context.selected.get(0).getFigure());
+        tls.enableGridTools(context.selected.get(0).figure);
       }
 
       function areaMultiSelect(area) {
@@ -1847,7 +2051,7 @@ var bit = (function() {
 
         onTrackProgress : function(pt) {
           tracker.progress(pt);
-          computeSelection(tracker.getCoords());
+          computeSelection(tracker.coords);
         },
 
         onTrackEnd : function() {
@@ -1874,16 +2078,16 @@ var bit = (function() {
         },
 
         onDeleteAll : function() {
-          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
-          context.selected.forEach(e => mdl.removeArea(e.getFigure()));
+          context.selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
+          context.selected.forEach(e => mdl.removeArea(e.figure));
           context.selected.empty();
           tls.disableGridTools();
         },
 
         onFreeze : function() {
-          if (context.selected.length() === 1) {
+          if (context.selected.length === 1) {
             let newSel = [];
-            if (mdl.freezeGridArea(context.selected.get(0).getFigure(), newSel)) {
+            if (mdl.freezeGridArea(context.selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
               context.selected.empty();
               newSel.forEach(e => context.selected.add(e));
               updateGridTools();
@@ -1913,7 +2117,7 @@ var bit = (function() {
         onStart : (parent, pt) => {
           let width = parent.getAttribute('width');
           let height = parent.getAttribute('height');
-          context.selected.sort((a,b) => a.getFigure().isGrid ? -1 : 1);
+          context.selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
           context.mover.start(context.selected, pt, width, height);
           tls.freeze();
         },
@@ -1932,7 +2136,7 @@ var bit = (function() {
         },
 
         onRotate : function(parent, direction) {
-          if (1 < context.selected.length()) {
+          if (1 < context.selected.length) {
             alert('Rotation is supported for a single selected area!');
             return;
           }
@@ -1956,7 +2160,7 @@ var bit = (function() {
       var handlers = {
 
         prevent : function(e) {
-          if (0 === context.selected.length()) return true;
+          if (0 === context.selected.length) return true;
           if (!context.selected.get(0).isEditable(e.target)) return true;
           return false;
         },
@@ -1996,9 +2200,10 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
-    mnu.init(mnuHandlers);
-    wks.init(dragHandlers, draw.handlers, selector.handlers, mover.handlers, editor.handlers);
-    tls.init(tools.handlers);
+    ldr.init(loader.handlers);
+    mnu.init(menu.handlers);
+    wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
+    tls.init(tooler.handlers);
 
   })(); /* APPLICATION MANAGEMENT */
 
