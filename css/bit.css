@@ -187,6 +187,10 @@ ul, ol {
 	display: none;
 }
 
+#save-project {
+  display: none;
+}
+
 /* WORKAREA ELEMENTS */
 
 #wks-wrap section {
@@ -458,7 +462,7 @@ ul, ol {
 }
 
 #map-attributes label {
-  width: 50px;
+  width: 120px;
   text-align: right;
 }
 

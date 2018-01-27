@@ -203,6 +203,17 @@ var bitarea = (function() {
       Object.assign(this._properties, p);
     }
 
+    toStore(index, areas) {
+      let rtn = {};
+      rtn.index = index;
+      rtn.type = this._type;
+      rtn.coords = this.copyCoords();
+      rtn.bonds = [];
+      this._bonds.forEach(e => rtn.bonds.push(areas.indexOf(e)));
+      rtn.properties = Object.assign({}, this._properties);
+      return rtn;
+    }
+
   } // FIGURE
 
   /*

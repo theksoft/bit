@@ -88,6 +88,8 @@ var bit = (function() {
 
     return {
 
+      setModified : () => context.modified = true,
+      setUnmodified : () => context.modified = false,
       isModified : () => context.modified,
 
       reset : function() {
@@ -103,16 +105,14 @@ var bit = (function() {
       setFile : function(f) {
         if (validateImgFile(f)) {
           context.filename = f.name;
-          context.modified = true;
           return true;
         }
         return false;
       },
 
-      setInfo(name, alt) {
-        context.name = name;
-        context.alt = alt;
-        context.modified = true;
+      setInfo(data) {
+        context.name = data.name;
+        context.alt = data.alt;
       },
 
       getInfo() {
@@ -128,7 +128,6 @@ var bit = (function() {
 
       addArea : function(area) {
         context.areas.push(area);
-        context.modified = true;
       },
 
       removeArea : function(area) {
@@ -148,7 +147,6 @@ var bit = (function() {
           let i = context.areas.indexOf(area);
           area.remove();
           context.areas.splice(i, 1);
-          context.modified = true;
         }
       },
 
@@ -170,13 +168,72 @@ var bit = (function() {
         grid.remove();
         context.areas.splice(i, 1);
         areas.forEach(e => context.areas.push(e));
-        context.modified = true;
         return true;
+      },
+
+      toStore() {
+        let rtn = {};
+        rtn.name = context.name;
+        rtn.alt = context.alt;
+        rtn.filename = context.filename;
+        rtn.areas = [];
+        context.areas.forEach((e, i, a) => rtn.areas.push(e.toStore(i, a)));
+        return rtn;
       }
 
     };
 
   })(); /* DATA MODEL MANAGEMENT */
+
+  /*
+   * STORE 
+   */
+
+  var store = (function() {
+
+    const storageKey = 'BiT';
+
+    function getStore() {
+      return JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+    }
+
+    function setStore(s) {
+      window.localStorage.setItem(storageKey, JSON.stringify(s));      
+    }
+
+    function write(name, value) {
+      let s = getStore();
+      s[name] = value;
+      setStore(s);
+    }
+
+    function read(name) {
+      return getStore()[name];
+    }
+
+    function remove(name) {
+      let s = getStore();
+      delete s[name];
+      setStore(s);
+    }
+
+    function list() {
+      return Object.keys(getStore());
+    }
+
+    function reset() {
+      window.localStorage.removeItem(storageKey);
+    }
+
+    return {
+      list,
+      read,
+      write,
+      remove,
+      reset
+    }
+
+  })();
 
   /*
    * WORKAREA MANAGEMENT
@@ -1632,8 +1689,11 @@ var bit = (function() {
   var mnu = (function() {
 
     var doms = {
-      newProjectBtn : $('new-project'),
-      previewBtn    : $('preview')
+      newProjectBtn     : $('new-project'),
+      previewBtn        : $('preview'),
+      saveProjectBtn    : $('save-project'),
+      loadProjectBtn    : $('load-project'),
+      deleteProjectsBtn : $('delete-projects')
     },
     context = {
       handlers : null
@@ -1652,16 +1712,38 @@ var bit = (function() {
       context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
     }
 
+    function onSaveProjectBtnClick(e) {
+      e.preventDefault();
+      context.handlers.onSaveProject();
+    }
+
+    function onLoadProjectBtnClick(e) {
+      e.preventDefault();
+//      context.handlers.onLoadProject();
+    }
+
+    function onDeleteProjectsBtnClick(e) {
+      e.preventDefault();
+      context.handlers.onDeleteProjects();
+    }
+
+    let canSave = () => show(doms.saveProjectBtn);
+    let preventSave = () => hide(doms.saveProjectBtn);
+
     return {
 
       init : function(handlers) {
         context.handlers = handlers;
         doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
         doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
+        doms.saveProjectBtn.addEventListener('click', onSaveProjectBtnClick, false);
+        doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
+        doms.deleteProjectsBtn.addEventListener('click', onDeleteProjectsBtnClick, false);
         return this.reset();
       },
 
       reset : function() {
+        hide(doms.saveProjectBtn);
         hide(doms.previewBtn);
         doms.previewBtn.classList.remove('selected');
         return this;
@@ -1671,7 +1753,9 @@ var bit = (function() {
         doms.previewBtn.classList.remove('selected');
         show(doms.previewBtn);
         return this;
-      }
+      },
+
+      canSave, preventSave
 
     };
 
@@ -1695,6 +1779,16 @@ var bit = (function() {
       mapper : new bitmap.Mapper()
     };
 
+    var setModified = () => {
+      mdl.setModified();
+      mnu.canSave();
+    };
+
+    var setUnmodified = () => {
+      mdl.setUnmodified();
+      mnu.preventSave();
+    };
+
     var loader = (function() {
 
       var handlers = {
@@ -1705,6 +1799,7 @@ var bit = (function() {
             mnu.switchToEditMode();
             ftr.info(data.file);
             wks.load(data.file);
+            setModified();
           } else {
             ftr.error(data.file);
           }
@@ -1744,6 +1839,15 @@ var bit = (function() {
             wks.switchToEdit();
             context.mapper.cancelPreview();
           }
+        },
+
+        onSaveProject : function() {
+          store.write(mdl.getInfo().name, mdl.toStore());
+          setUnmodified();
+        },
+
+        onDeleteProjects : function() {
+          store.reset();
         }
 
       };
@@ -1781,6 +1885,7 @@ var bit = (function() {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridScope = v;
+                setModified();
               }
             }
           },
@@ -1790,6 +1895,7 @@ var bit = (function() {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridAlign = v;
+                setModified();
               }
             }
           },
@@ -1799,6 +1905,7 @@ var bit = (function() {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridSpace = v;
+                setModified();
               }
             }
           },
@@ -1821,11 +1928,15 @@ var bit = (function() {
               let area = context.selected.get(0).figure;
               if (area.isGrid) {
                 area.gridOrder = v;
+                setModified();
               }
             }
           },
 
-          onPropsSave : (p) => tls.saveAreaProps(context.selected.get(0).figure, p),
+          onPropsSave : (p) => {
+            tls.saveAreaProps(context.selected.get(0).figure, p);
+            setModified()
+          },
           onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).figure)
 
       };
@@ -1937,6 +2048,7 @@ var bit = (function() {
           case 'done':
             let fig = generator.figure;
             mdl.addArea(fig);
+            setModified();
             context.selected.set(fig);
             tls.release();
             tls.enableGridTools(fig);
@@ -2082,6 +2194,7 @@ var bit = (function() {
           context.selected.forEach(e => mdl.removeArea(e.figure));
           context.selected.empty();
           tls.disableGridTools();
+          setModified();
         },
 
         onFreeze : function() {
@@ -2092,6 +2205,7 @@ var bit = (function() {
               newSel.forEach(e => context.selected.add(e));
               updateGridTools();
               newSel = null;
+              setModified();
             }
           }
         }
@@ -2122,7 +2236,10 @@ var bit = (function() {
           tls.freeze();
         },
         onProgress : pt => context.mover.progress(pt),
-        onEnd : pt => context.mover.end(pt),
+        onEnd : pt => {
+          context.mover.end(pt);
+          setModified();
+        },
         onExit : e => tls.release(),
         onCancel : ()  => {
           context.mover.cancel();
@@ -2133,6 +2250,7 @@ var bit = (function() {
           let width = parent.getAttribute('width');
           let height = parent.getAttribute('height');
           context.mover.step(context.selected, dx, dy, width, height);
+          setModified();
         },
 
         onRotate : function(parent, direction) {
@@ -2144,6 +2262,8 @@ var bit = (function() {
           let height = parent.getAttribute('height');
           if (!context.selected.get(0).rotate(direction, width, height)) {
             alert('ERROR - Rotation possibly makes area go beyond limits!');
+          } else {
+            setModified();
           }
         }
 
@@ -2173,7 +2293,10 @@ var bit = (function() {
         },
 
         onProgress : pt => context.editor.progress(pt),
-        onEnd : pt => context.editor.end(pt),
+        onEnd : pt => {
+          context.editor.end(pt);
+          setModified();
+        },
         onExit : e => tls.release(),
         onCancel : () => {
           context.editor.cancel();

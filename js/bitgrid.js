@@ -404,7 +404,7 @@ var bitgrid = (function() {
     }
 
     draw(coords, patternCoords) {
-      let elts = [];
+      let areas = [];
       if (this.areValidCoords(coords)) {
         let rcoords, pcoords, pprops, gprops, space, is, ix, bOuter, mw, mh, computeGridProperties;
         space = this._gridSpace;
@@ -419,32 +419,32 @@ var bitgrid = (function() {
           gprops = computeGridProperties(rcoords, pprops, space, mw, mh);
           pcoords.y = gprops.ys + gprops.is * gprops.spy + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
+            this.drawRaw(coords, areas, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += 2*gprops.spy;
           }
           pcoords.y = gprops.ys + gprops.ix * gprops.spy + pprops.offset.y;
           for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRaw(coords, elts, pcoords, gprops.xx, gprops.nxx, gprops.spx, pprops.offset.x, gprops.tx1, gprops.tx2, !bOuter);
+            this.drawRaw(coords, areas, pcoords, gprops.xx, gprops.nxx, gprops.spx, pprops.offset.x, gprops.tx1, gprops.tx2, !bOuter);
             pcoords.y += 2*gprops.spy;
           }
         } else {
           gprops = computeGridPropertiesEx(rcoords, pprops, space, computeGridProperties, mw, mh);
           pcoords.y = gprops.ys + gprops.is * gprops.spy + pprops.offset.y;
           for (is = gprops.is; is < gprops.ny; is += 2) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.spc, gprops.ts1, gprops.ts2, gprops.tx1, gprops.tx2, !bOuter);
+            this.drawRawEx(coords, areas, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.spc, gprops.ts1, gprops.ts2, gprops.tx1, gprops.tx2, !bOuter);
             pcoords.y += 2*gprops.spy;
           }
           pcoords.y = gprops.ys + gprops.ix * gprops.spy + pprops.offset.y;
           for (ix = gprops.ix; ix < gprops.ny; ix += 2) {
-            this.drawRawEx(coords, elts, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.spc, gprops.tx1, gprops.tx2, gprops.ts1, gprops.ts2, !bOuter);
+            this.drawRawEx(coords, areas, pcoords, gprops.xs, gprops.nx, gprops.spx, pprops.offset.x, gprops.spc, gprops.tx1, gprops.tx2, gprops.ts1, gprops.ts2, !bOuter);
             pcoords.y += 2*gprops.spy;
           }
         }
       }
       this._areas.forEach(e => e.remove());
       this._areas.splice(0, this._areas.length);
-      elts.forEach(e => this._areas.push(e));
-      elts.splice(0, elts.length);
+      areas.forEach(e => this._areas.push(e));
+      areas.splice(0, areas.length);
       this.reorder();
     }
 
@@ -457,11 +457,11 @@ var bitgrid = (function() {
       return coords;
     }
 
-    drawRaw(coords, elts, c, start, n, step, offset, tilt1, tilt2, bInner) {
+    drawRaw(coords, areas, c, start, n, step, offset, tilt1, tilt2, bInner) {
       console.log('drawRaw() not defined');
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, tilt1, tilt2, bInner) {
+    drawRawEx(coords, areas, c, start, n, step, offset, tilt1, tilt2, bInner) {
       console.log('drawRawEx() not defined');
     }
 
@@ -558,6 +558,15 @@ var bitgrid = (function() {
       return this._areas.reduce((a,e) => a || this._pattern.equalCoords(e.coords), false);
     }
 
+    toStore(rtn) {
+      rtn.isGrid = true;
+      rtn.drawScope = this._drawScope;
+      rtn.drawALign = this._drawAlign;
+      rtn.gridSpace = this._gridSpace;
+      rtn.gridOrder = this._gridOrder;
+      return rtn;
+    }
+
   }
 
   /*
@@ -574,26 +583,26 @@ var bitgrid = (function() {
       return (0 < coords.width && 0 < coords.height);
     }
 
-    drawRaw(coords, elts, c, start, n, step, offset, tilt1, tilt2) {
+    drawRaw(coords, areas, c, start, n, step, offset, tilt1, tilt2) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
         let elt = this.clonePattern(c);
         if (null !== elt) {
-          elts.push(elt);
+          areas.push(elt);
         }
         c.x += step;
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4) {
+    drawRawEx(coords, areas, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4) {
       let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = tilts[i%4];
         let elt = this.clonePattern(c);
         if (null !== elt) {
-          elts.push(elt);
+          areas.push(elt);
         }
         c.x += (i%2 === 0) ? spc : step - spc;
       }
@@ -608,7 +617,7 @@ var bitgrid = (function() {
       this.bindTo(bond);
       this._type = types.GRIDRECTANGLE;
       this.isGrid = true;
-      this.grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
+      this._grid = new RectangleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     bindTo(bond) {
@@ -631,57 +640,61 @@ var bitgrid = (function() {
 
     remove() {
       super.remove();
-      this.grid.remove();
-      this.grid = null;
+      this._grid.remove();
+      this._grid = null;
     }
 
     draw(coords, patternCoords) {
       super.draw(coords);
-      this.grid.draw(coords, patternCoords);
+      this._grid.draw(coords, patternCoords);
     }
 
     get gridScope() {
-      return this.grid.gridScope;
+      return this._grid.gridScope;
     }
 
     set gridScope(v) {
-      this.grid.gridScope = v;
+      this._grid.gridScope = v;
     }
 
     get gridAlign() {
-      return this.grid.gridAlign;
+      return this._grid.gridAlign;
     }
 
     set gridAlign(v) {
-      this.grid.gridAlign = v;
+      this._grid.gridAlign = v;
     }
 
     get gridSpace() {
-      return this.grid.gridSpace;
+      return this._grid.gridSpace;
     }
 
     set gridSpace(v) {
-      this.grid.gridSpace = v;
+      this._grid.gridSpace = v;
     }
 
     get gridOrder() {
-      return this.grid.gridOrder;
+      return this._grid.gridOrder;
     }
 
     set gridOrder(v) {
-      this.grid.gridOrder = v;
+      this._grid.gridOrder = v;
     }
 
     freezeTo(areas, specialize) {
-      this.grid.freezeTo(areas, this._parent, specialize);
+      this._grid.freezeTo(areas, this._parent, specialize);
     }
 
     get areas() {
-      return this.grid.areas;
+      return this._grid.areas;
     }
 
     isPatternInGrid() {
-      return this.grid.isPatternInGrid();
+      return this._grid.isPatternInGrid();
+    }
+
+    toStore(index, areas) {
+      return this._grid.toStore(super.toStore(index, areas));
     }
 
   } // RECTANGLE GRID
@@ -708,21 +721,21 @@ var bitgrid = (function() {
       return rtn;
     }
 
-    drawRaw(coords, elts, c, start, n, step, offset, tilt1, tilt2, bInner) {
+    drawRaw(coords, areas, c, start, n, step, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
-            elts.push(elt);
+            areas.push(elt);
           }
         }
         c.x += step;
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4, bInner) {
+    drawRawEx(coords, areas, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4, bInner) {
       let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
@@ -730,7 +743,7 @@ var bitgrid = (function() {
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
-            elts.push(elt);
+            areas.push(elt);
           }
         }
         c.x += (i%2 === 0) ? spc : step - spc;
@@ -779,7 +792,7 @@ var bitgrid = (function() {
       this.bindTo(bond);
       this._type = types.GRIDCIRCLE;
       this.isGrid = true;
-      this.grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
+      this._grid = new CircleGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     bindTo(bond) {
@@ -802,57 +815,61 @@ var bitgrid = (function() {
 
     remove() {
       super.remove();
-      this.grid.remove();
-      this.grid = null;
+      this._grid.remove();
+      this._grid = null;
     }
 
     draw(coords, patternCoords) {
       super.draw(coords);
-      this.grid.draw(coords, patternCoords);
+      this._grid.draw(coords, patternCoords);
     }
 
     get gridScope() {
-      return this.grid.gridScope;
+      return this._grid.gridScope;
     }
 
     set gridScope(v) {
-      this.grid.gridScope = v;
+      this._grid.gridScope = v;
     }
 
     get gridAlign() {
-      return this.grid.gridAlign;
+      return this._grid.gridAlign;
     }
 
     set gridAlign(v) {
-      this.grid.gridAlign = v;
+      this._grid.gridAlign = v;
     }
 
     get gridSpace() {
-      return this.grid.gridSpace;
+      return this._grid.gridSpace;
     }
 
     set gridSpace(v) {
-      this.grid.gridSpace = v;
+      this._grid.gridSpace = v;
     }
 
     get gridOrder() {
-      return this.grid.gridOrder;
+      return this._grid.gridOrder;
     }
 
     set gridOrder(v) {
-      this.grid.gridOrder = v;
+      this._grid.gridOrder = v;
     }
 
     freezeTo(areas, specialize) {
-      this.grid.freezeTo(areas, this._parent, specialize);
+      this._grid.freezeTo(areas, this._parent, specialize);
     }
 
     get areas() {
-      return this.grid.areas;
+      return this._grid.areas;
     }
 
     isPatternInGrid() {
-      return this.grid.isPatternInGrid();
+      return this._grid.isPatternInGrid();
+    }
+
+    toStore(index, areas) {
+      return this._grid.toStore(super.toStore(index, areas));
     }
 
   } // CIRCLE GRID
@@ -871,21 +888,21 @@ var bitgrid = (function() {
       return (0 < coords.width && 0 < coords.height);
     }
 
-    drawRaw(coords, elts, c, start, n, step, offset, tilt1, tilt2, bInner) {
+    drawRaw(coords, areas, c, start, n, step, offset, tilt1, tilt2, bInner) {
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
         c.tilt = (i%2 === 0) ? tilt1 : tilt2;
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
-            elts.push(elt);
+            areas.push(elt);
           }
         }
         c.x += step;
       }
     }
 
-    drawRawEx(coords, elts, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4, bInner) {
+    drawRawEx(coords, areas, c, start, n, step, offset, spc, tilt1, tilt2, tilt3, tilt4, bInner) {
       let tilts = [tilt1, tilt2, tilt3, tilt4];
       c.x = start + offset;
       for (let i = 0; i < n; i++) {
@@ -893,7 +910,7 @@ var bitgrid = (function() {
         if ((bInner && this.isContained(coords, c)) || (!bInner && this.intersect(coords, c))) {
           let elt = this.clonePattern(c);
           if (null !== elt) {
-            elts.push(elt);
+            areas.push(elt);
           }
         }
         c.x += (i%2 === 0) ? spc : step - spc;
@@ -949,7 +966,7 @@ var bitgrid = (function() {
       this.bindTo(bond);
       this._type = types.GRIDHEX;
       this.isGrid = true;
-      this.grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
+      this._grid = new HexGrid(gridParent, bond, this, drawScope, drawAlign, gridSpace, gridOrder);
     }
 
     bindTo(bond) {
@@ -972,57 +989,61 @@ var bitgrid = (function() {
 
     remove() {
       super.remove();
-      this.grid.remove();
-      this.grid = null;
+      this._grid.remove();
+      this._grid = null;
     }
 
     draw(coords, patternCoords) {
       super.draw(coords);
-      this.grid.draw(coords, patternCoords);
+      this._grid.draw(coords, patternCoords);
     }
 
     get gridScope() {
-      return this.grid.gridScope;
+      return this._grid.gridScope;
     }
 
     set gridScope(v) {
-      this.grid.gridScope = v;
+      this._grid.gridScope = v;
     }
 
     get gridAlign() {
-      return this.grid.gridAlign;
+      return this._grid.gridAlign;
     }
 
     set gridAlign(v) {
-      this.grid.gridAlign = v;
+      this._grid.gridAlign = v;
     }
 
     get gridSpace() {
-      return this.grid.gridSpace;
+      return this._grid.gridSpace;
     }
 
     set gridSpace(v) {
-      this.grid.gridSpace = v;
+      this._grid.gridSpace = v;
     }
 
     get gridOrder() {
-      return this.grid.gridOrder;
+      return this._grid.gridOrder;
     }
 
     set gridOrder(v) {
-      this.grid.gridOrder = v;
+      this._grid.gridOrder = v;
     }
 
     freezeTo(areas, specialize) {
-      this.grid.freezeTo(areas, this._parent, specialize);
+      this._grid.freezeTo(areas, this._parent, specialize);
     }
 
     get areas() {
-      return this.grid.areas;
+      return this._grid.areas;
     }
 
     isPatternInGrid() {
-      return this.grid.isPatternInGrid();
+      return this._grid.isPatternInGrid();
+    }
+
+    toStore(index, areas) {
+      return this._grid.toStore(super.toStore(index, areas));
     }
 
   } // HEX GRID
