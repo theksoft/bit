@@ -93,8 +93,11 @@ var bit = (function() {
       isModified : () => context.modified,
 
       reset : function() {
-        context.filename = '';
+        context.mode = 'new';
         context.modified = false;
+        context.filename = '';
+        context.name = '';
+        context.alt = '';
         context.areas.sort((a,b) => a.isGrid ? -1 : 1);
         context.areas.forEach(e => e.remove());
         context.areas.splice(0, context.areas.length);
@@ -186,7 +189,7 @@ var bit = (function() {
   })(); /* DATA MODEL MANAGEMENT */
 
   /*
-   * STORE 
+   * STORE
    */
 
   var store = (function() {
@@ -985,6 +988,24 @@ var bit = (function() {
         context.state = states.READY;
         viewport.setWorkingDims(doms.image.width, doms.image.height)
                 .resize();
+      },
+      
+      release : function() {
+        coordTracker.enable();
+        imageDragger.enable();
+        areaDrawer.enable();
+        areaMover.enable();
+        areaEditor.enable();
+        areaSelector.enable();
+      },
+
+      freeze : function() {
+        coordTracker.disable();
+        imageDragger.disable();
+        areaDrawer.disable();
+        areaMover.disable();
+        areaEditor.disable();
+        areaSelector.disable();
       }
 
     };
@@ -1649,6 +1670,7 @@ var bit = (function() {
       e.preventDefault();
       hide(doms.loader);
       clear();
+      context.handlers.onClose();
     }
 
     return {
@@ -1683,6 +1705,90 @@ var bit = (function() {
   })();
 
   /*
+   * PROJECT MANAGER
+   */
+
+  var prj = (function() {
+
+    var doms = {
+      projects : $('project-manager'),
+      list : $('project-list'),
+      closeBtn : $('project-close'),
+      deleteBtn : $('project-delete'),
+      clearBtn : $('project-clear')
+    },
+    context = {
+      handlers : null,
+      canClear : true
+    };
+    
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function fill() {
+      let canClearAll, content, flag;
+      canClearAll = true;
+      content = '';
+      store.list().forEach(e => {
+        flag = '';
+        if (e === mdl.getInfo().name) {
+          flag = ' disabled';
+          canClearAll = false;
+        }
+        content += '<option value="' + e + '"' + flag + '>' + e + '</option>';
+      });
+      doms.list.innerHTML = content;
+      return canClearAll;
+    }
+
+    function onClose(e) {
+      e.preventDefault();
+      hide(doms.projects);
+      doms.list.innerHTML = '';
+      context.handlers.onClose();
+    }
+
+    function onDelete(e) {
+      let i, sel;
+      e.preventDefault();
+      sel = [];
+      for (i = 0; i < doms.list.options.length; i++) {
+        if (doms.list.options[i].selected) {
+          sel.push(doms.list.options[i].value);
+        }
+      }
+      sel.forEach(e => store.remove(e));
+      fill();
+    }
+
+    function onClear(e) {
+      e.preventDefault();
+      if (context.canClearAll) {
+        store.reset();
+        fill();
+      }
+    }
+
+    return {
+
+      init : function(handlers) {
+        context.handlers = handlers;
+        doms.closeBtn.addEventListener('click', onClose, false);
+        doms.deleteBtn.addEventListener('click', onDelete, false);
+        doms.clearBtn.addEventListener('click', onClear, false);
+      },
+
+      show : function() {
+        context.canClear = fill();
+        doms.clearBtn.disabled = !context.canClear;
+        show(doms.projects);
+      }
+
+    };
+
+  })();
+
+  /*
    * MENU MANAGEMENT
    */
 
@@ -1693,10 +1799,11 @@ var bit = (function() {
       previewBtn        : $('preview'),
       saveProjectBtn    : $('save-project'),
       loadProjectBtn    : $('load-project'),
-      deleteProjectsBtn : $('delete-projects')
+      cleanProjectsBtn  : $('clean-projects')
     },
     context = {
-      handlers : null
+      handlers : null,
+      enabled : true
     };
 
     var hide = (obj) => obj.style.display = 'none';
@@ -1704,31 +1811,38 @@ var bit = (function() {
 
     function onNewProjectBtnClick(e) {
       e.preventDefault();
-      context.handlers.onNewProject();
+      if (context.enabled)
+        context.handlers.onNewProject();
     }
 
     function onPreviewBtnClick(e) {
       e.preventDefault();
-      context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+      if (context.enabled)
+        context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
     }
 
     function onSaveProjectBtnClick(e) {
       e.preventDefault();
-      context.handlers.onSaveProject();
+      if (context.enabled)
+        context.handlers.onSaveProject();
     }
 
     function onLoadProjectBtnClick(e) {
       e.preventDefault();
+//    if (context.enabled)
 //      context.handlers.onLoadProject();
     }
 
-    function onDeleteProjectsBtnClick(e) {
+    function onCleanProjectsBtnClick(e) {
       e.preventDefault();
-      context.handlers.onDeleteProjects();
+      if (context.enabled)
+        context.handlers.onCleanProjects();
     }
 
     let canSave = () => show(doms.saveProjectBtn);
     let preventSave = () => hide(doms.saveProjectBtn);
+    let release = () => context.enabled = true;
+    let freeze = () => context.enabled = false;
 
     return {
 
@@ -1738,7 +1852,7 @@ var bit = (function() {
         doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
         doms.saveProjectBtn.addEventListener('click', onSaveProjectBtnClick, false);
         doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
-        doms.deleteProjectsBtn.addEventListener('click', onDeleteProjectsBtnClick, false);
+        doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
         return this.reset();
       },
 
@@ -1755,7 +1869,8 @@ var bit = (function() {
         return this;
       },
 
-      canSave, preventSave
+      canSave, preventSave,
+      freeze, release
 
     };
 
@@ -1789,21 +1904,52 @@ var bit = (function() {
       mnu.preventSave();
     };
 
+    function freeze() {
+      wks.freeze();
+      tls.freeze();
+      mnu.freeze();
+    }
+
+    function release() {
+      wks.release();
+      tls.release();
+      mnu.release();
+    }
+
+    var onClose = () => release();
+
+    var projects = (function() {
+      
+      var handlers = {
+        onClose
+      };
+        
+      return {
+        handlers
+      };
+
+    })();
+
     var loader = (function() {
 
       var handlers = {
 
+        onClose,
+
         onNewMap : function(data) {
+          let rtn = false;
           if (mdl.setFile(data.file)) {
             mdl.setInfo(data);
             mnu.switchToEditMode();
             ftr.info(data.file);
             wks.load(data.file);
             setModified();
+            rtn = true;
           } else {
             ftr.error(data.file);
           }
-          return true;
+          release();
+          return rtn;
         }
 
       };
@@ -1828,6 +1974,7 @@ var bit = (function() {
             ldr.reset();
           }
           ldr.show();
+          freeze();
         },
 
         onPreview : function(activated) {
@@ -1846,8 +1993,9 @@ var bit = (function() {
           setUnmodified();
         },
 
-        onDeleteProjects : function() {
-          store.reset();
+        onCleanProjects : function() {
+          prj.show();
+          freeze();
         }
 
       };
@@ -2323,6 +2471,7 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
+    prj.init(projects.handlers);
     ldr.init(loader.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);

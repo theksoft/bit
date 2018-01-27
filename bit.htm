@@ -19,7 +19,7 @@
           <li id="preview"><a href="#">Preview</a></li>
           <li id="save-project"><a href="#">Save project</a></li>
           <li id="load-project"><a href="#">Load project</a></li>
-          <li id="delete-projects"><a href="#">Delete all projects</a></li>
+          <li id="clean-projects"><a href="#">Clean projects</a></li>
         </ul>
       </nav>
     </header>
@@ -151,6 +151,17 @@
     <div id="image-map-loader-buttons">
       <button id="map-set" disabled>OK</button>
       <button id="map-cancel">Cancel</button>
+    </div>
+  </form>
+
+  <!-- Project manager -->
+  <form id="project-manager">
+    <select id="project-list" multiple>
+    </select>
+    <div id="project-buttons">
+      <button id="project-close">Close</button>
+      <button id="project-delete">Delete</button>
+      <button id="project-clear">Delete All</button>
     </div>
   </form>
 

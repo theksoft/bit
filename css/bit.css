@@ -147,6 +147,13 @@ ul, ol {
   background-color: #800;
 }
 
+#header nav .disabled label,
+#header nav .disabled button,
+#header nav .disabled a:link,
+#header nav .disabled a:visited {
+  background-color: #222;
+}
+
 #header nav label,
 #header nav button,
 #header nav a:link,
@@ -549,4 +556,63 @@ input[type=text].error {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
+}
+
+/* PROJECT MANAGER FORM */
+
+#project-manager {
+  position: absolute;
+  top: 10%;
+  left: 40%;
+  width: 20%;
+  min-width: 150px;
+  z-index: 10;
+  background-color: rgba(0,0,0,0.9);
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  font-size: 12px;
+  color: #bbb;
+  margin: 0 auto;
+  text-align: center;
+  display: none;
+}
+
+#project-list {
+  background-color: #333;
+	width: 90%;
+}
+
+#project-list option {
+  color: #bbb;
+  padding: 2px 5px;
+}
+
+#project-list option:disabled {
+	color: #b55;
+}
+
+#project-manager button {
+  background-color: #004;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #ccc;
+  font-size: 12px;
+  vertical-align: middle;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+}
+
+#project-manager button:hover {
+  background-color: #226;
+}
+
+#project-manager button:active {
+  background-color: #337;
+}
+
+#project-manager button:disabled {
+  background-color: #333;
+  color: #888;
 }
