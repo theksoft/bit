@@ -147,6 +147,13 @@ ul, ol {
   background-color: #800;
 }
 
+#header nav .disabled label,
+#header nav .disabled button,
+#header nav .disabled a:link,
+#header nav .disabled a:visited {
+  background-color: #222;
+}
+
 #header nav label,
 #header nav button,
 #header nav a:link,
@@ -181,10 +188,6 @@ ul, ol {
   position: fixed;
   top: -100em;
   opacity: 0;
-}
-
-#preview {
-	display: none;
 }
 
 /* WORKAREA ELEMENTS */
@@ -411,9 +414,9 @@ ul, ol {
   padding: 5px 10px;
 }
 
-/* IMAGE MAP LOADER FORM */
+/* PROJECT CREATOR FORM */
 
-#image-map-loader {
+#project-creator {
 	position: absolute;
 	top: 10%;
 	left: 30%;
@@ -431,23 +434,23 @@ ul, ol {
   display: none;
 }
 
-#image-map-loader fieldset {
+#project-creator fieldset {
   border: 2px #555 solid;
   border-radius: 5px;
   padding: 10px;
   margin: 10px;
 }
 
-#image-map-loader legend {
+#project-creator legend {
 	color: #77b;
 	font-size: 14px;
 }
 
-#image-map-loader label {
+#project-creator label {
   display: inline-block;
 }
 
-#image-map-loader input[type=text] {
+#project-creator input[type=text] {
   background-color: #ccc;
   color: #333;
   border: 2px solid #555;
@@ -458,7 +461,7 @@ ul, ol {
 }
 
 #map-attributes label {
-  width: 50px;
+  width: 120px;
   text-align: right;
 }
 
@@ -504,7 +507,7 @@ input[type=text].error {
   opacity: 0;
 }
 
-#image-map-loader-buttons button, #load-image-file-lbl {
+#project-creator-buttons button, #load-image-file-lbl {
   background-color: #004;
   margin-top: 10px;
   margin-bottom: 4px;
@@ -516,20 +519,20 @@ input[type=text].error {
   border: 1px ridge gray;
 }
 
-#image-map-loader-buttons button:hover, #load-image-file-lbl:hover {
+#project-creator-buttons button:hover, #load-image-file-lbl:hover {
   background-color: #226;
 }
 
-#image-map-loader-buttons button:active, #load-image-file-lbl:active {
+#project-creator-buttons button:active, #load-image-file-lbl:active {
   background-color: #337;
 }
 
-#image-map-loader-buttons button:disabled {
+#project-creator-buttons button:disabled {
   background-color: #333;
   color: #888;
 }
 
-#image-map-loader-buttons {
+#project-creator-buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
@@ -545,4 +548,110 @@ input[type=text].error {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
+}
+
+/* PROJECT MANAGER FORM && PROJECT LOADER FORM */
+
+#project-manager,
+#project-loader {
+  position: absolute;
+  top: 10%;
+  left: 40%;
+  width: 20%;
+  min-width: 150px;
+  z-index: 10;
+  background-color: rgba(0,0,0,0.9);
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  font-size: 12px;
+  color: #bbb;
+  margin: 0 auto;
+  text-align: center;
+  display: none;
+}
+
+#project-list,
+#project-options {
+  background-color: #333;
+	width: 90%;
+}
+
+#project-list option,
+#project-options option {
+  color: #bbb;
+  padding: 2px 5px;
+}
+
+#project-list option:disabled,
+#project-options option:disabled {
+	color: #b55;
+}
+
+#project-manager button,
+#project-loader button {
+  background-color: #004;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #ccc;
+  font-size: 12px;
+  vertical-align: middle;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+}
+
+#project-manager button:hover,
+#project-loader button:hover {
+  background-color: #226;
+}
+
+#project-manager button:active,
+#project-loader button:active {
+  background-color: #337;
+}
+
+#project-manager button:disabled,
+#project-loader button:disabled {
+  background-color: #333;
+  color: #888;
+}
+
+#project-loader-buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+}
+
+#project-load {
+  order: 1;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#project-cancel {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#project-image {
+  width: 80%;
+  height: 200px;
+  border: 2px dashed #999;
+  border-radius: 5px;
+  padding: 12px 10px;
+  font-size: 12px;
+  color: #558;
+  vertical-align: middle;
+  margin: 5px auto;
+  text-align: center;
+}
+
+#project-image img {
+  max-width: 100%;
+  max-height: 100%;
+  vertical-align: middle;
+  margin: 5px auto;
+  display: none;
 }
