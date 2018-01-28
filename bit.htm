@@ -15,7 +15,10 @@
     <header id="header">
       <nav>
         <ul>
+          <li id="clean-projects"><a href="#">Clean projects</a></li>
           <li id="new-project"><a href="#">New project</a></li>
+          <li id="load-project"><a href="#">Load project</a></li>
+          <li id="save-project"><a href="#">Save project</a></li>
           <li id="preview"><a href="#">Preview</a></li>
         </ul>
       </nav>
@@ -121,11 +124,22 @@
     </footer>
   </div>
 
+  <!-- Project manager -->
+  <form id="project-manager">
+    <select id="project-list" multiple>
+    </select>
+    <div id="project-buttons">
+      <button id="project-close">Close</button>
+      <button id="project-delete">Delete</button>
+      <button id="project-clear">Delete All</button>
+    </div>
+  </form>
+
   <!-- Map attributes and image loader -->
-  <form id="image-map-loader">
+  <form id="project-creator">
     <fieldset id="map-attributes"><legend>Image map attributes</legend>
       <p>
-       <label for="map-name">name:</label>
+       <label for="map-name">Project / map name:</label>
        <input type="text" id="map-name" placeholder="map" value="" title="'name' attribute of the image map" />
       </p>
       <p>
@@ -145,9 +159,22 @@
 	     <input type="file" id="load-image-file" accept="image/jpeg,image/png,image/gif" />
 	    </p>
     </fieldset>
-    <div id="image-map-loader-buttons">
+    <div id="project-creator-buttons">
       <button id="map-set" disabled>OK</button>
       <button id="map-cancel">Cancel</button>
+    </div>
+  </form>
+
+  <!-- Project loader -->
+  <form id="project-loader">
+    <select id="project-options">
+    </select>
+    <div id="project-image">
+      <img src="" alt="Preview selected image" id="project-preview" />
+    </div>
+    <div id="project-creator-buttons">
+      <button id="project-load" disabled>OK</button>
+      <button id="project-cancel">Cancel</button>
     </div>
   </form>
 
