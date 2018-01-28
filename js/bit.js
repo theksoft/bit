@@ -118,6 +118,10 @@ var bit = (function() {
         return false;
       },
 
+      getFile : function() {
+        return context.filename; 
+      },
+
       setInfo(data) {
         context.name = data.name;
         context.alt = data.alt;
@@ -199,6 +203,7 @@ var bit = (function() {
         context.filename = project.filename;
         context.areas = [];
         project.areas.forEach((e, i) => context.areas.push(s2a(e, i, context.areas)));
+        return true;
       }
 
     };
@@ -1984,6 +1989,52 @@ var bit = (function() {
   })(); /* MAP PROJECT LOADER */
 
   /*
+   * MAP CODE DISPLAY
+   */
+
+  var code = (function() {
+
+    var doms = {
+      codeViewer  : $('project-code'),
+      code        : $('code-result'),
+      btnClose    : $('code-close')
+    },
+    context = {
+      handlers : null
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      hide(doms.codeViewer);
+      reset();
+      context.handlers.onClose();
+    }
+
+    function reset() {
+      code.innerHTML = '';
+    }
+
+    return {
+
+      init(handlers) {
+        context.handlers = handlers;
+        doms.btnClose.addEventListener('click', onCloseClick, false);
+        return this;
+      },
+
+      show : function(s) {
+        reset();
+        doms.code.innerHTML = s;
+        show(doms.codeViewer);
+      }
+
+    };
+  })();
+  
+  /*
    * MENU MANAGEMENT
    */
 
@@ -1994,7 +2045,8 @@ var bit = (function() {
       previewBtn        : $('preview'),
       saveProjectBtn    : $('save-project'),
       loadProjectBtn    : $('load-project'),
-      cleanProjectsBtn  : $('clean-projects')
+      cleanProjectsBtn  : $('clean-projects'),
+      generateBtn       : $('generate')
     },
     context = {
       handlers : null,
@@ -2034,6 +2086,12 @@ var bit = (function() {
         context.handlers.onCleanProjects();
     }
 
+    function onGenerateBtnClick(e) {
+      e.preventDefault();
+      if (context.enabled && !doms.generateBtn.classList.contains('disabled'))
+        context.handlers.onGenerateCode();
+    }
+
     let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
     let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
     let release = () => context.enabled = true;
@@ -2048,8 +2106,10 @@ var bit = (function() {
         doms.saveProjectBtn.addEventListener('click', onSaveProjectBtnClick, false);
         doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
         doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
+        doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.add('disabled');
+        doms.generateBtn.classList.add('disabled');
         return this.reset();
       },
 
@@ -2057,12 +2117,14 @@ var bit = (function() {
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.remove('selected');
         doms.previewBtn.classList.add('disabled');
+        doms.generateBtn.classList.add('disabled');
         return this;
       },
 
       switchToEditMode : function() {
         doms.previewBtn.classList.remove('disabled');
         doms.previewBtn.classList.remove('selected');
+        doms.generateBtn.classList.remove('disabled');
         return this;
       },
 
@@ -2210,6 +2272,11 @@ var bit = (function() {
 
         onCleanProjects : function() {
           prj.show();
+          freeze();
+        },
+
+        onGenerateCode : function() {
+          code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
           freeze();
         }
 
@@ -2689,6 +2756,7 @@ var bit = (function() {
     prj.init(projects.handlers);
     ctr.init(projects.handlers);
     ldr.init(projects.handlers);
+    code.init(projects.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);

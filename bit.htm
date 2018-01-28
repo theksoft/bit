@@ -20,6 +20,7 @@
           <li id="load-project"><a href="#">Load project</a></li>
           <li id="save-project"><a href="#">Save project</a></li>
           <li id="preview"><a href="#">Preview</a></li>
+          <li id="generate"><a href="#">Generate</a></li>
         </ul>
       </nav>
     </header>
@@ -27,7 +28,7 @@
       <section>
         <div id=workarea>
           <div id="container">
-            <img src="" alt="#" id="img-display" />
+            <img src="" alt="" id="img-display" />
             <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" id="draw-area"></svg>
             <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" id="grid-area"></svg>
           </div>
@@ -125,7 +126,7 @@
   </div>
 
   <!-- Project manager -->
-  <form id="project-manager">
+  <form id="project-manager" class="modal">
     <select id="project-list" multiple>
     </select>
     <div id="project-buttons">
@@ -136,7 +137,7 @@
   </form>
 
   <!-- Map attributes and image loader -->
-  <form id="project-creator">
+  <form id="project-creator" class="modal">
     <fieldset id="map-attributes"><legend>Image map attributes</legend>
       <p>
        <label for="map-name">Project / map name:</label>
@@ -166,7 +167,7 @@
   </form>
 
   <!-- Project loader -->
-  <form id="project-loader">
+  <form id="project-loader" class="modal">
     <select id="project-options">
     </select>
     <div id="project-image">
@@ -176,6 +177,12 @@
       <button id="project-load" disabled>OK</button>
       <button id="project-cancel">Cancel</button>
     </div>
+  </form>
+
+  <!-- HTML code -->
+  <form id="project-code" class="modal">
+    <div id="code-result"></div>
+    <button id="code-close">Close</button>
   </form>
 
   <script type="text/javascript" src="js/bitarea.js"></script>

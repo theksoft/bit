@@ -202,6 +202,19 @@ var bitmap = (function() {
       Grid.specializeProperties(props, n);
     }
 
+    static getHtmlString(filename, info, areas) {
+      let convert = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&gt;&lt;/g, '&gt;<br>&nbsp;&nbsp;&lt;');
+      let result = '';
+      if (areas.length > 0) {
+        result += convert('<img src="' + filename + '" alt="' + info.alt + '" usemap="#' + info.name + '" />') + '<br>'
+                + convert('<map name="' + info.name + '">') + '<br>';
+        result += areas.reduceRight((a,e) => a + '&nbsp;&nbsp;' + convert(create(e).htmlString) + '<br>', '');
+        result += convert('</map>');
+      } else {
+        result = '0 areas';
+      }
+      return result;
+    }
   }
 
   return {
