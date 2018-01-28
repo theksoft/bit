@@ -561,7 +561,7 @@ var bitgrid = (function() {
     toStore(rtn) {
       rtn.isGrid = true;
       rtn.drawScope = this._drawScope;
-      rtn.drawALign = this._drawAlign;
+      rtn.drawAlign = this._drawAlign;
       rtn.gridSpace = this._gridSpace;
       rtn.gridOrder = this._gridOrder;
       return rtn;

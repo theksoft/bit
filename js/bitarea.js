@@ -214,6 +214,12 @@ var bitarea = (function() {
       return rtn;
     }
 
+    fromStore(stored) {
+      this.areaProperties = stored.properties;
+      this.coords = stored.coords;
+      this.redraw();
+    }
+
   } // FIGURE
 
   /*
