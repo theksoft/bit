@@ -77,6 +77,8 @@ var bit = (function() {
           size      : 0,
           name      : '',
           alt       : '',
+          width     : 0,
+          height    : 0,
           areas     : []
         };
     
@@ -98,12 +100,10 @@ var bit = (function() {
       reset : function() {
         context.mode = 'new';
         context.modified = false;
-        context.dataURL = '';
-        context.filename = '';
-        context.type = '';
+        context.dataURL = context.filename = context.type = '';
         context.size = 0;
-        context.name = '';
-        context.alt = '';
+        context.name = context.alt = '';
+        context.width = context.height = 0;
         context.areas.sort((a,b) => a.isGrid ? -1 : 1);
         context.areas.forEach(e => e.remove());
         context.areas.splice(0, context.areas.length);
@@ -1015,6 +1015,7 @@ var bit = (function() {
 
     function onLoadImage() {
       ftr.loading.hide();
+      ftr.infoUpdate(doms.image.naturalWidth, doms.image.naturalHeight);
       show(doms.aside);
       show(doms.workarea);
       viewport.setWorkingDims(doms.image.width, doms.image.height)
@@ -1685,6 +1686,10 @@ var bit = (function() {
         doms.info.appendChild(image);
         doms.info.appendChild(info);
         return this;
+      },
+
+      infoUpdate(width, height) {
+        doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px';
       },
 
       coords,
