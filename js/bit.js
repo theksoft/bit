@@ -73,6 +73,8 @@ var bit = (function() {
           modified  : false,
           dataURL   : '',
           filename  : '',
+          type      : '',
+          size      : 0,
           name      : '',
           alt       : '',
           areas     : []
@@ -98,6 +100,8 @@ var bit = (function() {
         context.modified = false;
         context.dataURL = '';
         context.filename = '';
+        context.type = '';
+        context.size = 0;
         context.name = '';
         context.alt = '';
         context.areas.sort((a,b) => a.isGrid ? -1 : 1);
@@ -113,6 +117,8 @@ var bit = (function() {
           reader.addEventListener('load', () => context.dataURL = reader.result, false);
           reader.readAsDataURL(f);
           context.filename = f.name;
+          context.type = f.type;
+          context.size = f.size;
           return true;
         }
         return false;
@@ -189,6 +195,8 @@ var bit = (function() {
         rtn.name = context.name;
         rtn.alt = context.alt;
         rtn.filename = context.filename;
+        rtn.type = context.type;
+        rtn.size = context.size;
         rtn.areas = [];
         context.areas.sort((a,b) => a.isGrid ? 1 : -1);
         context.areas.forEach((e, i, a) => rtn.areas.push(a2s(e, i, a)));
@@ -201,6 +209,8 @@ var bit = (function() {
         context.name = project.name;
         context.alt = project.alt;
         context.filename = project.filename;
+        context.type = project.type;
+        context.size = project.size;
         context.areas = [];
         project.areas.forEach((e, i) => context.areas.push(s2a(e, i, context.areas)));
         return true;
@@ -1664,7 +1674,17 @@ var bit = (function() {
       },
 
       infoEx : function(p) {
-// TODO ...
+        clear();
+        var output = [];
+        output.push('<strong>', escape(p.filename), '</strong> (', p.type || 'n/a', ') - ',
+            p.size, ' bytes, last modified: n/a');      
+        var info = document.createElement('p');
+        info.innerHTML = output.join(''); 
+        var image = document.createElement('img');
+        image.src = p.dataURL;
+        doms.info.appendChild(image);
+        doms.info.appendChild(info);
+        return this;
       },
 
       coords,
