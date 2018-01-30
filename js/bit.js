@@ -18,6 +18,7 @@ var bit = (function() {
       RIGHT : 39,
       DOWN  : 40,
       a     : 65,
+      s     : 83,
       F8    : 119
     };
       
@@ -2118,8 +2119,28 @@ var bit = (function() {
 
     let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
     let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
-    let release = () => context.enabled = true;
-    let freeze = () => context.enabled = false;
+    let release = () => {
+      context.enabled = true;
+      document.addEventListener('keydown', onKeyAction);
+    }
+    let freeze = () => {
+      context.enabled = false;
+      document.removeEventListener('keydown', onKeyAction);
+    }
+
+    function onKeyAction(e) {
+      switch(e.keyCode) {
+      case utils.keyCodes.s:
+        if (utils.ctrlKey(e)) {
+          if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
+            e.preventDefault();
+            context.handlers.onSaveProject();
+          }
+        }
+        break;
+      default:
+      }
+    }
 
     return {
 
@@ -2134,6 +2155,7 @@ var bit = (function() {
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.add('disabled');
         doms.generateBtn.classList.add('disabled');
+        document.addEventListener('keydown', onKeyAction);
         return this.reset();
       },
 
@@ -2142,6 +2164,7 @@ var bit = (function() {
         doms.previewBtn.classList.remove('selected');
         doms.previewBtn.classList.add('disabled');
         doms.generateBtn.classList.add('disabled');
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
