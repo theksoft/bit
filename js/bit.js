@@ -1704,13 +1704,12 @@ var bit = (function() {
    */
 
   var prj = (function() {
-
     var doms = {
       projects  : $('project-manager'),
-      list      : $('project-list'),
-      closeBtn  : $('project-close'),
-      deleteBtn : $('project-delete'),
-      clearBtn  : $('project-clear')
+      list      : document.querySelector('#project-manager .project-list'),
+      closeBtn  : document.querySelector('#project-manager .close'),
+      deleteBtn : document.querySelector('#project-manager .delete'),
+      clearBtn  : document.querySelector('#project-manager .clear')
     },
     context = {
       handlers : null,
@@ -1791,10 +1790,10 @@ var bit = (function() {
 
     var doms = {
       creator       : $('project-creator'),
-      btnSet        : $('map-set'),
-      btnCancel     : $('map-cancel'),
+      btnSet        : document.querySelector('#project-creator .create'),
+      btnCancel     : document.querySelector('#project-creator .cancel'),
       dropZone      : $('image-drop-zone'),
-      imagePreview  : $('image-preview'),
+      imagePreview  : document.querySelector('#project-creator .preview'),
       inImageFile   : $('load-image-file'),
       inMapName     : $('map-name'),
       inMapAlt      : $('map-alt')
@@ -1934,10 +1933,10 @@ var bit = (function() {
 
     var doms = {
       loader        : $('project-loader'),
-      list          : $('project-options'),
-      btnLoad       : $('project-load'),
-      btnCancel     : $('project-cancel'),
-      imagePreview  : $('project-preview')
+      list          : document.querySelector('#project-loader .project-list'),
+      btnLoad       : document.querySelector('#project-loader .select'),
+      btnCancel     : document.querySelector('#project-loader .cancel'),
+      imagePreview  : document.querySelector('#project-loader .preview')
     },
     context = {
       handlers : null
@@ -2022,7 +2021,7 @@ var bit = (function() {
     var doms = {
       codeViewer  : $('project-code'),
       code        : $('code-result'),
-      btnClose    : $('code-close')
+      btnClose    : document.querySelector('#project-code .close')
     },
     context = {
       handlers : null

@@ -534,7 +534,7 @@ form.modal input[type=text].error {
   text-align: center;
 }
 
-#image-drop-zone img {
+#image-drop-zone .preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
@@ -572,19 +572,19 @@ form.modal input[type=text].error {
   background-color: #337;
 }
 
-#project-creator-buttons {
+#project-creator > .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
-#map-set {
+#project-creator > .buttons > .create {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#map-cancel {
+#project-creator > .buttons > .cancel {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
@@ -608,19 +608,19 @@ form.modal input[type=text].error {
   min-width: 150px;
 }
 
-#project-loader-buttons {
+#project-loader > .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
-#project-load {
+#project-loader > .buttons > .select {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#project-cancel {
+#project-loader > .buttons > .cancel {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
@@ -639,7 +639,7 @@ form.modal input[type=text].error {
   text-align: center;
 }
 
-#project-image img {
+#project-image .preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
@@ -667,7 +667,7 @@ form.modal input[type=text].error {
 	margin: 0 auto;
 }
 
-#code-close {
+#project-code .close {
 	position: sticky;
 	bottom: 5px;
 }
