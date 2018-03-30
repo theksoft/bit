@@ -21,6 +21,7 @@
           <li id="save-project"><a href="#">Save project</a></li>
           <li id="preview"><a href="#">Preview</a></li>
           <li id="generate"><a href="#">Generate</a></li>
+          <li id="load-html"><a href="#">Add HTML areas</a></li>
         </ul>
       </nav>
     </header>
@@ -179,10 +180,23 @@
     </div>
   </form>
 
-  <!-- HTML code -->
+  <!-- HTML code display -->
   <form id="project-code" class="modal">
     <div id="code-result"></div>
     <button class="close">Close</button>
+  </form>
+
+  <!-- HTML code input -->
+  <form id="code-loader" class="modal">
+    <p>
+      <label for="input-code">Enter HTML code here:</label>
+      <textarea id="input-code"></textarea>
+    </p>
+    <div class="buttons">
+      <button class="select" disabled>Load</button>
+      <button class="clear">Clear</button>
+      <button class="cancel">Cancel</button>
+    </div>
   </form>
 
   <script type="text/javascript" src="js/bitarea.js"></script>

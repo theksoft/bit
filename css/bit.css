@@ -485,6 +485,16 @@ form.modal input[type=text].error {
   color: #f44;
 }
 
+form.modal textarea {
+  background-color: #ccc;
+  color: #333;
+  border: 2px solid #555;
+  border-radius: 3px;
+  width: 120px;
+  padding: 2px 5px;
+  margin: 4px 12px 1px 1px;
+}
+
 /* PROJECT CREATOR FORM */
 
 #project-creator {
@@ -655,7 +665,6 @@ form.modal input[type=text].error {
   width: 90%;
   max-height: 60%;
   min-width: 300px;
-  font-family: monospace;
   overflow: auto;
   text-align: right;
 }
@@ -665,9 +674,64 @@ form.modal input[type=text].error {
 	padding: 5px 0;
 	text-align: left;
 	margin: 0 auto;
+  font-family: monospace;
 }
 
 #project-code .close {
 	position: sticky;
 	bottom: 5px;
+}
+
+/* HTML CODE FORM */
+
+#code-loader {
+  top: 20%;
+  left: 5%;
+  width: 90%;
+  max-height: 60%;
+  min-width: 300px;
+  text-align: left;
+}
+
+#code-loader label {
+	display: block;
+}
+
+#code-loader textarea {
+  font-family: monospace;
+  overflow: auto;
+  text-align: left;
+  margin: 5px 1%;
+  width: 97%;
+  min-width: 97%;
+  max-width: 97%;
+  min-height: 50px;
+  max-height: 500px;
+  background-color: #222;
+  color: #dcf;
+}
+
+#code-loader > .buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  width: 100%;
+}
+
+#code-loader > .buttons > .select {
+  order: 1;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#code-loader > .buttons > .clear {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#code-loader > .buttons > .cancel {
+  order: 3;
+  margin-left: 10px;
+  margin-right: 10px;
 }

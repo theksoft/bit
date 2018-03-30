@@ -149,6 +149,10 @@ var bit = (function() {
         context.areas.push(area);
       },
 
+      addAreas(areas) {
+        areas.forEach(e => context.areas.push(e));
+      },
+
       removeArea : function(area) {
         if(-1 != context.areas.indexOf(area)) {
           if (!area.isGrid && area.hasBonds()) {
@@ -2057,8 +2061,81 @@ var bit = (function() {
       }
 
     };
+
   })();
-  
+
+  /*
+   * HTML CODE LOADER
+   */
+
+  var htm = (function() {
+
+    var doms = {
+      codeLoader : $('code-loader'),
+      btnLoad    : document.querySelector('#code-loader .select'),
+      btnClear   : document.querySelector('#code-loader .clear'),
+      btnCancel  : document.querySelector('#code-loader .cancel'),
+      code       : $('input-code')
+    },
+    context = {
+      handlers : null
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function clear() {
+      doms.btnLoad.disabled = true;
+    }
+
+    function reset() {
+      clear();
+      if (doms.code.value != '') {
+        doms.btnLoad.disabled = false;
+      }
+    }
+
+    function onCodeInput(e) {
+      doms.btnLoad.disabled = (doms.code.value === '');
+    }
+
+    function onLoadClick(e) {
+      hide(doms.codeLoader);
+      clear();
+      context.handlers.onLoadCode(doms.code.value);
+    }
+
+    function onClearClick(e) {
+      doms.code.value = '';
+      doms.btnLoad.disabled = true;
+    }
+
+    function onCancelClick(e) {
+      e.preventDefault();
+      hide(doms.codeLoader);
+      clear();
+      context.handlers.onClose();
+    }
+
+    return {
+
+      init : function(handlers) {
+        context.handlers = handlers;
+        doms.btnLoad.addEventListener('click', onLoadClick, false);
+        doms.btnCancel.addEventListener('click', onCancelClick, false);
+        doms.btnClear.addEventListener('click', onClearClick, false);
+        doms.code.addEventListener('input', onCodeInput, false);
+      },
+
+      show() {
+        reset();
+        show(doms.codeLoader);
+      }
+
+    };
+
+  })();
+
   /*
    * MENU MANAGEMENT
    */
@@ -2071,7 +2148,8 @@ var bit = (function() {
       saveProjectBtn    : $('save-project'),
       loadProjectBtn    : $('load-project'),
       cleanProjectsBtn  : $('clean-projects'),
-      generateBtn       : $('generate')
+      generateBtn       : $('generate'),
+      loadHTMLBtn       : $('load-html')
     },
     context = {
       handlers : null,
@@ -2117,6 +2195,12 @@ var bit = (function() {
         context.handlers.onGenerateCode();
     }
 
+    function onLoadHTMLBtnClick(e) {
+      e.preventDefault();
+      if (context.enabled && !doms.loadHTMLBtn.classList.contains('disabled'))
+        context.handlers.onLoadHTML();
+    }
+
     let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
     let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
     let release = () => {
@@ -2152,9 +2236,11 @@ var bit = (function() {
         doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
         doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
         doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
+        doms.loadHTMLBtn.addEventListener('click', onLoadHTMLBtnClick, false);
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.add('disabled');
         doms.generateBtn.classList.add('disabled');
+        doms.loadHTMLBtn.classList.add('disabled');
         document.addEventListener('keydown', onKeyAction);
         return this.reset();
       },
@@ -2164,6 +2250,7 @@ var bit = (function() {
         doms.previewBtn.classList.remove('selected');
         doms.previewBtn.classList.add('disabled');
         doms.generateBtn.classList.add('disabled');
+        doms.loadHTMLBtn.classList.add('disabled');
         document.addEventListener('keydown', onKeyAction);
         return this;
       },
@@ -2172,6 +2259,7 @@ var bit = (function() {
         doms.previewBtn.classList.remove('disabled');
         doms.previewBtn.classList.remove('selected');
         doms.generateBtn.classList.remove('disabled');
+        doms.loadHTMLBtn.classList.remove('disabled');
         return this;
       },
 
@@ -2261,10 +2349,24 @@ var bit = (function() {
           }
           release();
           return rtn;
+        },
+
+        onLoadCode : function(code) {
+          let areas, rtn;
+          rtn = false;
+          if (code) {
+            areas = bitmap.Mapper.loadHtmlString(code);
+            if (areas.length > 0 && mdl.addAreas(areas)) {
+              setModified();
+              rtn = true;
+            }
+          }
+          release();
+          return rtn;
         }
 
       };
-      
+
       return {
         handlers
       };
@@ -2324,6 +2426,11 @@ var bit = (function() {
 
         onGenerateCode : function() {
           code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
+          freeze();
+        },
+
+        onLoadHTML : function() {
+          htm.show();
           freeze();
         }
 
@@ -2804,6 +2911,7 @@ var bit = (function() {
     ctr.init(projects.handlers);
     ldr.init(projects.handlers);
     code.init(projects.handlers);
+    htm.init(projects.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);
