@@ -203,7 +203,7 @@ var bitarea = (function() {
       Object.assign(this._properties, p);
     }
 
-    toStore(index, areas) {
+    toRecord(index, areas) {
       let rtn = {};
       rtn.index = index;
       rtn.type = this._type;
@@ -214,9 +214,9 @@ var bitarea = (function() {
       return rtn;
     }
 
-    fromStore(stored) {
-      this.areaProperties = stored.properties;
-      this.coords = stored.coords;
+    fromRecord(record) {
+      this.areaProperties = record.properties;
+      this.coords = record.coords;
       this.redraw();
     }
 
@@ -777,13 +777,50 @@ var bitarea = (function() {
 
   }
 
+  /*
+   * FIGURE FACTORY FROM RECORD
+   */
+
+  function createFromRecord(record, parent) {
+    const factory = {
+      'rectangle'   : Rectangle,
+      'square'      : Square,
+      'rhombus'     : Rhombus,
+      'circleCtr'   : Circle,
+      'circleDtr'   : CircleEx,
+      'ellipse'     : Ellipse,
+      'triangleIsc' : IsoscelesTriangle,
+      'triangleEql' : EquilateralTriangle,
+      'triangleRct' : RectangleTriangle,
+      'hexRct'      : Hex,
+      'hexDtr'      : HexEx,
+      'polygon'     : Polygon
+    };
+    let figure, generator;
+    generator = factory[record.type];
+    if (!generator) {
+      throw new Error('ERROR - Invalid figure type in record: ' + record.type);
+    }
+    figure = new generator(parent, false, false);
+    if (!figure) {
+      throw new Error('ERROR - Cannot create area from record : ' + record.type);
+    }
+    figure.fromRecord(record);
+    return figure;
+  }
+
+  /*
+   * EXPORTS
+   */
+
   return {
     NSSVG, types, tilts,
     Rectangle, Square, Rhombus,
     Circle, CircleEx, Ellipse,
     IsoscelesTriangle, EquilateralTriangle, RectangleTriangle,
     Hex, HexEx,
-    Polygon, Polyline
+    Polygon, Polyline,
+    createFromRecord
   }
 
 })(); /* BIT Area Definitions */

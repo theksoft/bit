@@ -414,24 +414,94 @@ ul, ol {
   padding: 5px 10px;
 }
 
-/* PROJECT CREATOR FORM */
+/* MODAL FORM */
 
-#project-creator {
-	position: absolute;
-	top: 10%;
-	left: 30%;
-	width: 30%;
-	min-width: 300px;
-	z-index: 10;
-	background: rgba(0,0,0,0.9);
-	border-radius: 5px;
-	padding: 10px;
-	box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
-	font-size: 12px;
-	color: #bbb;
+form.modal {
+  position: absolute;
+  z-index: 10;
+  background: rgba(0,0,0,0.9);
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
+  font-size: 12px;
+  color: #bbb;
   margin: 0 auto;
   text-align: center;
   display: none;
+}
+
+form.modal button {
+  background-color: #004;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #ccc;
+  font-size: 12px;
+  vertical-align: middle;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px ridge gray;
+}
+
+form.modal button:hover {
+  background-color: #226;
+}
+
+form.modal button:active {
+  background-color: #337;
+}
+
+form.modal button:disabled {
+  background-color: #333;
+  color: #888;
+}
+
+form.modal select {
+	color: #ccc;
+  background-color: #333;
+  width: 90%;
+}
+
+form.modal option {
+  color: #bbb;
+  padding: 2px 5px;
+}
+
+form.modal option:disabled {
+  color: #b55;
+}
+
+form.modal input[type=text] {
+  background-color: #ccc;
+  color: #333;
+  border: 2px solid #555;
+  border-radius: 3px;
+  width: 120px;
+  padding: 2px 5px;
+  margin: 4px 12px 1px 1px;
+}
+
+form.modal input[type=text].error {
+  border: 2px solid #f44;
+  color: #f44;
+}
+
+form.modal textarea {
+  background-color: #ccc;
+  color: #333;
+  border: 2px solid #555;
+  border-radius: 3px;
+  width: 120px;
+  padding: 2px 5px;
+  margin: 4px 12px 1px 1px;
+}
+
+/* PROJECT CREATOR FORM */
+
+#project-creator {
+  top: 10%;
+	left: 30%;
+	width: 30%;
+	min-width: 300px;
 }
 
 #project-creator fieldset {
@@ -448,16 +518,6 @@ ul, ol {
 
 #project-creator label {
   display: inline-block;
-}
-
-#project-creator input[type=text] {
-  background-color: #ccc;
-  color: #333;
-  border: 2px solid #555;
-  border-radius: 3px;
-  width: 120px;
-  padding: 2px 5px;
-  margin: 4px 12px 1px 1px;
 }
 
 #map-attributes label {
@@ -484,7 +544,7 @@ ul, ol {
   text-align: center;
 }
 
-#image-drop-zone img {
+#image-drop-zone .preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
@@ -496,18 +556,13 @@ ul, ol {
   border: 2px dashed #f44;
 }
 
-input[type=text].error {
-  border: 2px solid #f44;
-	color: #f44;
-}
-
 #load-image-file {
   position: fixed;
   top: -100em;
   opacity: 0;
 }
 
-#project-creator-buttons button, #load-image-file-lbl {
+#load-image-file-lbl {
   background-color: #004;
   margin-top: 10px;
   margin-bottom: 4px;
@@ -519,117 +574,63 @@ input[type=text].error {
   border: 1px ridge gray;
 }
 
-#project-creator-buttons button:hover, #load-image-file-lbl:hover {
+#load-image-file-lbl:hover {
   background-color: #226;
 }
 
-#project-creator-buttons button:active, #load-image-file-lbl:active {
+#load-image-file-lbl:active {
   background-color: #337;
 }
 
-#project-creator-buttons button:disabled {
-  background-color: #333;
-  color: #888;
-}
-
-#project-creator-buttons {
+#project-creator > .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
-#map-set {
+#project-creator > .buttons > .create {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#map-cancel {
+#project-creator > .buttons > .cancel {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
 }
 
-/* PROJECT MANAGER FORM && PROJECT LOADER FORM */
+/* PROJECT MANAGER FORM */
 
-#project-manager,
-#project-loader {
-  position: absolute;
+#project-manager {
   top: 10%;
   left: 40%;
   width: 20%;
   min-width: 150px;
-  z-index: 10;
-  background-color: rgba(0,0,0,0.9);
-  border-radius: 5px;
-  padding: 10px;
-  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
-  font-size: 12px;
-  color: #bbb;
-  margin: 0 auto;
-  text-align: center;
-  display: none;
 }
 
-#project-list,
-#project-options {
-  background-color: #333;
-	width: 90%;
+/* PROJECT LOADER FORM */
+
+#project-loader {
+  top: 10%;
+  left: 40%;
+  width: 20%;
+  min-width: 150px;
 }
 
-#project-list option,
-#project-options option {
-  color: #bbb;
-  padding: 2px 5px;
-}
-
-#project-list option:disabled,
-#project-options option:disabled {
-	color: #b55;
-}
-
-#project-manager button,
-#project-loader button {
-  background-color: #004;
-  margin-top: 10px;
-  margin-bottom: 4px;
-  color: #ccc;
-  font-size: 12px;
-  vertical-align: middle;
-  border-radius: 5px;
-  padding: 5px 10px;
-  border: 1px ridge gray;
-}
-
-#project-manager button:hover,
-#project-loader button:hover {
-  background-color: #226;
-}
-
-#project-manager button:active,
-#project-loader button:active {
-  background-color: #337;
-}
-
-#project-manager button:disabled,
-#project-loader button:disabled {
-  background-color: #333;
-  color: #888;
-}
-
-#project-loader-buttons {
+#project-loader > .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
-#project-load {
+#project-loader > .buttons > .select {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#project-cancel {
+#project-loader > .buttons > .cancel {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
@@ -648,10 +649,89 @@ input[type=text].error {
   text-align: center;
 }
 
-#project-image img {
+#project-image .preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
   margin: 5px auto;
   display: none;
+}
+
+/* PROJECT CODE FORM */
+
+#project-code {
+	top: 20%;
+  left: 5%;
+  width: 90%;
+  max-height: 60%;
+  min-width: 300px;
+  overflow: auto;
+  text-align: right;
+}
+
+#code-result {
+	width: 96%;
+	padding: 5px 0;
+	text-align: left;
+	margin: 0 auto;
+  font-family: monospace;
+}
+
+#project-code .close {
+	position: sticky;
+	bottom: 5px;
+}
+
+/* HTML CODE FORM */
+
+#code-loader {
+  top: 20%;
+  left: 5%;
+  width: 90%;
+  max-height: 60%;
+  min-width: 300px;
+  text-align: left;
+}
+
+#code-loader label {
+	display: block;
+}
+
+#code-loader textarea {
+  font-family: monospace;
+  overflow: auto;
+  text-align: left;
+  margin: 5px 1%;
+  width: 97%;
+  min-width: 97%;
+  max-width: 97%;
+  min-height: 50px;
+  max-height: 500px;
+  background-color: #222;
+  color: #dcf;
+}
+
+#code-loader > .buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  width: 100%;
+}
+
+#code-loader > .buttons > .select {
+  order: 1;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#code-loader > .buttons > .clear {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#code-loader > .buttons > .cancel {
+  order: 3;
+  margin-left: 10px;
+  margin-right: 10px;
 }
