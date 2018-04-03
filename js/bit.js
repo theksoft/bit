@@ -266,69 +266,18 @@ var bit = (function() {
     }
 
     function a2s(area, index, areas) {
-      return area.toStore(index, areas);
+      return area.toRecord(index, areas);
     }
 
     function s2a(stored, index, areas) {
-      
-      const factory = {
-        'rectangle'   : bitarea.Rectangle,
-        'square'      : bitarea.Square,
-        'rhombus'     : bitarea.Rhombus,
-        'circleCtr'   : bitarea.Circle,
-        'circleDtr'   : bitarea.CircleEx,
-        'ellipse'     : bitarea.Ellipse,
-        'triangleIsc' : bitarea.IsoscelesTriangle,
-        'triangleEql' : bitarea.EquilateralTriangle,
-        'triangleRct' : bitarea.RectangleTriangle,
-        'hexRct'      : bitarea.Hex,
-        'hexDtr'      : bitarea.HexEx,
-        'polygon'     : bitarea.Polygon
-      };
-
-      const gridFactory = {
-        'gridRectangle' : bitgrid.Rectangle,
-        'gridCircle'    : bitgrid.Circle,
-        'gridHex'       : bitgrid.Hex
-      };
-
       let area;
-
-      let ac = function(stored) {
-        let figGen = factory[stored.type];
-        if (!figGen) {
-          console.log('ERROR - Unknown area type "' + stored.type + '"');
-          return null;
-        }
-        return new figGen(wks.getParent(), false, false);
-      }
-
-      let gc = function(bond, stored) {
-        let figGen = gridFactory[stored.type];
-        if (!figGen) {
-          console.log('ERROR - Unknown grid type "' + stored.type + '"');
-          return null;
-        }
-        return new figGen(wks.getParent(), bond, wks.getGridParent(), stored.drawScope, stored.drawAlign, stored.gridSpace, stored.gridOrder);
-      }
-
       if (index !== stored.index || index != areas.length) {
         console.log('ERROR - Corrupted record with bad index');
         return null;
       }
-
-      if (!stored.isGrid) {
-        area = ac(stored);
-      } else {
-        if (stored.bonds.length !== 1) {
-          console.log('ERROR - Corrupted record with bad grid pattern');
-          return null;
-        }
-        area = gc(areas[stored.bonds[0]], stored);
-      }
-      if (null !== area) {
-        area.fromStore(stored);
-      }
+      area = (!stored.isGrid)
+          ? bitarea.createFromRecord(stored, wks.getParent())
+          : bitgrid.createFromRecord(stored, wks.getParent(), wks.getGridParent(), areas);
       return area;
     }
 
@@ -2353,11 +2302,15 @@ var bit = (function() {
 
         onLoadCode : function(code) {
           let areas, rtn;
+          areas = [];
           rtn = false;
           if (code) {
-            areas = bitmap.Mapper.loadHtmlString(code);
-            if (areas.length > 0 && mdl.addAreas(areas)) {
+            bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, wks.getParent())));
+            if (areas.length > 0) {
+              mdl.addAreas(areas);
               setModified();
+              selector.handlers.onUnselectAll();
+              selector.selectSubset(areas);
               rtn = true;
             }
           }
@@ -2713,6 +2666,11 @@ var bit = (function() {
         tls.disableGridTools();
       }
 
+      function areaSelectSubset(areas) {
+        areas.forEach(e => context.selected.add(e));
+        updateGridTools();
+      }
+
       var handlers = {
 
         preventSelect : function(e) {
@@ -2797,7 +2755,8 @@ var bit = (function() {
       };
 
       return {
-        handlers
+        handlers,
+        selectSubset : areaSelectSubset
       };
 
     })();

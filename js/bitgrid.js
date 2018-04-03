@@ -558,7 +558,7 @@ var bitgrid = (function() {
       return this._areas.reduce((a,e) => a || this._pattern.equalCoords(e.coords), false);
     }
 
-    toStore(rtn) {
+    toRecord(rtn) {
       rtn.isGrid = true;
       rtn.drawScope = this._drawScope;
       rtn.drawAlign = this._drawAlign;
@@ -693,8 +693,8 @@ var bitgrid = (function() {
       return this._grid.isPatternInGrid();
     }
 
-    toStore(index, areas) {
-      return this._grid.toStore(super.toStore(index, areas));
+    toRecord(index, areas) {
+      return this._grid.toRecord(super.toRecord(index, areas));
     }
 
   } // RECTANGLE GRID
@@ -868,8 +868,8 @@ var bitgrid = (function() {
       return this._grid.isPatternInGrid();
     }
 
-    toStore(index, areas) {
-      return this._grid.toStore(super.toStore(index, areas));
+    toRecord(index, areas) {
+      return this._grid.toRecord(super.toRecord(index, areas));
     }
 
   } // CIRCLE GRID
@@ -1042,15 +1042,49 @@ var bitgrid = (function() {
       return this._grid.isPatternInGrid();
     }
 
-    toStore(index, areas) {
-      return this._grid.toStore(super.toStore(index, areas));
+    toRecord(index, areas) {
+      return this._grid.toRecord(super.toRecord(index, areas));
     }
 
   } // HEX GRID
 
+  /*
+   * GRID FACTORY FROM RECORD
+   */
+
+  function createFromRecord(record, parent, gridParent, areas) {
+    const factory = {
+      'gridRectangle' : bitgrid.Rectangle,
+      'gridCircle'    : bitgrid.Circle,
+      'gridHex'       : bitgrid.Hex
+    };
+    let figure, generator;
+    if (!record.isGrid) {
+      return null;
+    }
+    if (record.bonds.length !== 1 || areas.length <= record.bonds[0]) {
+      throw new Error('ERROR - Corrupted record with bad grid pattern');
+    }
+    generator = factory[record.type];
+    if (!generator) {
+      throw new Error('ERROR - Invalid figure type in record: ' + record.type);
+    }
+    figure = new generator(parent, areas[record.bonds[0]], gridParent, record.drawScope, record.drawAlign, record.gridSpace, record.gridOrder);
+    if (!figure) {
+      throw new Error('ERROR - Cannot create area from record : ' + record.type);
+    }
+    figure.fromRecord(record);
+    return figure;
+  }
+
+  /*
+   * EXPORTS
+   */
+
   return {
     scopes, aligns, orders,
-    Rectangle, Circle, Hex
+    Rectangle, Circle, Hex,
+    createFromRecord
   };
 
 })(); /* BIT Grid Area Definition */
