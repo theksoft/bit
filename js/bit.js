@@ -18,6 +18,7 @@ var bit = (function() {
       RIGHT : 39,
       DOWN  : 40,
       a     : 65,
+      s     : 83,
       F8    : 119
     };
       
@@ -73,8 +74,12 @@ var bit = (function() {
           modified  : false,
           dataURL   : '',
           filename  : '',
+          type      : '',
+          size      : 0,
           name      : '',
           alt       : '',
+          width     : 0,
+          height    : 0,
           areas     : []
         };
     
@@ -96,10 +101,10 @@ var bit = (function() {
       reset : function() {
         context.mode = 'new';
         context.modified = false;
-        context.dataURL = '';
-        context.filename = '';
-        context.name = '';
-        context.alt = '';
+        context.dataURL = context.filename = context.type = '';
+        context.size = 0;
+        context.name = context.alt = '';
+        context.width = context.height = 0;
         context.areas.sort((a,b) => a.isGrid ? -1 : 1);
         context.areas.forEach(e => e.remove());
         context.areas.splice(0, context.areas.length);
@@ -113,9 +118,15 @@ var bit = (function() {
           reader.addEventListener('load', () => context.dataURL = reader.result, false);
           reader.readAsDataURL(f);
           context.filename = f.name;
+          context.type = f.type;
+          context.size = f.size;
           return true;
         }
         return false;
+      },
+
+      getFile : function() {
+        return context.filename; 
       },
 
       setInfo(data) {
@@ -136,6 +147,10 @@ var bit = (function() {
 
       addArea : function(area) {
         context.areas.push(area);
+      },
+
+      addAreas(areas) {
+        areas.forEach(e => context.areas.push(e));
       },
 
       removeArea : function(area) {
@@ -185,6 +200,8 @@ var bit = (function() {
         rtn.name = context.name;
         rtn.alt = context.alt;
         rtn.filename = context.filename;
+        rtn.type = context.type;
+        rtn.size = context.size;
         rtn.areas = [];
         context.areas.sort((a,b) => a.isGrid ? 1 : -1);
         context.areas.forEach((e, i, a) => rtn.areas.push(a2s(e, i, a)));
@@ -197,8 +214,11 @@ var bit = (function() {
         context.name = project.name;
         context.alt = project.alt;
         context.filename = project.filename;
+        context.type = project.type;
+        context.size = project.size;
         context.areas = [];
         project.areas.forEach((e, i) => context.areas.push(s2a(e, i, context.areas)));
+        return true;
       }
 
     };
@@ -246,69 +266,18 @@ var bit = (function() {
     }
 
     function a2s(area, index, areas) {
-      return area.toStore(index, areas);
+      return area.toRecord(index, areas);
     }
 
     function s2a(stored, index, areas) {
-      
-      const factory = {
-        'rectangle'   : bitarea.Rectangle,
-        'square'      : bitarea.Square,
-        'rhombus'     : bitarea.Rhombus,
-        'circleCtr'   : bitarea.Circle,
-        'circleDtr'   : bitarea.CircleEx,
-        'ellipse'     : bitarea.Ellipse,
-        'triangleIsc' : bitarea.IsoscelesTriangle,
-        'triangleEql' : bitarea.EquilateralTriangle,
-        'triangleRct' : bitarea.RectangleTriangle,
-        'hexRct'      : bitarea.Hex,
-        'hexDtr'      : bitarea.HexEx,
-        'polygon'     : bitarea.Polygon
-      };
-
-      const gridFactory = {
-        'gridRectangle' : bitgrid.Rectangle,
-        'gridCircle'    : bitgrid.Circle,
-        'gridHex'       : bitgrid.Hex
-      };
-
       let area;
-
-      let ac = function(stored) {
-        let figGen = factory[stored.type];
-        if (!figGen) {
-          console.log('ERROR - Unknown area type "' + stored.type + '"');
-          return null;
-        }
-        return new figGen(wks.getParent(), false, false);
-      }
-
-      let gc = function(bond, stored) {
-        let figGen = gridFactory[stored.type];
-        if (!figGen) {
-          console.log('ERROR - Unknown grid type "' + stored.type + '"');
-          return null;
-        }
-        return new figGen(wks.getParent(), bond, wks.getGridParent(), stored.drawScope, stored.drawAlign, stored.gridSpace, stored.gridOrder);
-      }
-
       if (index !== stored.index || index != areas.length) {
         console.log('ERROR - Corrupted record with bad index');
         return null;
       }
-
-      if (!stored.isGrid) {
-        area = ac(stored);
-      } else {
-        if (stored.bonds.length !== 1) {
-          console.log('ERROR - Corrupted record with bad grid pattern');
-          return null;
-        }
-        area = gc(areas[stored.bonds[0]], stored);
-      }
-      if (null !== area) {
-        area.fromStore(stored);
-      }
+      area = (!stored.isGrid)
+          ? bitarea.createFromRecord(stored, wks.getParent())
+          : bitgrid.createFromRecord(stored, wks.getParent(), wks.getGridParent(), areas);
       return area;
     }
 
@@ -1000,6 +969,7 @@ var bit = (function() {
 
     function onLoadImage() {
       ftr.loading.hide();
+      ftr.infoUpdate(doms.image.naturalWidth, doms.image.naturalHeight);
       show(doms.aside);
       show(doms.workarea);
       viewport.setWorkingDims(doms.image.width, doms.image.height)
@@ -1659,7 +1629,21 @@ var bit = (function() {
       },
 
       infoEx : function(p) {
-// TODO ...
+        clear();
+        var output = [];
+        output.push('<strong>', escape(p.filename), '</strong> (', p.type || 'n/a', ') - ',
+            p.size, ' bytes, last modified: n/a');      
+        var info = document.createElement('p');
+        info.innerHTML = output.join(''); 
+        var image = document.createElement('img');
+        image.src = p.dataURL;
+        doms.info.appendChild(image);
+        doms.info.appendChild(info);
+        return this;
+      },
+
+      infoUpdate(width, height) {
+        doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px';
       },
 
       coords,
@@ -1674,13 +1658,12 @@ var bit = (function() {
    */
 
   var prj = (function() {
-
     var doms = {
       projects  : $('project-manager'),
-      list      : $('project-list'),
-      closeBtn  : $('project-close'),
-      deleteBtn : $('project-delete'),
-      clearBtn  : $('project-clear')
+      list      : document.querySelector('#project-manager .project-list'),
+      closeBtn  : document.querySelector('#project-manager .close'),
+      deleteBtn : document.querySelector('#project-manager .delete'),
+      clearBtn  : document.querySelector('#project-manager .clear')
     },
     context = {
       handlers : null,
@@ -1761,10 +1744,10 @@ var bit = (function() {
 
     var doms = {
       creator       : $('project-creator'),
-      btnSet        : $('map-set'),
-      btnCancel     : $('map-cancel'),
+      btnSet        : document.querySelector('#project-creator .create'),
+      btnCancel     : document.querySelector('#project-creator .cancel'),
       dropZone      : $('image-drop-zone'),
-      imagePreview  : $('image-preview'),
+      imagePreview  : document.querySelector('#project-creator .preview'),
       inImageFile   : $('load-image-file'),
       inMapName     : $('map-name'),
       inMapAlt      : $('map-alt')
@@ -1904,10 +1887,10 @@ var bit = (function() {
 
     var doms = {
       loader        : $('project-loader'),
-      list          : $('project-options'),
-      btnLoad       : $('project-load'),
-      btnCancel     : $('project-cancel'),
-      imagePreview  : $('project-preview')
+      list          : document.querySelector('#project-loader .project-list'),
+      btnLoad       : document.querySelector('#project-loader .select'),
+      btnCancel     : document.querySelector('#project-loader .cancel'),
+      imagePreview  : document.querySelector('#project-loader .preview')
     },
     context = {
       handlers : null
@@ -1984,6 +1967,125 @@ var bit = (function() {
   })(); /* MAP PROJECT LOADER */
 
   /*
+   * MAP CODE DISPLAY
+   */
+
+  var code = (function() {
+
+    var doms = {
+      codeViewer  : $('project-code'),
+      code        : $('code-result'),
+      btnClose    : document.querySelector('#project-code .close')
+    },
+    context = {
+      handlers : null
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      hide(doms.codeViewer);
+      reset();
+      context.handlers.onClose();
+    }
+
+    function reset() {
+      code.innerHTML = '';
+    }
+
+    return {
+
+      init(handlers) {
+        context.handlers = handlers;
+        doms.btnClose.addEventListener('click', onCloseClick, false);
+        return this;
+      },
+
+      show : function(s) {
+        reset();
+        doms.code.innerHTML = s;
+        show(doms.codeViewer);
+      }
+
+    };
+
+  })();
+
+  /*
+   * HTML CODE LOADER
+   */
+
+  var htm = (function() {
+
+    var doms = {
+      codeLoader : $('code-loader'),
+      btnLoad    : document.querySelector('#code-loader .select'),
+      btnClear   : document.querySelector('#code-loader .clear'),
+      btnCancel  : document.querySelector('#code-loader .cancel'),
+      code       : $('input-code')
+    },
+    context = {
+      handlers : null
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function clear() {
+      doms.btnLoad.disabled = true;
+    }
+
+    function reset() {
+      clear();
+      if (doms.code.value != '') {
+        doms.btnLoad.disabled = false;
+      }
+    }
+
+    function onCodeInput(e) {
+      doms.btnLoad.disabled = (doms.code.value === '');
+    }
+
+    function onLoadClick(e) {
+      hide(doms.codeLoader);
+      clear();
+      context.handlers.onLoadCode(doms.code.value);
+    }
+
+    function onClearClick(e) {
+      doms.code.value = '';
+      doms.btnLoad.disabled = true;
+    }
+
+    function onCancelClick(e) {
+      e.preventDefault();
+      hide(doms.codeLoader);
+      clear();
+      context.handlers.onClose();
+    }
+
+    return {
+
+      init : function(handlers) {
+        context.handlers = handlers;
+        doms.btnLoad.addEventListener('click', onLoadClick, false);
+        doms.btnCancel.addEventListener('click', onCancelClick, false);
+        doms.btnClear.addEventListener('click', onClearClick, false);
+        doms.code.addEventListener('input', onCodeInput, false);
+      },
+
+      show() {
+        reset();
+        show(doms.codeLoader);
+      }
+
+    };
+
+  })();
+
+  /*
    * MENU MANAGEMENT
    */
 
@@ -1994,7 +2096,9 @@ var bit = (function() {
       previewBtn        : $('preview'),
       saveProjectBtn    : $('save-project'),
       loadProjectBtn    : $('load-project'),
-      cleanProjectsBtn  : $('clean-projects')
+      cleanProjectsBtn  : $('clean-projects'),
+      generateBtn       : $('generate'),
+      loadHTMLBtn       : $('load-html')
     },
     context = {
       handlers : null,
@@ -2034,10 +2138,42 @@ var bit = (function() {
         context.handlers.onCleanProjects();
     }
 
+    function onGenerateBtnClick(e) {
+      e.preventDefault();
+      if (context.enabled && !doms.generateBtn.classList.contains('disabled'))
+        context.handlers.onGenerateCode();
+    }
+
+    function onLoadHTMLBtnClick(e) {
+      e.preventDefault();
+      if (context.enabled && !doms.loadHTMLBtn.classList.contains('disabled'))
+        context.handlers.onLoadHTML();
+    }
+
     let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
     let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
-    let release = () => context.enabled = true;
-    let freeze = () => context.enabled = false;
+    let release = () => {
+      context.enabled = true;
+      document.addEventListener('keydown', onKeyAction);
+    }
+    let freeze = () => {
+      context.enabled = false;
+      document.removeEventListener('keydown', onKeyAction);
+    }
+
+    function onKeyAction(e) {
+      switch(e.keyCode) {
+      case utils.keyCodes.s:
+        if (utils.ctrlKey(e)) {
+          if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
+            e.preventDefault();
+            context.handlers.onSaveProject();
+          }
+        }
+        break;
+      default:
+      }
+    }
 
     return {
 
@@ -2048,8 +2184,13 @@ var bit = (function() {
         doms.saveProjectBtn.addEventListener('click', onSaveProjectBtnClick, false);
         doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
         doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
+        doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
+        doms.loadHTMLBtn.addEventListener('click', onLoadHTMLBtnClick, false);
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.add('disabled');
+        doms.generateBtn.classList.add('disabled');
+        doms.loadHTMLBtn.classList.add('disabled');
+        document.addEventListener('keydown', onKeyAction);
         return this.reset();
       },
 
@@ -2057,12 +2198,17 @@ var bit = (function() {
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.remove('selected');
         doms.previewBtn.classList.add('disabled');
+        doms.generateBtn.classList.add('disabled');
+        doms.loadHTMLBtn.classList.add('disabled');
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
       switchToEditMode : function() {
         doms.previewBtn.classList.remove('disabled');
         doms.previewBtn.classList.remove('selected');
+        doms.generateBtn.classList.remove('disabled');
+        doms.loadHTMLBtn.classList.remove('disabled');
         return this;
       },
 
@@ -2152,10 +2298,28 @@ var bit = (function() {
           }
           release();
           return rtn;
+        },
+
+        onLoadCode : function(code) {
+          let areas, rtn;
+          areas = [];
+          rtn = false;
+          if (code) {
+            bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, wks.getParent())));
+            if (areas.length > 0) {
+              mdl.addAreas(areas);
+              setModified();
+              selector.handlers.onUnselectAll();
+              selector.selectSubset(areas);
+              rtn = true;
+            }
+          }
+          release();
+          return rtn;
         }
 
       };
-      
+
       return {
         handlers
       };
@@ -2210,6 +2374,16 @@ var bit = (function() {
 
         onCleanProjects : function() {
           prj.show();
+          freeze();
+        },
+
+        onGenerateCode : function() {
+          code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
+          freeze();
+        },
+
+        onLoadHTML : function() {
+          htm.show();
           freeze();
         }
 
@@ -2492,6 +2666,11 @@ var bit = (function() {
         tls.disableGridTools();
       }
 
+      function areaSelectSubset(areas) {
+        areas.forEach(e => context.selected.add(e));
+        updateGridTools();
+      }
+
       var handlers = {
 
         preventSelect : function(e) {
@@ -2576,7 +2755,8 @@ var bit = (function() {
       };
 
       return {
-        handlers
+        handlers,
+        selectSubset : areaSelectSubset
       };
 
     })();
@@ -2689,6 +2869,8 @@ var bit = (function() {
     prj.init(projects.handlers);
     ctr.init(projects.handlers);
     ldr.init(projects.handlers);
+    code.init(projects.handlers);
+    htm.init(projects.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);

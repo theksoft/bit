@@ -20,6 +20,12 @@ var bitmap = (function() {
     POLYGON   : 'poly'
   }
 
+  const shapes2areas = {
+    rect    : 'rectangle',
+    circle  : 'circleCtr',
+    poly    : 'polygon'
+  };
+
   /*
    * FIGURE MAPPER
    */
@@ -200,6 +206,108 @@ var bitmap = (function() {
 
     static specializeProperties(props, n) {
       Grid.specializeProperties(props, n);
+    }
+
+    static getHtmlString(filename, info, areas) {
+      let convert = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&gt;&lt;/g, '&gt;<br>&nbsp;&nbsp;&lt;');
+      let result = '';
+      if (filename && info && areas) {
+        if (areas && areas.length > 0) {
+          result += convert('<img src="' + filename + '" alt="' + info.alt + '" usemap="#' + info.name + '" />') + '<br>'
+                  + convert('<map name="' + info.name + '">') + '<br>';
+          result += areas.reduceRight((a,e) => {
+            let r = create(e).htmlString;
+            return a + (('' == r) ? '' : '&nbsp;&nbsp;' + convert(r) + '<br>');
+          }, '');
+          result += convert('</map>');
+        } else {
+          result = '0 areas';
+        }
+      }
+      return result;
+    }
+
+    static loadHtmlString(code) {
+      const MAPEXP = /<area([\s\S]*?)\/>/gmi,
+      AREAEXP = {
+        shape   : / shape="(rect|circle|poly)"/,
+        coords  : / coords="([\d ,]+?)"/,
+        HREF    : / href="([\S\s]+?)"/,
+        ALT     : / alt="([\S\s]+?)"/,
+        TITLE   : / title="([\S\s]+?)"/,
+        ID      : / id="([\S\s]+?)"/
+      },
+      COORDLIM = / ?, ?/;
+
+      let COORDMAP = {
+        rect    : function(a) {
+          let c, cs;
+          cs = a.coords.split(COORDLIM);
+          if (4 != cs.length) return false;
+          c = {};
+          c.x = parseInt(cs[0], 10);
+          c.y = parseInt(cs[1], 10);
+          c.width = parseInt(cs[2], 10) - c.x;
+          c.height = parseInt(cs[3], 10) - c.y;
+          a.coords = c;
+          return (c.width >= 0 && c.height >= 0);
+        },
+        circle  : function(a) {
+          let c, cs;
+          cs = a.coords.split(COORDLIM);
+          if (3 != cs.length) return false;
+          c = {};
+          c.x = parseInt(cs[0], 10);
+          c.y = parseInt(cs[1], 10);
+          c.r = parseInt(cs[2], 10);
+          a.coords = c;
+          return (c.r >= 0);
+        },
+        poly    : function(a) {
+          let c, cs, i;
+          cs = a.coords.split(COORDLIM);
+          if (0 != cs.length % 2) return false;
+          c = [];
+          for (i=0; i<cs.length / 2; i++)
+            c.push({ x : parseInt(cs[2*i], 10), y : parseInt(cs[2*i+1], 10) });
+          a.coords = c;
+          return true;
+        }
+      }
+  
+      let records;
+  
+      records = [];
+      if (code) {
+        while(true) {
+          let attrs, result, r;
+          attrs = {};
+          attrs.properties = {};
+          result = MAPEXP.exec(code);
+          if (!result) break;
+          Object.keys(AREAEXP).forEach(e => {
+            r = AREAEXP[e].exec(result[1]);
+            if (r) {
+              if (properties[e]) {
+                attrs.properties[properties[e]] = r[1];
+              } else {
+                attrs[e] = r[1];
+              }
+            }
+          });
+          if (!attrs.shape || !attrs.coords || !Object.values(shapes).includes(attrs.shape)) {
+            console.log('ERROR: Missing attributes - "' + result[1] + '"');
+            break;
+          }
+          if (!COORDMAP[attrs.shape](attrs)) {
+            console.log('ERROR: Bad coordinates - "' + attrs.coords + '"');
+            break;
+          }
+          attrs.type = shapes2areas[attrs.shape];
+          records.push(attrs);
+        }
+      }
+      return records;
     }
 
   }

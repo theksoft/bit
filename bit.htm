@@ -20,6 +20,8 @@
           <li id="load-project"><a href="#">Load project</a></li>
           <li id="save-project"><a href="#">Save project</a></li>
           <li id="preview"><a href="#">Preview</a></li>
+          <li id="generate"><a href="#">Generate</a></li>
+          <li id="load-html"><a href="#">Add HTML areas</a></li>
         </ul>
       </nav>
     </header>
@@ -27,7 +29,7 @@
       <section>
         <div id=workarea>
           <div id="container">
-            <img src="" alt="#" id="img-display" />
+            <img src="" alt="" id="img-display" />
             <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" id="draw-area"></svg>
             <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" id="grid-area"></svg>
           </div>
@@ -125,18 +127,18 @@
   </div>
 
   <!-- Project manager -->
-  <form id="project-manager">
-    <select id="project-list" multiple>
+  <form id="project-manager" class="modal">
+    <select class="project-list" multiple>
     </select>
-    <div id="project-buttons">
-      <button id="project-close">Close</button>
-      <button id="project-delete">Delete</button>
-      <button id="project-clear">Delete All</button>
+    <div class="buttons">
+      <button class="close">Close</button>
+      <button class="delete" >Delete</button>
+      <button class="clear">Delete All</button>
     </div>
   </form>
 
   <!-- Map attributes and image loader -->
-  <form id="project-creator">
+  <form id="project-creator" class="modal">
     <fieldset id="map-attributes"><legend>Image map attributes</legend>
       <p>
        <label for="map-name">Project / map name:</label>
@@ -151,7 +153,7 @@
       <div>
 	      <label>Drop image file here</label>
 		    <div id="image-drop-zone">
-	        <img src="" alt="Preview selected image" id="image-preview" />
+	        <img class="preview" src="" alt="Preview selected image" />
 	      </div>
       </div>
 	    <p>
@@ -159,22 +161,41 @@
 	     <input type="file" id="load-image-file" accept="image/jpeg,image/png,image/gif" />
 	    </p>
     </fieldset>
-    <div id="project-creator-buttons">
-      <button id="map-set" disabled>OK</button>
-      <button id="map-cancel">Cancel</button>
+    <div class="buttons">
+      <button class="create" disabled>Create</button>
+      <button class="cancel">Cancel</button>
     </div>
   </form>
 
   <!-- Project loader -->
-  <form id="project-loader">
-    <select id="project-options">
+  <form id="project-loader" class="modal">
+    <select class="project-list">
     </select>
     <div id="project-image">
-      <img src="" alt="Preview selected image" id="project-preview" />
+      <img class="preview" src="" alt="Preview selected image" />
     </div>
-    <div id="project-creator-buttons">
-      <button id="project-load" disabled>OK</button>
-      <button id="project-cancel">Cancel</button>
+    <div class="buttons">
+      <button class="select" disabled>Load</button>
+      <button class="cancel">Cancel</button>
+    </div>
+  </form>
+
+  <!-- HTML code display -->
+  <form id="project-code" class="modal">
+    <div id="code-result"></div>
+    <button class="close">Close</button>
+  </form>
+
+  <!-- HTML code input -->
+  <form id="code-loader" class="modal">
+    <p>
+      <label for="input-code">Enter HTML code here:</label>
+      <textarea id="input-code"></textarea>
+    </p>
+    <div class="buttons">
+      <button class="select" disabled>Load</button>
+      <button class="clear">Clear</button>
+      <button class="cancel">Cancel</button>
     </div>
   </form>
 
