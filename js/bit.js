@@ -2279,6 +2279,10 @@ var bit = (function() {
         ftr.infoEx(project);
         wks.loadEx(project);
         if(mdl.fromStore(project, store.s2a)) {
+          mdl.forEachArea(e => {
+            e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
+            e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
+          });
           mnu.switchToEditMode();
           setUnmodified();
           rtn = true;
@@ -2297,6 +2301,10 @@ var bit = (function() {
           bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, wks.getParent())));
           if (areas.length > 0) {
             mdl.addAreas(areas);
+            areas.forEach(e => {
+              e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
+              e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
+            });
             setModified();
             selector.unselectAll();
             selector.selectSubset(areas);
