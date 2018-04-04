@@ -78,6 +78,14 @@ var bitedit = (function() {
       this.addClass(clsStatus.DISABLED);
     }
 
+    highlight() {
+      this.addClass(clsStatus.HIGHLIGHTED);
+    }
+
+    trivialize() {
+      this.removeClass(clsStatus.HIGHLIGHTED);
+    }
+
     set cursor(cursor) {
       if (this.hasClass(this._cursor)) {
         this.removeClass(this._cursor);
@@ -157,6 +165,14 @@ var bitedit = (function() {
         this._grips.forEach(e => e.disable());
         this._enabled = false;
       }
+    }
+
+    highlight() {
+      this._grips.forEach(e => e.highlight());
+    }
+
+    trivialize() {
+      this._grips.forEach(e => e.trivialize());
     }
 
     get figure() {

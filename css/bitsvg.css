@@ -208,6 +208,10 @@
 	fill: #555;
 }
 
+#draw-area rect.grip.disabled.highlighted {
+  fill: #ddd;
+}
+
 #draw-area rect.grip:hover {
   fill: #000; 
 }

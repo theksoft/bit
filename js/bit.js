@@ -2252,6 +2252,18 @@ var bit = (function() {
       mnu.release();
     }
 
+    function onAreaEnter(e) {
+      if (selector.getCount() === 0) {
+        tls.displayAreaProps(this);
+      }
+    }
+
+    function onAreaLeave(e) {
+      if (selector.getCount() === 0) {
+        tls.resetAreaProps();
+      }
+    }
+
     var projects = (function() {
 
       var onClose = () => release();
@@ -2479,18 +2491,6 @@ var bit = (function() {
 
     })();
 
-    function onAreaEnter(e) {
-      if (selector.getCount() === 0) {
-        tls.displayAreaProps(this);
-      }
-    }
-
-    function onAreaLeave(e) {
-      if (selector.getCount() === 0) {
-        tls.resetAreaProps();
-      }
-    }
-
     var drawer = (function() {
 
       const _factory = {
@@ -2624,11 +2624,16 @@ var bit = (function() {
       function _areaSelect(area) {
         tls.blurAreaProps();
         _selected.set(mdl.findArea(area));
+        _selected.get(0).highlight();
         tls.enableGridTools(_selected.get(0).figure);
       }
 
       function _areaMultiSelect(area) {
+        if (_selected.length > 0)
+          _selected.get(0).trivialize();
         _selected.toggle(mdl.findArea(area));
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
         _updateGridTools();
       }
 
@@ -2646,11 +2651,18 @@ var bit = (function() {
       }
 
       function _areaSelectAll() {
+        if (_selected.length > 0)
+          _selected.get(0).trivialize();
+        __selected.empty();
         mdl.forEachArea(e => _selected.add(e));
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
         _updateGridTools();
       }
 
       function _areaUnselectAll() {
+        if (_selected.length > 0)
+          _selected.get(0).trivialize();
         _selected.empty();
         tls.disableGridTools();
       }
@@ -2663,11 +2675,14 @@ var bit = (function() {
 
       function select(figure) {
         _selected.set(figure);
+        _selected.get(0).highlight();
         tls.enableGridTools(figure);
       }
 
       function selectSubset(figures) {
         figures.forEach(e => _selected.add(e));
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
         _updateGridTools();
       }
 
@@ -2717,9 +2732,13 @@ var bit = (function() {
       function onTrackEnd() {
         _tracker.cancel();
         _tracker = null;
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
       }
       
       function onTrackExit() {
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
         tls.release();
       }
 
@@ -2741,8 +2760,11 @@ var bit = (function() {
         if (_selected.length === 1) {
           let newSel = [];
           if (mdl.freezeGridArea(_selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
+            _selected.get(0).trivialize();
             _selected.empty();
             newSel.forEach(e => _selected.add(e));
+            if (_selected.length > 0)
+              _selected.get(0).highlight();
             _updateGridTools();
             newSel = null;
             setModified();
