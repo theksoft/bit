@@ -1807,6 +1807,10 @@ var fEquilateralTriangle = (function() {
       return this._selection.reduce(f, i);
     }
 
+    slice() {
+      return this._selection.slice();
+    }
+
   } // MULTI-SELECTOR
 
   /*
