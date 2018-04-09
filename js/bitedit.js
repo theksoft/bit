@@ -288,6 +288,16 @@ var bitedit = (function() {
       return false;
     }
 
+    // RESIZE SECTION
+
+    truncateDims(newWidth, newHeight) {
+      return { width: newWidth, height: newHeight };
+    }
+
+    resize(newDims) {
+      console.log('resize() not defined');
+    }
+
   }
 
   /*
@@ -445,6 +455,15 @@ var bitedit = (function() {
       return (coords.width > 0 && coords.height > 0) ? true : false;
     }
 
+    resize(dims) {
+      let c = this._figure.coords;
+      c.width = dims.width;
+      c.height = dims.height;
+      this._figure.coords = c;
+      this._figure.redraw();
+      this.repositionGrips();
+    }
+
   } // RECTANGLE EDITOR
 
   /*
@@ -500,6 +519,11 @@ var bitedit = (function() {
         'tl' : fSquare.tlEdit, 'tr' : fSquare.trEdit, 'bl' : fSquare.blEdit, 'br' : fSquare.brEdit
       };
       return (this._enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
+    }
+
+    truncateDims(newWidth, newHeight) {
+      let d = Math.min(newWidth, newHeight);
+      return super.truncateDims(d, d);
     }
 
   } // SQUARE EDITOR
@@ -606,6 +630,22 @@ var bitedit = (function() {
 
     checkCoords(coords) {
       return (coords.r > 0) ? true : false;
+    }
+
+    truncateDims(newWidth, newHeight) {
+      let d = Math.min(newWidth, newHeight);
+      return super.truncateDims(d, d);
+    }
+
+    resize(dims) {
+      let r = Math.round(dims.width/2);
+      let c = this._figure.coords;
+      c.x -= c.r - r;
+      c.y -= c.r - r;
+      c.r = r;
+      this._figure.coords = c;
+      this._figure.redraw();
+      this.repositionGrips();
     }
 
   } // CIRCLE (from CENTER)EDITOR
@@ -937,7 +977,7 @@ var fEquilateralTriangle = (function() {
     // GRIP CONSTRAINTS
 
     function sideCompute(msm, mso, mbm, mbM) {
-      return Math.min( msm, 2*mso, Math.min(mbm, mbM)/R );
+      return Math.min(msm, 2*mso, Math.min(mbm, mbM)/R);
     }
 
     function cornerCompute(msm, mso, mbm, mbM, ls, lb) {
@@ -1138,12 +1178,33 @@ var fEquilateralTriangle = (function() {
       return rtn;
     }
 
+    // RESIZE
+
+    function normalizeSize(lb, ls) {
+      lb = Math.min(lb, Math.round(ls/R));
+      ls = Math.round(lb*R);
+      return [lb, ls];
+    }
+
+    function tbComputeSize(newWidth, newHeight) {
+      let w, h;
+      [w, h] = normalizeSize(newWidth, newHeight);
+      return { width: w, height: h };
+    }
+
+    function lrComputeSize(newWidth, newHeight) {
+      let w, h;
+      [h, w] = normalizeSize(newHeight, newWidth);
+      return { width: w, height: h };
+    }
+
     return {
 
       lEditCns, rEditCns, tEditCns, bEditCns,
       ltlEditCns, lblEditCns, rtrEditCns, rbrEditCns, ttlEditCns, ttrEditCns, bblEditCns, bbrEditCns,
       lEdit, rEdit, tEdit, bEdit,
-      ltlEdit, lblEdit, rtrEdit, rbrEdit, ttlEdit, ttrEdit, bblEdit, bbrEdit
+      ltlEdit, lblEdit, rtrEdit, rbrEdit, ttlEdit, ttrEdit, bblEdit, bbrEdit,
+      tbComputeSize, lrComputeSize
 
     };
 
@@ -1187,7 +1248,24 @@ var fEquilateralTriangle = (function() {
       return (this._enabled) ? editCoords[id](this._figure, dx, dy) : this._figure.coords;
     }
 
-  } // EQUILATERAL TRIANGLE GENERATOR
+    truncateDims(newWidth, newHeight) {
+      let r;
+      switch(this._figure.coords.tilt) {
+      case bitarea.tilts.LEFT:
+      case bitarea.tilts.RIGHT:
+        r = fEquilateralTriangle.lrComputeSize(newWidth, newHeight);
+        break;
+      case bitarea.tilts.TOP:
+      case bitarea.tilts.BOTTOM:
+        r = fEquilateralTriangle.tbComputeSize(newWidth, newHeight);
+        break;
+      default:
+        r = { width: this._figure.coords.width, height: this._figure.coords.height };
+      }
+      return r;
+    }
+
+  } // EQUILATERAL TRIANGLE EDITOR
 
   /*
    * RECTANGLE TRIANGLE EDITOR
@@ -1376,7 +1454,7 @@ var fEquilateralTriangle = (function() {
       return (f) ? f(this._figure, dx, dy) : super.computeEditCoords(id, dx, dy);
     }
 
-  } // RECTANGLE TRIANGLE GENERATOR
+  } // RECTANGLE TRIANGLE EDITOR
 
   /*
    * HEX EDITOR
@@ -1488,10 +1566,29 @@ var fEquilateralTriangle = (function() {
       return coords;
     }
 
+    // RESIZE
+
+    function normalizeSize(ls, lb) {
+      ls = Math.min(ls, Math.round(lb/R));
+      lb = Math.round(ls*R);
+      return [ls, lb];
+    }
+    function hComputeSize(newWidth, newHeight) {
+      let w, h;
+      [w, h] = normalizeSize(newWidth, newHeight);
+      return { width: w, height: h };
+    }
+    function vComputeSize(newWidth, newHeight) {
+      let w, h;
+      [h, w] = normalizeSize(newHeight, newWidth);
+      return { width: w, height: h };
+    }
+
     return {
 
       hrEditCns, hlEditCns, htEditCns, hbEditCns, vrEditCns, vlEditCns, vtEditCns, vbEditCns,
-      hrEdit, hlEdit, htEdit, hbEdit, vrEdit, vlEdit, vtEdit, vbEdit
+      hrEdit, hlEdit, htEdit, hbEdit, vrEdit, vlEdit, vtEdit, vbEdit,
+      hComputeSize, vComputeSize
 
     };
 
@@ -1568,6 +1665,11 @@ var fEquilateralTriangle = (function() {
       return (f) ? f(this._figure, dx, dy) : super.computeEditCoords(id, dx, dy);
     }
 
+    truncateDims(newWidth, newHeight) {
+      let c = this._figure.coords;
+      return ((c.width > c.height) ? fHex.hComputeSize(newWidth, newHeight) : fHex.vComputeSize(newWidth, newHeight));
+    }
+
   } // HEX EDITOR
 
   /*
@@ -1638,6 +1740,21 @@ var fEquilateralTriangle = (function() {
 
     checkCoords(coords) {
       return (2 < coords.length) ? true : false;
+    }
+
+    resize(dims) {
+      let rct, rw, rh, c;
+      rct = this._figure.rect;
+      rw = dims.width / rct.width;
+      rh = dims.height / rct.height;
+      c = this._figure.coords;
+      c.forEach(p => {
+        p.x = Math.round(rct.x + (p.x - rct.x)*rw);
+        p.y = Math.round(rct.y + (p.y - rct.y)*rh);
+      });
+      this._figure.coords = c;
+      this._figure.redraw();
+      this.repositionGrips();
     }
 
   }
@@ -2003,9 +2120,32 @@ var fEquilateralTriangle = (function() {
  
   } // ORDER
 
+  /*
+   * SIZER
+   */
+
+  class Sizer {
+
+    constructor() {}
+
+    checkBoundaries(selection, newWidth, newHeight, winWidth, winHeight) {
+      return selection.reduce((a,e) => {
+        let d, r;
+        d = e.truncateDims(newWidth, newHeight);
+        r = e.figure.rect;
+        return a && (r.x + d.width <= winWidth && r.y + d.height <= winHeight );
+      }, true);
+    }
+
+    resize(selection, newWidth, newHeight) {
+      selection.forEach(e => e.resize(e.truncateDims(newWidth, newHeight)));
+    }
+
+  } // SIZER
+
   return {
     directions, clsStatus, isGrip,
-    MultiSelector, Mover, Editor, Order
+    MultiSelector, Mover, Editor, Order, Sizer
   };
   
 })(); /* BIT Area Editors */

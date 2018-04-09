@@ -1071,7 +1071,8 @@ var bit = (function() {
       },
 
       getParent : () => doms.drawarea,
-      getGridParent : () => doms.gridarea
+      getGridParent : () => doms.gridarea,
+      getDims : () => { return { width: doms.image.width, height: doms.image.height } }
 
     };
 
@@ -1142,6 +1143,7 @@ var bit = (function() {
     const doms = {
       inGridSpace     : $('grid-space'),
       btnShowOrder    : $('show-order'),
+      btnResize       : $('resize'),
       btnPropsSave    : $('area-props-save'),
       btnPropsRestore : $('area-props-restore')
     };
@@ -1360,7 +1362,6 @@ var bit = (function() {
       toggleState((btnsGridAlign[2].align === context.align) ? btnsGridAlign[2].dom : btnsGridAlign[1].dom, btnsGridAlign[0].dom);
       doms.inGridSpace.defaultValue = "0";
       doms.inGridSpace.value = "0";
-      doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
       context.showOrder = false;
       setGridOrder(btnsOrder[0].order);
     }
@@ -1368,7 +1369,6 @@ var bit = (function() {
     function onShowOrder(e) {
       blurAreaProps();
       if(!context.showOrder) {
-        doms.btnShowOrder.classList.add(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         doms.btnShowOrder.addEventListener('mouseup', onHideOrder, false);
         doms.btnShowOrder.addEventListener('mouseleave', onHideOrder, false);
@@ -1380,7 +1380,6 @@ var bit = (function() {
     function onHideOrder(e) {
       blurAreaProps();
       if(context.showOrder) {
-        doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         doms.btnShowOrder.removeEventListener('mouseup', onHideOrder, false);
         doms.btnShowOrder.removeEventListener('mouseleave', onHideOrder, false);
@@ -1457,6 +1456,11 @@ var bit = (function() {
       doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
 
+    function onResize(e) {
+      context.handlers.onResize();
+      e.preventDefault();
+    }
+
     return {
 
       init : function(handlers) {
@@ -1503,6 +1507,7 @@ var bit = (function() {
           e.dom.removeEventListener('input', onPropsInput, false)
           e.dom.blur();
         });
+        doms.btnResize.removeEventListener('click', onResize, false);
         context.freezed = true;
       },
 
@@ -1521,6 +1526,7 @@ var bit = (function() {
           e.dom.addEventListener('input', onPropsInput, false)
           e.dom.addEventListener('keydown', onPropsKey, false)
         });
+        doms.btnResize.addEventListener('click', onResize, false);
         context.freezed = false;
       },
 
@@ -2419,7 +2425,8 @@ var bit = (function() {
 
     var tooler = (function() {
 
-      var _order = new bitedit.Order();
+      var _order = new bitedit.Order(),
+          _sizer = new bitedit.Sizer();
 
       function onGridScopeChange(v) {
         if (selector.getCount() === 1) {
@@ -2481,11 +2488,23 @@ var bit = (function() {
 
       var onPropsRestore = () => tls.restoreAreaProps(selector.first().figure);
 
+      function onResize() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_sizer.checkBoundaries(selector.list(), r.width, r.height, d.width, d.height))
+            alert('Resizing selected elements makes at least one of them outside of image boudaries!');
+          else
+            _sizer.resize(selector.list(), r.width, r.height);
+        }
+      }
+
       return {
         handlers : {
           onGridScopeChange, onGridAlignChange, onGridSpaceChange,
           onShowOrder, onGridOrderChange,
-          onPropsSave, onPropsRestore
+          onPropsSave, onPropsRestore,
+          onResize
         }
       };
 
