@@ -1144,6 +1144,12 @@ var bit = (function() {
       inGridSpace     : $('grid-space'),
       btnShowOrder    : $('show-order'),
       btnResize       : $('resize'),
+      btnAlignCH      : $('align-center-h'),
+      btnAlignCV      : $('align-center-v'),
+      btnAlignL       : $('align-left'),
+      btnAlignT       : $('align-top'),
+      btnAlignR       : $('align-right'),
+      btnAlignB       : $('align-bottom'),
       btnPropsSave    : $('area-props-save'),
       btnPropsRestore : $('area-props-restore')
     };
@@ -1461,6 +1467,36 @@ var bit = (function() {
       e.preventDefault();
     }
 
+    function onAlignLeft(e) {
+      context.handlers.onAlignLeft();
+      e.preventDefault();
+    }
+
+    function onAlignTop(e) {
+      context.handlers.onAlignTop();
+      e.preventDefault();
+    }
+
+    function onAlignRight(e) {
+      context.handlers.onAlignRight();
+      e.preventDefault();
+    }
+
+    function onAlignBottom(e) {
+      context.handlers.onAlignBottom();
+      e.preventDefault();
+    }
+
+    function onAlignCenterHorizontally(e) {
+      context.handlers.onAlignCenterHorizontally();
+      e.preventDefault();
+    }
+
+    function onAlignCenterVertically(e) {
+      context.handlers.onAlignCenterVertically();
+      e.preventDefault();
+    }
+
     return {
 
       init : function(handlers) {
@@ -1508,6 +1544,12 @@ var bit = (function() {
           e.dom.blur();
         });
         doms.btnResize.removeEventListener('click', onResize, false);
+        doms.btnAlignL.removeEventListener('click', onAlignLeft, false);
+        doms.btnAlignT.removeEventListener('click', onAlignTop, false);
+        doms.btnAlignR.removeEventListener('click', onAlignRight, false);
+        doms.btnAlignB.removeEventListener('click', onAlignBottom, false);
+        doms.btnAlignCH.removeEventListener('click', onAlignCenterHorizontally, false);
+        doms.btnAlignCV.removeEventListener('click', onAlignCenterVertically, false);
         context.freezed = true;
       },
 
@@ -1527,6 +1569,12 @@ var bit = (function() {
           e.dom.addEventListener('keydown', onPropsKey, false)
         });
         doms.btnResize.addEventListener('click', onResize, false);
+        doms.btnAlignL.addEventListener('click', onAlignLeft, false);
+        doms.btnAlignT.addEventListener('click', onAlignTop, false);
+        doms.btnAlignR.addEventListener('click', onAlignRight, false);
+        doms.btnAlignB.addEventListener('click', onAlignBottom, false);
+        doms.btnAlignCH.addEventListener('click', onAlignCenterHorizontally, false);
+        doms.btnAlignCV.addEventListener('click', onAlignCenterVertically, false);
         context.freezed = false;
       },
 
@@ -2499,12 +2547,43 @@ var bit = (function() {
         }
       }
 
+      function onAlignCenterHorizontally() {
+        if (1 < selector.getCount()) {
+        }
+      }
+
+      function onAlignCenterVertically() {
+        if (1 < selector.getCount()) {
+        }
+      }
+
+      function onAlignLeft() {
+        if (1 < selector.getCount()) {
+        }
+      }
+
+      function onAlignTop() {
+        if (1 < selector.getCount()) {
+        }
+      }
+
+      function onAlignRight() {
+        if (1 < selector.getCount()) {
+        }
+      }
+
+      function onAlignBottom() {
+        if (1 < selector.getCount()) {
+        }
+      }
+
       return {
         handlers : {
           onGridScopeChange, onGridAlignChange, onGridSpaceChange,
           onShowOrder, onGridOrderChange,
           onPropsSave, onPropsRestore,
-          onResize
+          onResize, onAlignCenterHorizontally, onAlignCenterVertically,
+          onAlignLeft, onAlignTop, onAlignRight, onAlignBottom
         }
       };
 
