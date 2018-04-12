@@ -2168,6 +2168,7 @@ var fEquilateralTriangle = (function() {
     }
 
     checkRightBoundaries(selection, newLeft, winWidth) {
+      return selection.reduce((a,e) => a && newLeft + e.figure.rect.width <= winWidth, true);
     }
 
     checkBottomBoundaries(selection, newTop, winHeight) {
@@ -2190,6 +2191,7 @@ var fEquilateralTriangle = (function() {
     }
 
     alignLeft(selection, newLeft) {
+      selection.forEach(e => e.moveToOffset(newLeft - e.figure.rect.x, 0));
     }
 
     alignTop(selection, nexTop) {
