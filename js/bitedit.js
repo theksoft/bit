@@ -2172,6 +2172,7 @@ var fEquilateralTriangle = (function() {
     }
 
     checkBottomBoundaries(selection, newTop, winHeight) {
+      return selection.reduce((a,e) => a && newTop + e.figure.rect.height <= winHeight, true);
     }
 
     checkLeftBoundaries(selection, newRight) {
@@ -2179,6 +2180,7 @@ var fEquilateralTriangle = (function() {
     }
 
     checkTopBoundaries(selection, newBottom) {
+//      return selection.reduce((a,e) => a && newBottom - e.figure.rect.height >= 0, true);
     }
 
     // MODIFIERS
@@ -2195,7 +2197,8 @@ var fEquilateralTriangle = (function() {
       selection.forEach(e => e.moveToOffset(newLeft - e.figure.rect.x, 0));
     }
 
-    alignTop(selection, nexTop) {
+    alignTop(selection, newTop) {
+      selection.forEach(e => e.moveToOffset(0, newTop - e.figure.rect.y));
     }
 
     alignRight(selection, newRight) {
@@ -2203,6 +2206,7 @@ var fEquilateralTriangle = (function() {
     }
 
     alignBottom(selection, newBottom) {
+//      selection.forEach(e => e.moveToOffset(0, newBottom - (e.figure.rect.y + e.figure.rect.height)));
     }
 
   } // ALIGNER
