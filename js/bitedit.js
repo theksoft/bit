@@ -2180,7 +2180,7 @@ var fEquilateralTriangle = (function() {
     }
 
     checkTopBoundaries(selection, newBottom) {
-//      return selection.reduce((a,e) => a && newBottom - e.figure.rect.height >= 0, true);
+      return selection.reduce((a,e) => a && newBottom - e.figure.rect.height >= 0, true);
     }
 
     // MODIFIERS
@@ -2206,7 +2206,7 @@ var fEquilateralTriangle = (function() {
     }
 
     alignBottom(selection, newBottom) {
-//      selection.forEach(e => e.moveToOffset(0, newBottom - (e.figure.rect.y + e.figure.rect.height)));
+      selection.forEach(e => e.moveToOffset(0, newBottom - (e.figure.rect.y + e.figure.rect.height)));
     }
 
   } // ALIGNER
