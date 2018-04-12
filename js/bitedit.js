@@ -2143,9 +2143,59 @@ var fEquilateralTriangle = (function() {
 
   } // SIZER
 
+  /*
+   * ALIGNER
+   */
+
+  class Aligner {
+    
+    constructor() {}
+
+    // CHECKERS
+
+    checkVerticalBoundaries(selection, newCy, winHeight) {
+    }
+
+    checkHorizontalBoundaries(selection, newCx, winWidth) {
+    }
+
+    checkRightBoundaries(selection, newLeft, winWidth) {
+    }
+
+    checkBottomBoundaries(selection, newTop, winHeight) {
+    }
+
+    checkLeftBoundaries(selection, newRight) {
+    }
+
+    checkTopBoundaries(selection, newBottom) {
+    }
+
+    // MODIFIERS
+
+    alignHorizontally(selection, newCy) {
+    }
+
+    alignVertically(selection, newCx) {
+    }
+
+    alignLeft(selection, newLeft) {
+    }
+
+    alignTop(selection, nexTop) {
+    }
+
+    alignRight(selection, newRight) {
+    }
+
+    alignBottom(selection, newBottom) {
+    }
+
+  } // ALIGNER
+
   return {
     directions, clsStatus, isGrip,
-    MultiSelector, Mover, Editor, Order, Sizer
+    MultiSelector, Mover, Editor, Order, Sizer, Aligner
   };
   
 })(); /* BIT Area Editors */

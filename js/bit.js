@@ -2474,7 +2474,8 @@ var bit = (function() {
     var tooler = (function() {
 
       var _order = new bitedit.Order(),
-          _sizer = new bitedit.Sizer();
+          _sizer = new bitedit.Sizer(),
+          _aligner = new bitedit.Aligner();
 
       function onGridScopeChange(v) {
         if (selector.getCount() === 1) {
@@ -2549,31 +2550,69 @@ var bit = (function() {
 
       function onAlignCenterHorizontally() {
         if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          let cy = Math.round(r.y + r.height/2);
+          if (!_aligner.checkVerticalBoundaries(selector.list(), cy, d.height))
+            alert('Aligning horizontally selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignHorizontally(selector.list(), cy);
         }
       }
 
       function onAlignCenterVertically() {
         if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          let cx = Math.round(r.x + r.width/2);
+          if (!_aligner.checkHorizontalBoundaries(selector.list(), cx, d.width))
+            alert('Aligning vertically selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignVertically(selector.list(), cx);
         }
       }
 
       function onAlignLeft() {
         if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkRightBoundaries(selector.list(), r.x, d.width))
+            alert('Aligning on left side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignLeft(selector.list(), r.x);
         }
       }
 
       function onAlignTop() {
         if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkBottomBoundaries(selector.list(), r.y, d.height))
+            alert('Aligning on top side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignTop(selector.list(), r.y);
         }
       }
 
       function onAlignRight() {
         if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkLeftBoundaries(selector.list(), r.x + r.width))
+            alert('Aligning on right side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignRight(selector.list(), r.x + r.width);
         }
       }
 
       function onAlignBottom() {
         if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkTopBoundaries(selector.list(), r.y + r.height))
+            alert('Aligning on bottom side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignBottom(selector.list(), r.y + r.height);
         }
       }
 
