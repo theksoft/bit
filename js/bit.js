@@ -1071,7 +1071,8 @@ var bit = (function() {
       },
 
       getParent : () => doms.drawarea,
-      getGridParent : () => doms.gridarea
+      getGridParent : () => doms.gridarea,
+      getDims : () => { return { width: doms.image.width, height: doms.image.height } }
 
     };
 
@@ -1142,6 +1143,13 @@ var bit = (function() {
     const doms = {
       inGridSpace     : $('grid-space'),
       btnShowOrder    : $('show-order'),
+      btnResize       : $('resize'),
+      btnAlignCH      : $('align-center-h'),
+      btnAlignCV      : $('align-center-v'),
+      btnAlignL       : $('align-left'),
+      btnAlignT       : $('align-top'),
+      btnAlignR       : $('align-right'),
+      btnAlignB       : $('align-bottom'),
       btnPropsSave    : $('area-props-save'),
       btnPropsRestore : $('area-props-restore')
     };
@@ -1360,7 +1368,6 @@ var bit = (function() {
       toggleState((btnsGridAlign[2].align === context.align) ? btnsGridAlign[2].dom : btnsGridAlign[1].dom, btnsGridAlign[0].dom);
       doms.inGridSpace.defaultValue = "0";
       doms.inGridSpace.value = "0";
-      doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
       context.showOrder = false;
       setGridOrder(btnsOrder[0].order);
     }
@@ -1368,7 +1375,6 @@ var bit = (function() {
     function onShowOrder(e) {
       blurAreaProps();
       if(!context.showOrder) {
-        doms.btnShowOrder.classList.add(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
         doms.btnShowOrder.addEventListener('mouseup', onHideOrder, false);
         doms.btnShowOrder.addEventListener('mouseleave', onHideOrder, false);
@@ -1380,7 +1386,6 @@ var bit = (function() {
     function onHideOrder(e) {
       blurAreaProps();
       if(context.showOrder) {
-        doms.btnShowOrder.classList.remove(bitedit.clsStatus.SELECTED);
         doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
         doms.btnShowOrder.removeEventListener('mouseup', onHideOrder, false);
         doms.btnShowOrder.removeEventListener('mouseleave', onHideOrder, false);
@@ -1457,6 +1462,41 @@ var bit = (function() {
       doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
 
+    function onResize(e) {
+      context.handlers.onResize();
+      e.preventDefault();
+    }
+
+    function onAlignLeft(e) {
+      context.handlers.onAlignLeft();
+      e.preventDefault();
+    }
+
+    function onAlignTop(e) {
+      context.handlers.onAlignTop();
+      e.preventDefault();
+    }
+
+    function onAlignRight(e) {
+      context.handlers.onAlignRight();
+      e.preventDefault();
+    }
+
+    function onAlignBottom(e) {
+      context.handlers.onAlignBottom();
+      e.preventDefault();
+    }
+
+    function onAlignCenterHorizontally(e) {
+      context.handlers.onAlignCenterHorizontally();
+      e.preventDefault();
+    }
+
+    function onAlignCenterVertically(e) {
+      context.handlers.onAlignCenterVertically();
+      e.preventDefault();
+    }
+
     return {
 
       init : function(handlers) {
@@ -1503,6 +1543,13 @@ var bit = (function() {
           e.dom.removeEventListener('input', onPropsInput, false)
           e.dom.blur();
         });
+        doms.btnResize.removeEventListener('click', onResize, false);
+        doms.btnAlignL.removeEventListener('click', onAlignLeft, false);
+        doms.btnAlignT.removeEventListener('click', onAlignTop, false);
+        doms.btnAlignR.removeEventListener('click', onAlignRight, false);
+        doms.btnAlignB.removeEventListener('click', onAlignBottom, false);
+        doms.btnAlignCH.removeEventListener('click', onAlignCenterHorizontally, false);
+        doms.btnAlignCV.removeEventListener('click', onAlignCenterVertically, false);
         context.freezed = true;
       },
 
@@ -1521,6 +1568,13 @@ var bit = (function() {
           e.dom.addEventListener('input', onPropsInput, false)
           e.dom.addEventListener('keydown', onPropsKey, false)
         });
+        doms.btnResize.addEventListener('click', onResize, false);
+        doms.btnAlignL.addEventListener('click', onAlignLeft, false);
+        doms.btnAlignT.addEventListener('click', onAlignTop, false);
+        doms.btnAlignR.addEventListener('click', onAlignRight, false);
+        doms.btnAlignB.addEventListener('click', onAlignBottom, false);
+        doms.btnAlignCH.addEventListener('click', onAlignCenterHorizontally, false);
+        doms.btnAlignCV.addEventListener('click', onAlignCenterVertically, false);
         context.freezed = false;
       },
 
@@ -1658,6 +1712,7 @@ var bit = (function() {
    */
 
   var prj = (function() {
+
     var doms = {
       projects  : $('project-manager'),
       list      : document.querySelector('#project-manager .project-list'),
@@ -2227,14 +2282,6 @@ var bit = (function() {
 
     var doms = {
       fileDropZone : $('file-drop-zone')
-    },
-
-    context = {
-      selected : new bitedit.MultiSelector(),
-      mover : new bitedit.Mover(),
-      editor : new bitedit.Editor(),
-      order : new bitedit.Order(),
-      mapper : new bitmap.Mapper()
     };
 
     var setModified = () => {
@@ -2259,250 +2306,331 @@ var bit = (function() {
       mnu.release();
     }
 
-    var onClose = () => release();
+    function onAreaEnter(e) {
+      if (selector.getCount() === 0) {
+        tls.displayAreaProps(this);
+      }
+    }
+
+    function onAreaLeave(e) {
+      if (selector.getCount() === 0) {
+        tls.resetAreaProps();
+      }
+    }
 
     var projects = (function() {
 
-      var handlers = {
+      var onClose = () => release();
 
-        onClose,
-
-        onNewMap : function(data) {
-          let rtn = false;
-          if (mdl.setFile(data.file)) {
-            mdl.setInfo(data);
-            mnu.switchToEditMode();
-            ftr.info(data.file);
-            wks.load(data.file);
-            setModified();
-            rtn = true;
-          } else {
-            ftr.error(data.file);
-          }
-          release();
-          return rtn;
-        },
-
-        onLoadMap : function(name) {
-          let rtn, project;
-          rtn = false;
-          project = store.read(name);
-          ftr.infoEx(project);
-          wks.loadEx(project);
-          if(mdl.fromStore(project, store.s2a)) {
-            mnu.switchToEditMode();
-            setUnmodified();
-            rtn = true;
-          } else {
-            ftr.errorEx(project);
-          }
-          release();
-          return rtn;
-        },
-
-        onLoadCode : function(code) {
-          let areas, rtn;
-          areas = [];
-          rtn = false;
-          if (code) {
-            bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, wks.getParent())));
-            if (areas.length > 0) {
-              mdl.addAreas(areas);
-              setModified();
-              selector.handlers.onUnselectAll();
-              selector.selectSubset(areas);
-              rtn = true;
-            }
-          }
-          release();
-          return rtn;
+      function onNewMap(data) {
+        let rtn = false;
+        if (mdl.setFile(data.file)) {
+          mdl.setInfo(data);
+          mnu.switchToEditMode();
+          ftr.info(data.file);
+          wks.load(data.file);
+          setModified();
+          rtn = true;
+        } else {
+          ftr.error(data.file);
         }
+        release();
+        return rtn;
+      }
 
-      };
+      function onLoadMap(name) {
+        let rtn, project;
+        rtn = false;
+        project = store.read(name);
+        ftr.infoEx(project);
+        wks.loadEx(project);
+        if(mdl.fromStore(project, store.s2a)) {
+          mdl.forEachArea(e => {
+            e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
+            e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
+          });
+          mnu.switchToEditMode();
+          setUnmodified();
+          rtn = true;
+        } else {
+          ftr.errorEx(project);
+        }
+        release();
+        return rtn;
+      }
+
+      function onLoadCode(code) {
+        let areas, rtn;
+        areas = [];
+        rtn = false;
+        if (code) {
+          bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, wks.getParent())));
+          if (areas.length > 0) {
+            mdl.addAreas(areas);
+            areas.forEach(e => {
+              e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
+              e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
+            });
+            setModified();
+            selector.unselectAll();
+            selector.selectSubset(areas);
+            rtn = true;
+          }
+        }
+        release();
+        return rtn;
+      }
 
       return {
-        handlers
+        handlers : { onClose, onNewMap, onLoadMap, onLoadCode }
       };
 
     })();
 
     var menu = (function() {
 
-      var handlers = {
-          
-        onNewProject : function() {
-          if (!mdl.isModified() || confirm('Discard all changes?')) {
-            ftr.reset();
-            wks.reset();
-            tls.reset();
-            mnu.reset();
-            mdl.reset();
-            ctr.reset();
-            ctr.show();
-            freeze();
-          }
-        },
-
-        onPreview : function(activated) {
-          if (activated) {
-            let c, i;
-            [c, i] = wks.switchToPreview();
-            context.mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
-          } else {
-            wks.switchToEdit();
-            context.mapper.cancelPreview();
-          }
-        },
-
-        onLoadProject : function() {
-          if (!mdl.isModified() || confirm('Discard all changes?')) {
-            ftr.reset();
-            wks.reset();
-            tls.reset();
-            mnu.reset();
-            mdl.reset();
-            ctr.reset();
-            ldr.show();
-            freeze();
-          }
-        },
-
-        onSaveProject : function() {
-          store.write(mdl.getInfo().name, mdl.toStore(store.a2s));
-          setUnmodified();
-        },
-
-        onCleanProjects : function() {
-          prj.show();
-          freeze();
-        },
-
-        onGenerateCode : function() {
-          code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
-          freeze();
-        },
-
-        onLoadHTML : function() {
-          htm.show();
+      var _mapper = new bitmap.Mapper();
+ 
+      function onNewProject() {
+        if (!mdl.isModified() || confirm('Discard all changes?')) {
+          ftr.reset();
+          wks.reset();
+          tls.reset();
+          mnu.reset();
+          mdl.reset();
+          ctr.reset();
+          ctr.show();
           freeze();
         }
+      }
 
-      };
+      function onPreview(activated) {
+        if (activated) {
+          let c, i;
+          [c, i] = wks.switchToPreview();
+          _mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
+        } else {
+          wks.switchToEdit();
+          _mapper.cancelPreview();
+        }
+      }
+
+      function onLoadProject() {
+        if (!mdl.isModified() || confirm('Discard all changes?')) {
+          ftr.reset();
+          wks.reset();
+          tls.reset();
+          mnu.reset();
+          mdl.reset();
+          ctr.reset();
+          ldr.show();
+          freeze();
+        }
+      }
+
+      function onSaveProject() {
+        store.write(mdl.getInfo().name, mdl.toStore(store.a2s));
+        setUnmodified();
+      }
+
+      function onCleanProjects() {
+        prj.show();
+        freeze();
+      }
+
+      function onGenerateCode() {
+        code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
+        freeze();
+      }
+
+      function onLoadHTML() {
+        htm.show();
+        freeze();
+      }
 
       return {
-        handlers
+        handlers : {
+          onNewProject, onPreview, onLoadProject, onSaveProject, onCleanProjects,
+          onGenerateCode, onLoadHTML
+        }
       };
 
     })();
 
     var dragger = (function() {
 
-      var handlers = {
-          
-        prevent : function(e) {
-          if (!tls.none()) return true;
-          if (mdl.findArea(e.target)) return true;
-          return false;
-        }
-
-      };
+      function prevent(e) {
+        if (!tls.none()) return true;
+        if (mdl.findArea(e.target)) return true;
+        return false;
+      }
 
       return {
-        handlers
+        handlers : { prevent }
       };
 
     })();
 
     var tooler = (function() {
 
-      var handlers = {
-          
-          onGridScopeChange : function(v) {
-            if (context.selected.length === 1) {
-              let area = context.selected.get(0).figure;
-              if (area.isGrid) {
-                area.gridScope = v;
-                setModified();
-              }
-            }
-          },
+      var _order = new bitedit.Order(),
+          _sizer = new bitedit.Sizer(),
+          _aligner = new bitedit.Aligner();
 
-          onGridAlignChange : function(v) {
-            if (context.selected.length === 1) {
-              let area = context.selected.get(0).figure;
-              if (area.isGrid) {
-                area.gridAlign = v;
-                setModified();
-              }
-            }
-          },
+      function onGridScopeChange(v) {
+        if (selector.getCount() === 1) {
+          let area = selector.first().figure;
+          if (area.isGrid) {
+            area.gridScope = v;
+            setModified();
+          }
+        }
+      }
 
-          onGridSpaceChange : function(v) {
-            if (context.selected.length === 1) {
-              let area = context.selected.get(0).figure;
-              if (area.isGrid) {
-                area.gridSpace = v;
-                setModified();
-              }
-            }
-          },
+      function onGridAlignChange(v) {
+        if (selector.getCount() === 1) {
+          let area = selector.first().figure;
+          if (area.isGrid) {
+            area.gridAlign = v;
+            setModified();
+          }
+        }
+      }
 
-          onShowOrder : function(bShow) {
-            if (bShow) {
-              let list, fig;
-              if (context.selected.length === 1) {
-                fig = context.selected.get(0).figure;
-                list = (fig.isGrid) ? [fig] : fig.copyBonds();
-                list.forEach(g => context.order.display(g.areas));
-              }
-            } else {
-              context.order.hide();
-            }
-          },
+      function onGridSpaceChange(v) {
+        if (selector.getCount() === 1) {
+          let area = selector.first().figure;
+          if (area.isGrid) {
+            area.gridSpace = v;
+            setModified();
+          }
+        }
+      }
 
-          onGridOrderChange : function(v) {
-            if (context.selected.length === 1) {
-              let area = context.selected.get(0).figure;
-              if (area.isGrid) {
-                area.gridOrder = v;
-                setModified();
-              }
-            }
-          },
+      function onShowOrder(bShow) {
+        if (bShow) {
+          let list, fig;
+          if (selector.getCount() === 1) {
+            fig = selector.first().figure;
+            list = (fig.isGrid) ? [fig] : fig.copyBonds();
+            list.forEach(g => _order.display(g.areas));
+          }
+        } else {
+          _order.hide();
+        }
+      }
 
-          onPropsSave : (p) => {
-            tls.saveAreaProps(context.selected.get(0).figure, p);
-            setModified()
-          },
-          onPropsRestore : () => tls.restoreAreaProps(context.selected.get(0).figure)
+      function onGridOrderChange(v) {
+        if (selector.getCount() === 1) {
+          let area = selector.first().figure;
+          if (area.isGrid) {
+            area.gridOrder = v;
+            setModified();
+          }
+        }
+      }
 
-      };
+      function onPropsSave(p) {
+        tls.saveAreaProps(selector.first().figure, p);
+        setModified();
+      }
+
+      var onPropsRestore = () => tls.restoreAreaProps(selector.first().figure);
+
+      function onResize() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_sizer.checkBoundaries(selector.list(), r.width, r.height, d.width, d.height))
+            alert('Resizing selected elements makes at least one of them outside of image boudaries!');
+          else
+            _sizer.resize(selector.list(), r.width, r.height);
+        }
+      }
+
+      function onAlignCenterHorizontally() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          let cy = Math.round(r.y + r.height/2);
+          if (!_aligner.checkVerticalBoundaries(selector.list(), cy, d.height))
+            alert('Aligning horizontally selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignHorizontally(selector.list(), cy);
+        }
+      }
+
+      function onAlignCenterVertically() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          let cx = Math.round(r.x + r.width/2);
+          if (!_aligner.checkHorizontalBoundaries(selector.list(), cx, d.width))
+            alert('Aligning vertically selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignVertically(selector.list(), cx);
+        }
+      }
+
+      function onAlignLeft() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkRightBoundaries(selector.list(), r.x, d.width))
+            alert('Aligning on left side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignLeft(selector.list(), r.x);
+        }
+      }
+
+      function onAlignTop() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkBottomBoundaries(selector.list(), r.y, d.height))
+            alert('Aligning on top side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignTop(selector.list(), r.y);
+        }
+      }
+
+      function onAlignRight() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkLeftBoundaries(selector.list(), r.x + r.width))
+            alert('Aligning on right side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignRight(selector.list(), r.x + r.width);
+        }
+      }
+
+      function onAlignBottom() {
+        if (1 < selector.getCount()) {
+          let d = wks.getDims();
+          let r = selector.first().figure.rect;
+          if (!_aligner.checkTopBoundaries(selector.list(), r.y + r.height))
+            alert('Aligning on bottom side selected elements makes at least one of them outside of image boudaries!');
+          else
+            _aligner.alignBottom(selector.list(), r.y + r.height);
+        }
+      }
 
       return {
-        handlers
+        handlers : {
+          onGridScopeChange, onGridAlignChange, onGridSpaceChange,
+          onShowOrder, onGridOrderChange,
+          onPropsSave, onPropsRestore,
+          onResize, onAlignCenterHorizontally, onAlignCenterVertically,
+          onAlignLeft, onAlignTop, onAlignRight, onAlignBottom
+        }
       };
 
     })();
 
-    function isAreaSelected(area) {
-      return context.selected.has(mdl.findArea(area));
-    }
-
-    function onAreaEnter(e) {
-      if (context.selected.length === 0) {
-        tls.displayAreaProps(this);
-      }
-    }
-
-    function onAreaLeave(e) {
-      if (context.selected.length === 0) {
-        tls.resetAreaProps();
-      }
-    }
-
     var drawer = (function() {
 
-      var factory = {
+      const _factory = {
         'rectangle'   : bitgen.Rectangle,
         'square'      : bitgen.Square,
         'rhombus'     : bitgen.Rhombus,
@@ -2517,16 +2645,16 @@ var bit = (function() {
         'polygon'     : bitgen.Polygon
       };
 
-      var gridFactory = {
+      const _gridFactory = {
         'gridRectangle' : bitgen.GridRectangle,
         'gridCircle'    : bitgen.GridCircle,
         'gridHex'       : bitgen.GridHex
       };
 
-      var generator = null;
+      var _generator = null;
 
-      function create(parent, alt) {
-        let figGen = factory[tls.getDrawingMode()];
+      function _create(parent, alt) {
+        let figGen = _factory[tls.getDrawingMode()];
         if (!figGen) {
           console.log('ERROR - Drawing mode not handled');
           return null;
@@ -2534,8 +2662,8 @@ var bit = (function() {
         return new figGen(parent, false, alt);
       }
 
-      function createGrid(parent, bond, gridParent) {
-        let figGen = gridFactory[tls.getDrawingMode()];
+      function _createGrid(parent, bond, gridParent) {
+        let figGen = _gridFactory[tls.getDrawingMode()];
         if (!figGen) {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
@@ -2543,313 +2671,361 @@ var bit = (function() {
         return new figGen(parent, bond, gridParent, tls.getGridScope(), tls.getGridAlign(), tls.getGridSpace(), tls.getGridOrder());
       }
 
-      var handlers = {
+      function prevent(e) {
+        if (e.ctrlKey || e.shiftKey) return true;
+        if (tls.none()) return true;
+        if (mdl.findArea(e.target)) return true;
+        return false;
+      }
 
-        prevent : function(e) {
-          if (e.ctrlKey || e.shiftKey) return true;
-          if (tls.none()) return true;
-          if (mdl.findArea(e.target)) return true;
-          return false;
-        },
-
-        onStart : function(parent, pt, alt, gridParent) {
-          let bondElt = (tls.isGridDrawingModeSelected()) ? context.selected.get(0).figure : null; 
-          context.selected.empty();
-          if (null === bondElt) {
-            generator = create(parent, alt);
-          } else {
-            generator = createGrid(parent, bondElt, gridParent);
-          }
-          if (null == generator) {
-            alert('Unable to draw selected area!');
-            tls.disableGridTools();
-            return false;
-          }
-          tls.freeze();
-          tls.disableAreaProps();
-          generator.start(pt);
-          return true;
-        },
-
-        onProgress : function(parent, pt) {
-          let width = parent.getAttribute('width');
-          let height = parent.getAttribute('height');
-          generator.progress(pt, width, height);
-        },
-
-        onEnd : function(parent, pt) {
-          let complete = true;
-          let width = parent.getAttribute('width');
-          let height = parent.getAttribute('height');
-          switch(generator.end(pt, width, height)) {
-          case 'done':
-            let fig = generator.figure;
-            mdl.addArea(fig);
-            setModified();
-            context.selected.set(fig);
-            tls.release();
-            tls.enableGridTools(fig);
-            fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
-            fig.dom.addEventListener('mouseleave', onAreaLeave.bind(fig), false);
-            generator = null;
-            break;
-          case 'error':
-            alert('Invalid area dimensions!');
-            tls.release();
-            break;
-          case 'continue':
-          default:
-            complete = false;
-          }
-          return complete;
-        },
-
-        onCancel : function() {
-          generator.cancel();
-          generator = null;
-          tls.release();
+      function onStart(parent, pt, alt, gridParent) {
+        let bondElt = (tls.isGridDrawingModeSelected()) ? selector.first().figure : null;
+        selector.empty();
+        _generator = (null === bondElt)
+                    ? _create(parent, alt)
+                    : _createGrid(parent, bondElt, gridParent);
+        if (null == _generator) {
+          alert('Unable to draw selected area!');
           tls.disableGridTools();
+          return false;
         }
+        tls.freeze();
+        tls.disableAreaProps();
+        _generator.start(pt);
+        return true;
+      }
 
-      };
+      function onProgress(parent, pt) {
+        let width = parent.getAttribute('width');
+        let height = parent.getAttribute('height');
+        _generator.progress(pt, width, height);
+      }
+
+      function onEnd(parent, pt) {
+        let complete = true;
+        let width = parent.getAttribute('width');
+        let height = parent.getAttribute('height');
+        switch(_generator.end(pt, width, height)) {
+        case 'done':
+          let fig = _generator.figure;
+          mdl.addArea(fig);
+          setModified();
+          selector.select(fig);
+          tls.release();
+          fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
+          fig.dom.addEventListener('mouseleave', onAreaLeave.bind(fig), false);
+          _generator = null;
+          break;
+        case 'error':
+          alert('Invalid area dimensions!');
+          tls.release();
+          break;
+        case 'continue':
+        default:
+          complete = false;
+        }
+        return complete;
+      }
+
+      function onCancel() {
+        _generator.cancel();
+        _generator = null;
+        tls.release();
+        tls.disableGridTools();
+      }
 
       return {
-        handlers
+        handlers : { prevent, onStart, onProgress, onEnd, onCancel }
       };
 
     })();
 
     var selector = (function() {
 
-      var tracker = null;
+      var _tracker = null,
+          _selected = new bitedit.MultiSelector();
 
-      function updateGridTools() {
+      function _updateGridTools() {
         tls.blurAreaProps();
-        if (context.selected.length === 1) {
-          tls.enableGridTools(context.selected.get(0).figure);
+        if (_selected.length === 1) {
+          tls.enableGridTools(_selected.get(0).figure);
         } else {
           tls.disableGridTools();
         }
       }
 
-      function areaSelect(area) {
+      function isAreaSelected(area) {
+        return _selected.has(mdl.findArea(area));
+      }
+
+      function _areaSelect(area) {
         tls.blurAreaProps();
-        context.selected.set(mdl.findArea(area));
-        tls.enableGridTools(context.selected.get(0).figure);
+        _selected.set(mdl.findArea(area));
+        _selected.get(0).highlight();
+        tls.enableGridTools(_selected.get(0).figure);
       }
 
-      function areaMultiSelect(area) {
-        context.selected.toggle(mdl.findArea(area));
-        updateGridTools();
+      function _areaMultiSelect(area) {
+        if (_selected.length > 0)
+          _selected.get(0).trivialize();
+        _selected.toggle(mdl.findArea(area));
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
+        _updateGridTools();
       }
 
-      function computeSelection(coords) {
+      function _computeSelection(coords) {
         mdl.forEachArea(function(e) {
           if (e.within(coords)) {
-            if (!context.selected.has(e)) {
-              context.selected.toggle(e);
+            if (!_selected.has(e)) {
+              _selected.toggle(e);
             }
-          } else if (context.selected.has(e)) {
-            context.selected.toggle(e);
+          } else if (_selected.has(e)) {
+            _selected.toggle(e);
           }
         });
-        updateGridTools();
+        _updateGridTools();
       }
 
-      function areaSelectAll() {
-        mdl.forEachArea(e => context.selected.add(e));
-        updateGridTools();
+      function _areaSelectAll() {
+        if (_selected.length > 0)
+          _selected.get(0).trivialize();
+        __selected.empty();
+        mdl.forEachArea(e => _selected.add(e));
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
+        _updateGridTools();
       }
 
-      function areaUnselectAll() {
-        context.selected.empty();
+      function _areaUnselectAll() {
+        if (_selected.length > 0)
+          _selected.get(0).trivialize();
+        _selected.empty();
         tls.disableGridTools();
       }
 
-      function areaSelectSubset(areas) {
-        areas.forEach(e => context.selected.add(e));
-        updateGridTools();
+      var getSelectedCount  = () => _selected.length,
+          getSelected       = () => _selected.get(0),
+          getSelectedList   = () => _selected.slice(),
+          empty             = () => _selected.empty(),
+          unselectAll       = _areaUnselectAll;
+
+      function select(figure) {
+        _selected.set(figure);
+        _selected.get(0).highlight();
+        tls.enableGridTools(figure);
       }
 
-      var handlers = {
+      function selectSubset(figures) {
+        figures.forEach(e => _selected.add(e));
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
+        _updateGridTools();
+      }
 
-        preventSelect : function(e) {
-          if (e.ctrlKey || e.metaKey || e.altKey) return true;
-          if (!mdl.findArea(e.target)) return true;
-          if (isAreaSelected(e.target) && !e.shiftKey) return true; // is a move
-          return false;
-        },
+      function preventSelect(e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return true;
+        if (!mdl.findArea(e.target)) return true;
+        if (isAreaSelected(e.target) && !e.shiftKey) return true; // is a move
+        return false;
+      }
 
-        onSelect(target, shiftKey) {
-          if (!shiftKey) {
-            areaSelect(target);
-          } else {
-            areaMultiSelect(target);
-          }
-        },
+      function onSelect(target, shiftKey) {
+        if (!shiftKey) {
+          _areaSelect(target);
+        } else {
+          _areaMultiSelect(target);
+        }
+      }
 
-        preventTracking : function(e) {
-          if (!tls.none()) return true;
-          if (!utils.noMetaKey(e)) return true;
-          if (mdl.findArea(e.target)) return true;
-          if (bitedit.isGrip(e.target)) return true;
-          return false;
-        },
+      function onSelectAll() {
+        _areaSelectAll();
+      }
 
-        onTrackStart : function(parent, pt, unselect) {
-          areaUnselectAll();
-          tracker = new bitgen.Tracker(parent);
-          tracker.start(pt);
-          tls.freeze();
-        },
+      function onUnselectAll() {
+        _areaUnselectAll();
+      }
 
-        onTrackProgress : function(pt) {
-          tracker.progress(pt);
-          computeSelection(tracker.coords);
-        },
+      function preventTracking(e) {
+        if (!tls.none()) return true;
+        if (!utils.noMetaKey(e)) return true;
+        if (mdl.findArea(e.target)) return true;
+        if (bitedit.isGrip(e.target)) return true;
+        return false;
+      }
 
-        onTrackEnd : function() {
-          tracker.cancel();
-          tracker = null;
-        },
-        
-        onTrackExit : function() {
-          tls.release();
-        },
+      function onTrackStart(parent, pt, unselect) {
+        _areaUnselectAll();
+        _tracker = new bitgen.Tracker(parent);
+        _tracker.start(pt);
+        tls.freeze();
+      }
 
-        onTrackCancel : function() {
-          tracker.cancel();
-          tracker = null;
-          tls.release();
-        },
+      function onTrackProgress(pt) {
+        _tracker.progress(pt);
+        _computeSelection(_tracker.coords);
+      }
 
-        onSelectAll : function() {
-          areaSelectAll();
-        },
+      function onTrackEnd() {
+        _tracker.cancel();
+        _tracker = null;
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
+      }
+      
+      function onTrackExit() {
+        if (_selected.length > 0)
+          _selected.get(0).highlight();
+        tls.release();
+      }
 
-        onUnselectAll : function() {
-          areaUnselectAll();
-        },
+      function onTrackCancel() {
+        _tracker.cancel();
+        _tracker = null;
+        tls.release();
+      }
 
-        onDeleteAll : function() {
-          context.selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
-          context.selected.forEach(e => mdl.removeArea(e.figure));
-          context.selected.empty();
-          tls.disableGridTools();
-          setModified();
-        },
+      function onDeleteAll() {
+        _selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
+        _selected.forEach(e => mdl.removeArea(e.figure));
+        _selected.empty();
+        tls.disableGridTools();
+        setModified();
+      }
 
-        onFreeze : function() {
-          if (context.selected.length === 1) {
-            let newSel = [];
-            if (mdl.freezeGridArea(context.selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
-              context.selected.empty();
-              newSel.forEach(e => context.selected.add(e));
-              updateGridTools();
-              newSel = null;
-              setModified();
-            }
+      function onFreeze() {
+        if (_selected.length === 1) {
+          let newSel = [];
+          if (mdl.freezeGridArea(_selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
+            _selected.get(0).trivialize();
+            _selected.empty();
+            newSel.forEach(e => _selected.add(e));
+            if (_selected.length > 0)
+              _selected.get(0).highlight();
+            _updateGridTools();
+            newSel = null;
+            setModified();
           }
         }
-
-      };
+      }
 
       return {
-        handlers,
-        selectSubset : areaSelectSubset
+        isAreaSelected,
+        getCount : getSelectedCount, first : getSelected, list : getSelectedList,
+        select, selectSubset, empty, unselectAll,
+        handlers : {
+          preventSelect, onSelect, onSelectAll, onUnselectAll,
+          preventTracking, onTrackStart, onTrackProgress, onTrackEnd, onTrackExit, onTrackCancel,
+          onDeleteAll, onFreeze
+        }
       };
 
     })();
 
     var mover = (function() {
 
-      var handlers = {
+      var _mover = new bitedit.Mover();
 
-        prevent : function(e) {
-          if (!mdl.findArea(e.target)) return true;
-          if (!isAreaSelected(e.target)) return true;
-          return false;
-        },
+      function prevent(e) {
+        if (!mdl.findArea(e.target)) return true;
+        if (!selector.isAreaSelected(e.target)) return true;
+        return false;
+      }
 
-        onStart : (parent, pt) => {
-          let width = parent.getAttribute('width');
-          let height = parent.getAttribute('height');
-          context.selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
-          context.mover.start(context.selected, pt, width, height);
-          tls.freeze();
-        },
-        onProgress : pt => context.mover.progress(pt),
-        onEnd : pt => {
-          context.mover.end(pt);
-          setModified();
-        },
-        onExit : e => tls.release(),
-        onCancel : ()  => {
-          context.mover.cancel();
-          tls.release();
-        },
- 
-        onStep : function(parent, dx, dy) {
-          let width = parent.getAttribute('width');
-          let height = parent.getAttribute('height');
-          context.mover.step(context.selected, dx, dy, width, height);
-          setModified();
-        },
+      function onStart(parent, pt) {
+        let width = parent.getAttribute('width');
+        let height = parent.getAttribute('height');
+        let selected = selector.list();
+        selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
+        _mover.start(selected, pt, width, height);
+        tls.freeze();
+      }
 
-        onRotate : function(parent, direction) {
-          if (1 < context.selected.length) {
-            alert('Rotation is supported for a single selected area!');
-            return;
-          }
-          let width = parent.getAttribute('width');
-          let height = parent.getAttribute('height');
-          if (!context.selected.get(0).rotate(direction, width, height)) {
-            alert('ERROR - Rotation possibly makes area go beyond limits!');
-          } else {
-            setModified();
-          }
+      function onProgress(pt) {
+        _mover.progress(pt)
+      }
+
+      function onEnd(pt) {
+        _mover.end(pt);
+        setModified();
+      }
+
+      function onExit(e) {
+        tls.release()
+      }
+
+      function onCancel() {
+        _mover.cancel();
+        tls.release();
+      }
+
+      function onStep(parent, dx, dy) {
+        let width = parent.getAttribute('width');
+        let height = parent.getAttribute('height');
+        _mover.step(selector.list(), dx, dy, width, height);
+        setModified();
+      }
+
+      function onRotate(parent, direction) {
+        if (1 < selector.getCount()) {
+          alert('Rotation is supported for a single selected area!');
+          return;
         }
-
-      };
+        let width = parent.getAttribute('width');
+        let height = parent.getAttribute('height');
+        if (!selector.first().rotate(direction, width, height)) {
+          alert('ERROR - Rotation possibly makes area go beyond limits!');
+        } else {
+          setModified();
+        }
+      }
 
       return {
-        handlers
+        handlers : {
+          prevent, onStart, onProgress, onEnd, onExit, onCancel,
+          onStep, onRotate
+        }
       };
 
     })();
 
     var editor = (function() {
 
-      var handlers = {
+      var _editor = new bitedit.Editor();
 
-        prevent : function(e) {
-          if (0 === context.selected.length) return true;
-          if (!context.selected.get(0).isEditable(e.target)) return true;
-          return false;
-        },
+      function prevent(e) {
+        if (0 === selector.getCount()) return true;
+        if (!selector.first().isEditable(e.target)) return true;
+        return false;
+      }
 
-        onStart : function(parent, target, pt) {
-          let width = parent.getAttribute('width');
-          let height = parent.getAttribute('height');
-          context.editor.start(context.selected.get(0), target, pt, width, height);
-          tls.freeze();
-        },
+      function onStart(parent, target, pt) {
+        let width = parent.getAttribute('width');
+        let height = parent.getAttribute('height');
+        _editor.start(selector.first(), target, pt, width, height);
+        tls.freeze();
+      }
 
-        onProgress : pt => context.editor.progress(pt),
-        onEnd : pt => {
-          context.editor.end(pt);
-          setModified();
-        },
-        onExit : e => tls.release(),
-        onCancel : () => {
-          context.editor.cancel();
-          tls.release();
-        }
+      function onProgress(pt) {
+        _editor.progress(pt)
+      }
 
-      };
+      function onEnd(pt) {
+        _editor.end(pt);
+        setModified();
+      }
+
+      function onExit(e) {
+        tls.release()
+      }
+
+      function onCancel() {
+        _editor.cancel();
+        tls.release();
+      }
 
       return {
-        handlers
+        handlers : { prevent, onStart, onProgress, onEnd, onExit, onCancel }
       };
 
     })();
