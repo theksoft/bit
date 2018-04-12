@@ -2154,6 +2154,10 @@ var fEquilateralTriangle = (function() {
     // CHECKERS
 
     checkVerticalBoundaries(selection, newCy, winHeight) {
+      return selection.reduce((a,e) => {
+        let hhalf = Math.round(e.figure.rect.height/2);
+        return a && newCy - hhalf >= 0 && newCy + hhalf <= winHeight;
+      }, true);
     }
 
     checkHorizontalBoundaries(selection, newCx, winWidth) {
@@ -2174,6 +2178,7 @@ var fEquilateralTriangle = (function() {
     // MODIFIERS
 
     alignHorizontally(selection, newCy) {
+      selection.forEach(e => e.moveToOffset(0, newCy - e.figure.center[1]));
     }
 
     alignVertically(selection, newCx) {

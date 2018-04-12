@@ -398,7 +398,7 @@ var bitarea = (function() {
     draw(coords) {
       let c = coords || this._coords;
       if (this._dom) {
-        this.svgCoords = c;
+        this._svgCoords = c;
         this._dom.setAttribute('cx', c.x);
         this._dom.setAttribute('cy', c.y);
         this._dom.setAttribute('r', c.r);
@@ -414,7 +414,7 @@ var bitarea = (function() {
     }
 
     get center() {
-      return [this._svgCoords.x, this._svgCoords.y];
+      return [this._coords.x, this._coords.y];
     }
 
     get rect() {
@@ -771,7 +771,11 @@ var bitarea = (function() {
     }
 
     get center() {
-      return [this._coords[0].x, this._coords[0].y];
+      let r = this.rect;
+      return [
+        r.x + Math.round(r.width/2),
+        r.y + Math.round(r.height/2)
+      ];
     }
 
     get rect() {
