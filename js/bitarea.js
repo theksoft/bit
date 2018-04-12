@@ -92,6 +92,11 @@ var bitarea = (function() {
       return Object.assign({}, coords || this._coords);
     }
 
+    get rect() {
+      console.log('rect() not defined');
+      return { x : 0, y : 0, width : 0, height : 0 };
+    }
+
     set svgCoords(coords) {
       Object.assign(this._svgCoords, coords);
     }
@@ -282,6 +287,13 @@ var bitarea = (function() {
       ];
     }
 
+    get rect() {
+      return {
+        x : this._coords.x, y : this._coords.y,
+        width : this._coords.width, height : this._coords.height
+      };
+    }
+
   } // RECTANGLE
 
   /*
@@ -386,7 +398,7 @@ var bitarea = (function() {
     draw(coords) {
       let c = coords || this._coords;
       if (this._dom) {
-        this.svgCoords = c;
+        this._svgCoords = c;
         this._dom.setAttribute('cx', c.x);
         this._dom.setAttribute('cy', c.y);
         this._dom.setAttribute('r', c.r);
@@ -402,7 +414,16 @@ var bitarea = (function() {
     }
 
     get center() {
-      return [this._svgCoords.x, this._svgCoords.y];
+      return [this._coords.x, this._coords.y];
+    }
+
+    get rect() {
+      return {
+        x : this._coords.x - this._coords.r,
+        y : this._coords.y - this._coords.r,
+        width : 2 * this._coords.r,
+        height : 2 * this._coords.r
+      };
     }
 
   } // CIRCLE CLASS (from CENTER)
@@ -750,7 +771,22 @@ var bitarea = (function() {
     }
 
     get center() {
-      return [this._coords[0].x, this._coords[0].y];
+      let r = this.rect;
+      return [
+        r.x + Math.round(r.width/2),
+        r.y + Math.round(r.height/2)
+      ];
+    }
+
+    get rect() {
+      let d = this._coords.reduce((r,e) => {
+        if (e.x < r.xm) r.xm = e.x;
+        if (e.x > r.xM) r.xM = e.x;
+        if (e.y < r.ym) r.ym = e.y;
+        if (e.y > r.yM) r.yM = e.y;
+        return r;
+      }, { xm: 100000, xM: -100000, ym: 100000, yM: -100000 });
+      return { x : d.xm, y : d.ym, width : d.xM - d.xm, height : d.yM - d.ym };
     }
 
   } // POLYGON

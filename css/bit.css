@@ -297,6 +297,11 @@ ul, ol {
   display: none;
 }
 
+#tools img.button:active {
+  background-color: #e8ffdd;
+  border: 2px solid #008000;
+}
+
 /* TOOLS PROPERTIES FORM */
 
 #area-props label {
