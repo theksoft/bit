@@ -18,7 +18,9 @@ var bit = (function() {
       RIGHT : 39,
       DOWN  : 40,
       a     : 65,
+      c     : 67,
       s     : 83,
+      v     : 86,
       F8    : 119
     };
       
@@ -55,6 +57,7 @@ var bit = (function() {
       leftButtonHeld : e => Math.floor(e.buttons/2)*2 !== e.buttons ? true : false,
       noMetaKey : e => (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
+      ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       keyCodes, fgTypes,
       clsActions
 
@@ -692,13 +695,23 @@ var bit = (function() {
           }
           break;
         case utils.keyCodes.a:
-          if (ready() && utils.ctrlKey(e)) {
+          if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onSelectAll();
           }
           break;
         case utils.keyCodes.F8:
-          if (ready() && utils.ctrlKey(e)) {
+          if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onFreeze();
+          }
+          break;
+        case utils.keyCodes.c:
+          if (ready() && utils.ctrlMetaKey(e)) {
+            context.aSel.onCopySelection();
+          }
+          break;
+        case utils.keyCodes.v:
+          if (ready() && utils.ctrlMetaKey(e)) {
+            context.aSel.onPasteSelection();
           }
           break;
         default:
@@ -2909,6 +2922,16 @@ var bit = (function() {
         }
       }
 
+      function onCopy() {
+        if (_selected.length < 1) return;
+        console.log('onCopy');
+      }
+
+      function onPaste() {
+        if (_selected.length < 1) return;
+        console.log('onPaste');
+      }
+
       return {
         isAreaSelected,
         getCount : getSelectedCount, first : getSelected, list : getSelectedList,
@@ -2916,7 +2939,7 @@ var bit = (function() {
         handlers : {
           preventSelect, onSelect, onSelectAll, onUnselectAll,
           preventTracking, onTrackStart, onTrackProgress, onTrackEnd, onTrackExit, onTrackCancel,
-          onDeleteAll, onFreeze
+          onDeleteAll, onFreeze, onCopySelection : onCopy, onPasteSelection : onPaste
         }
       };
 
