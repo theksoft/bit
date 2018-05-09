@@ -302,7 +302,8 @@ var bit = (function() {
   var clp = (function() {
 
     var context = {
-        data : null
+        data  : null,
+        risky : false
     };
 
     function copy(areas, selected) {
@@ -314,17 +315,19 @@ var bit = (function() {
       selected.forEach((e) => cb.selected.push(areas.indexOf(e)));
       context.data = JSON.stringify(cb);
       cb = null;
-console.log(data);
+      context.risky = false;
+console.log(context.data);
     }
 
     function paste() {
-console.log(data);
+console.log(context.data);
       let cb = JSON.parse(data || '{}');
       cb = null;
     }
 
     return {
-      copy, paste
+      copy, paste,
+      isRisky : () => context.risky, setRisky : () => context.risky = true
     }
 
   })();
@@ -2331,13 +2334,15 @@ console.log(data);
       fileDropZone : $('file-drop-zone')
     };
 
-    var setModified = () => {
+    var setModified = safe => {
       mdl.setModified();
+      if (!safe) clp.setRisky();
       mnu.canSave();
     };
 
     var setUnmodified = () => {
       mdl.setUnmodified();
+      clp.setRisky();
       mnu.preventSave();
     };
 
@@ -2963,8 +2968,10 @@ console.log(data);
       }
 
       function onPaste() {
-        if (_selected.length < 1) return;
+        if (clp.isRisky() && !confirm('Project has been modified and only a deep copy can be done.\nPerform a deep copy?'))
+          return;
         console.log('onPaste');
+        setModified(true);
       }
 
       return {
