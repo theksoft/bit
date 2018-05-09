@@ -207,7 +207,7 @@ var bit = (function() {
         rtn.size = context.size;
         rtn.areas = [];
         context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-        context.areas.forEach((e, i, a) => rtn.areas.push(a2s(e, i, a)));
+        context.areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)));
         return rtn;
       },
       
@@ -220,7 +220,7 @@ var bit = (function() {
         context.type = project.type;
         context.size = project.size;
         context.areas = [];
-        project.areas.forEach((e, i) => context.areas.push(s2a(e, i, context.areas)));
+        project.areas.forEach((e,i) => context.areas.push(s2a(e, i, context.areas)));
         return true;
       }
 
@@ -295,6 +295,40 @@ var bit = (function() {
 
   })();
 
+  /*
+   * PSEUDO-CLIPBOARD MANAGEMENT 
+   */
+
+  var clp = (function() {
+
+    var context = {
+        data : null
+    };
+
+    function copy(areas, selected) {
+      let cb = {};
+      cb.areas = [];
+      areas.sort((a,b) => a.isGrid ? 1 : -1);
+      areas.forEach((e,i,a) => cb.areas.push(e.toRecord(i,a)));
+      cb.selected = [];
+      selected.forEach((e) => cb.selected.push(areas.indexOf(e)));
+      context.data = JSON.stringify(cb);
+      cb = null;
+console.log(data);
+    }
+
+    function paste() {
+console.log(data);
+      let cb = JSON.parse(data || '{}');
+      cb = null;
+    }
+
+    return {
+      copy, paste
+    }
+
+  })();
+  
   /*
    * WORKAREA MANAGEMENT
    */
@@ -2925,6 +2959,7 @@ var bit = (function() {
       function onCopy() {
         if (_selected.length < 1) return;
         console.log('onCopy');
+        clp.copy(mdl.getAreas(), _selected.reduce((a,e) => { a.push(e.figure); return a; }, []));
       }
 
       function onPaste() {
