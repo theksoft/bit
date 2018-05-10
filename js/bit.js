@@ -317,7 +317,7 @@ var bit = (function() {
 
     var context = {
         data  : null,
-        basic : false,
+        basic : true,
         risky : false
     };
 
@@ -332,7 +332,7 @@ console.log(context.data);
     function setClipboard(c) {
       context.data = JSON.stringify(c);
       context.basic = c.basic;
-      context.risky = false;
+      context.unsafe = false;
       c = null;
 console.log(context.data);
     }
@@ -343,7 +343,7 @@ console.log(context.data);
 
     return {
       setClipboard,
-      setRisky : () => { if (!context.basic) context.risky = true; }, isRisky : () => context.risky,
+      setCopyUnsafe : () => { if (!context.basic) context.unsafe = true; }, isCopyUnsafe : () => context.unsafe,
       a2c
     }
 
@@ -2351,16 +2351,16 @@ console.log(context.data);
       fileDropZone : $('file-drop-zone')
     };
 
-    var setModified = safe => {
+    var setModified = unsafe => {
       mdl.setModified();
-      if (!safe) clp.setRisky();
       mnu.canSave();
+      if (unsafe) clp.setCopyUnsafe();
     };
 
-    var setUnmodified = () => {
+    var setUnmodified = unsafe => {
       mdl.setUnmodified();
-      clp.setRisky();
       mnu.preventSave();
+      if (unsafe) clp.setCopyUnsafe();
     };
 
     function freeze() {
@@ -2398,7 +2398,7 @@ console.log(context.data);
           mnu.switchToEditMode();
           ftr.info(data.file);
           wks.load(data.file);
-          setModified();
+          setModified(true);
           rtn = true;
         } else {
           ftr.error(data.file);
@@ -2419,7 +2419,7 @@ console.log(context.data);
             e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
           });
           mnu.switchToEditMode();
-          setUnmodified();
+          setUnmodified(true);
           rtn = true;
         } else {
           ftr.errorEx(project);
@@ -2440,7 +2440,7 @@ console.log(context.data);
               e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
               e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
             });
-            setModified();
+            setModified(true);
             selector.unselectAll();
             selector.selectSubset(areas);
             rtn = true;
@@ -2778,7 +2778,7 @@ console.log(context.data);
         case 'done':
           let fig = _generator.figure;
           mdl.addArea(fig);
-          setModified();
+          setModified(true);
           selector.select(fig);
           tls.release();
           fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
@@ -2959,7 +2959,7 @@ console.log(context.data);
         _selected.forEach(e => mdl.removeArea(e.figure));
         _selected.empty();
         tls.disableGridTools();
-        setModified();
+        setModified(true);
       }
 
       function onFreeze() {
@@ -2973,7 +2973,7 @@ console.log(context.data);
               _selected.get(0).highlight();
             _updateGridTools();
             newSel = null;
-            setModified();
+            setModified(true);
           }
         }
       }
@@ -2985,11 +2985,11 @@ console.log('onCopy');
       }
 
       function onPaste() {
-        if (clp.isRisky() && !confirm('Project has been modified and only a deep copy can be done.\nPerform a deep copy?'))
+        if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
           return;
 console.log('onPaste');
         // TODO: Manage selection
-        setModified(true);
+        setModified();
       }
 
       return {
