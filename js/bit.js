@@ -95,135 +95,134 @@ var bit = (function() {
       return false;
     }
 
-    return {
+    function reset() {
+      context.mode = 'new';
+      context.modified = false;
+      context.dataURL = context.filename = context.type = '';
+      context.size = 0;
+      context.name = context.alt = '';
+      context.width = context.height = 0;
+      context.areas.sort((a,b) => a.isGrid ? -1 : 1);
+      context.areas.forEach(e => e.remove());
+      context.areas.splice(0, context.areas.length);
+      return this;
+    }
 
+    function setFile(f) {
+      var reader = new FileReader();
+      if (validateImgFile(f)) {
+        reader.addEventListener('load', () => context.dataURL = reader.result, false);
+        reader.readAsDataURL(f);
+        context.filename = f.name;
+        context.type = f.type;
+        context.size = f.size;
+        return true;
+      }
+      return false;
+    }
+
+    function getFile() {
+      return context.filename; 
+    }
+
+    function setInfo(data) {
+      context.name = data.name;
+      context.alt = data.alt;
+    }
+
+    function getInfo() {
+      return { name : context.name, alt : context.alt };
+    }
+
+    function getAreas() {
+      return context.areas.slice();
+    }
+
+    function addArea(area) {
+      context.areas.push(area);
+    }
+
+    function addAreas(areas) {
+      areas.forEach(e => context.areas.push(e));
+    }
+
+    function removeArea(area) {
+      if(-1 != context.areas.indexOf(area)) {
+        if (!area.isGrid && area.hasBonds()) {
+          if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
+            return;
+          }
+          let bonds = area.copyBonds();
+          bonds.forEach(e => {
+            let j = context.areas.indexOf(e);
+            e.remove();
+            context.areas.splice(j, 1);
+          });
+          bonds.splice(0, bonds.length);
+        }
+        let i = context.areas.indexOf(area);
+        area.remove();
+        context.areas.splice(i, 1);
+      }
+    }
+
+    function findArea(obj) {
+      return context.areas.find(function(e) {
+        return e.is(obj);
+      });
+    }
+
+    function freezeGridArea(grid, areas, specialize) {
+      if (!grid.isGrid ||
+          false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
+        return false;
+      }
+      let i = context.areas.indexOf(grid);
+      grid.freezeTo(areas, specialize);
+      grid.remove();
+      context.areas.splice(i, 1);
+      areas.forEach(e => context.areas.push(e));
+      return true;
+    }
+
+    function toStore(a2s) {
+      let rtn = {};
+      rtn.dataURL = context.dataURL;
+      rtn.name = context.name;
+      rtn.alt = context.alt;
+      rtn.filename = context.filename;
+      rtn.type = context.type;
+      rtn.size = context.size;
+      rtn.areas = [];
+      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
+      context.areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)));
+      return rtn;
+    }
+    
+    function fromStore(project, s2a) {
+      context.modified = false;
+      context.dataURL = project.dataURL;
+      context.name = project.name;
+      context.alt = project.alt;
+      context.filename = project.filename;
+      context.type = project.type;
+      context.size = project.size;
+      context.areas = [];
+      project.areas.forEach((e,i) => context.areas.push(s2a(e, i, context.areas)));
+      return true;
+    }
+
+    return {
       setModified : () => context.modified = true,
       setUnmodified : () => context.modified = false,
       isModified : () => context.modified,
-
-      reset : function() {
-        context.mode = 'new';
-        context.modified = false;
-        context.dataURL = context.filename = context.type = '';
-        context.size = 0;
-        context.name = context.alt = '';
-        context.width = context.height = 0;
-        context.areas.sort((a,b) => a.isGrid ? -1 : 1);
-        context.areas.forEach(e => e.remove());
-        context.areas.splice(0, context.areas.length);
-        return this;
-      },
-
-      validateImgFile,
-      setFile : function(f) {
-        var reader = new FileReader();
-        if (validateImgFile(f)) {
-          reader.addEventListener('load', () => context.dataURL = reader.result, false);
-          reader.readAsDataURL(f);
-          context.filename = f.name;
-          context.type = f.type;
-          context.size = f.size;
-          return true;
-        }
-        return false;
-      },
-
-      getFile : function() {
-        return context.filename; 
-      },
-
-      setInfo(data) {
-        context.name = data.name;
-        context.alt = data.alt;
-      },
-
-      getInfo() {
-        return {
-          name : context.name,
-          alt : context.alt
-        };
-      },
-
-      getAreas : function() {
-        return context.areas.slice();
-      },
-
-      addArea : function(area) {
-        context.areas.push(area);
-      },
-
-      addAreas(areas) {
-        areas.forEach(e => context.areas.push(e));
-      },
-
-      removeArea : function(area) {
-        if(-1 != context.areas.indexOf(area)) {
-          if (!area.isGrid && area.hasBonds()) {
-            if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
-              return;
-            }
-            let bonds = area.copyBonds();
-            bonds.forEach(e => {
-              let j = context.areas.indexOf(e);
-              e.remove();
-              context.areas.splice(j, 1);
-            });
-            bonds.splice(0, bonds.length);
-          }
-          let i = context.areas.indexOf(area);
-          area.remove();
-          context.areas.splice(i, 1);
-        }
-      },
-
-      findArea : function(obj) {
-        return context.areas.find(function(e) {
-          return e.is(obj);
-        });
-      },
-
+      reset,
+      validateImgFile, setFile, getFile,
+      setInfo, getInfo,
+      getAreas, addArea, addAreas, removeArea, findArea,
       forEachArea : f => context.areas.forEach(f),
-
-      freezeGridArea : function(grid, areas, specialize) {
-        if (!grid.isGrid ||
-            false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
-          return false;
-        }
-        let i = context.areas.indexOf(grid);
-        grid.freezeTo(areas, specialize);
-        grid.remove();
-        context.areas.splice(i, 1);
-        areas.forEach(e => context.areas.push(e));
-        return true;
-      },
-
-      toStore(a2s) {
-        let rtn = {};
-        rtn.dataURL = context.dataURL;
-        rtn.name = context.name;
-        rtn.alt = context.alt;
-        rtn.filename = context.filename;
-        rtn.type = context.type;
-        rtn.size = context.size;
-        rtn.areas = [];
-        context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-        context.areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)));
-        return rtn;
-      },
-      
-      fromStore(project, s2a) {
-        context.modified = false;
-        context.dataURL = project.dataURL;
-        context.name = project.name;
-        context.alt = project.alt;
-        context.filename = project.filename;
-        context.type = project.type;
-        context.size = project.size;
-        context.areas = [];
-        project.areas.forEach((e,i) => context.areas.push(s2a(e, i, context.areas)));
-        return true;
-      }
-
+      freezeGridArea,
+      toStore, fromStore
     };
 
   })(); /* DATA MODEL MANAGEMENT */
@@ -319,7 +318,7 @@ var bit = (function() {
 console.log(context.data);
     }
 
-    function paste() {
+    function paste(areas) {
 console.log(context.data);
       let cb = JSON.parse(data || '{}');
       cb = null;
@@ -2971,6 +2970,7 @@ console.log(context.data);
         if (clp.isRisky() && !confirm('Project has been modified and only a deep copy can be done.\nPerform a deep copy?'))
           return;
         console.log('onPaste');
+        // TODO: Manage selection
         setModified(true);
       }
 
