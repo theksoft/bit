@@ -212,6 +212,20 @@ var bit = (function() {
       return true;
     }
 
+    function toClipboard(selected, a2c) {
+      let rtn = {};
+      rtn.areas = [];
+      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
+      context.areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i,a)));
+      rtn.selected = [];
+      selected.forEach((e) => rtn.selected.push(context.areas.indexOf(e)));
+      rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true);
+      return rtn;
+    }
+
+    function fromClipboard() {
+    }
+
     return {
       setModified : () => context.modified = true,
       setUnmodified : () => context.modified = false,
@@ -222,7 +236,8 @@ var bit = (function() {
       getAreas, addArea, addAreas, removeArea, findArea,
       forEachArea : f => context.areas.forEach(f),
       freezeGridArea,
-      toStore, fromStore
+      toStore, fromStore,
+      toClipboard, fromClipboard
     };
 
   })(); /* DATA MODEL MANAGEMENT */
@@ -302,31 +317,34 @@ var bit = (function() {
 
     var context = {
         data  : null,
+        basic : false,
         risky : false
     };
 
-    function copy(areas, selected) {
-      let cb = {};
-      cb.areas = [];
-      areas.sort((a,b) => a.isGrid ? 1 : -1);
-      areas.forEach((e,i,a) => cb.areas.push(e.toRecord(i,a)));
-      cb.selected = [];
-      selected.forEach((e) => cb.selected.push(areas.indexOf(e)));
-      context.data = JSON.stringify(cb);
-      cb = null;
-      context.risky = false;
-console.log(context.data);
-    }
-
+/*
     function paste(areas) {
 console.log(context.data);
       let cb = JSON.parse(data || '{}');
       cb = null;
     }
+*/
+
+    function setClipboard(c) {
+      context.data = JSON.stringify(c);
+      context.basic = c.basic;
+      context.risky = false;
+      c = null;
+console.log(context.data);
+    }
+
+    function a2c(area, index, areas) {
+      return area.toRecord(index, areas);
+    }
 
     return {
-      copy, paste,
-      isRisky : () => context.risky, setRisky : () => context.risky = true
+      setClipboard,
+      isRisky : () => context.risky, setRisky : () => context.risky = true,
+      a2c
     }
 
   })();
@@ -2962,14 +2980,14 @@ console.log(context.data);
 
       function onCopy() {
         if (_selected.length < 1) return;
-        console.log('onCopy');
-        clp.copy(mdl.getAreas(), _selected.reduce((a,e) => { a.push(e.figure); return a; }, []));
+console.log('onCopy');
+        clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
       }
 
       function onPaste() {
         if (clp.isRisky() && !confirm('Project has been modified and only a deep copy can be done.\nPerform a deep copy?'))
           return;
-        console.log('onPaste');
+console.log('onPaste');
         // TODO: Manage selection
         setModified(true);
       }
