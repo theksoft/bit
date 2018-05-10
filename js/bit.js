@@ -343,7 +343,7 @@ console.log(context.data);
 
     return {
       setClipboard,
-      isRisky : () => context.risky, setRisky : () => context.risky = true,
+      setRisky : () => { if (!context.basic) context.risky = true; }, isRisky : () => context.risky,
       a2c
     }
 
