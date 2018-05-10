@@ -10,20 +10,6 @@ var bit = (function() {
 
   var utils = (function() {
 
-    const keyCodes = {
-      ESC   : 27,
-      DEL   : 46,
-      LEFT  : 37,
-      UP    : 38,
-      RIGHT : 39,
-      DOWN  : 40,
-      a     : 65,
-      c     : 67,
-      s     : 83,
-      v     : 86,
-      F8    : 119
-    };
-      
     const fgTypes = {
       NONE          : 'none',
       HEXDTR        : 'hexDtr',
@@ -58,7 +44,8 @@ var bit = (function() {
       noMetaKey : e => (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
-      keyCodes, fgTypes,
+      ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
+      fgTypes,
       clsActions
 
     };
@@ -216,14 +203,43 @@ var bit = (function() {
       let rtn = {};
       rtn.areas = [];
       context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-      context.areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i,a)));
+      context.areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i, a)));
       rtn.selected = [];
       selected.forEach((e) => rtn.selected.push(context.areas.indexOf(e)));
       rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true);
       return rtn;
     }
 
-    function fromClipboard() {
+    function fromClipboard(c, c2a, deep) {
+      let area, copied = [];
+      if (!deep && !c.unsafe) {
+        c.selected.forEach(e => {
+          area = c2a(c.areas[e], e, context.areas);
+          copied.push(area);
+        });
+      } else {
+        // Deep copy
+        let insert, index, deep;
+        deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1);
+        insert = deep.findIndex(e => c.areas[e].isGrid);
+        c.selected.forEach(e => {
+          area = c.areas[e];
+          if (area.isGrid) {
+            index = deep.indexOf(area.bonds[0]);
+            if (-1 === index) {
+              deep.splice(insert, 0, area.bonds[0]);
+              index = insert++;
+            }
+            area.bonds[0] = index;
+          }
+        });
+        deep.forEach((e,i) => {
+          c.areas[e].index = i;
+          area = c2a(c.areas[e], i, copied);
+          copied.push(area);
+        });
+      }
+      return copied;
     }
 
     return {
@@ -289,7 +305,7 @@ var bit = (function() {
     function s2a(stored, index, areas) {
       let area;
       if (index !== stored.index || index != areas.length) {
-        console.log('ERROR - Corrupted record with bad index');
+        console.log('ERROR - Corrupted stored record with bad index');
         return null;
       }
       area = (!stored.isGrid)
@@ -318,33 +334,47 @@ var bit = (function() {
     var context = {
         data  : null,
         basic : true,
-        risky : false
+        risky : false,
+        offset : 0
     };
 
-/*
-    function paste(areas) {
-console.log(context.data);
-      let cb = JSON.parse(data || '{}');
-      cb = null;
-    }
-*/
+    const COPY_OFFSET = 10;
 
     function setClipboard(c) {
       context.data = JSON.stringify(c);
       context.basic = c.basic;
       context.unsafe = false;
+      context.offset = 0;
       c = null;
-console.log(context.data);
+    }
+
+    function getClipboard() {
+      let c = JSON.parse(context.data || '{}');
+      c.unsafe = context.unsafe;
+      context.offset += COPY_OFFSET;
+      return c;
     }
 
     function a2c(area, index, areas) {
       return area.toRecord(index, areas);
     }
 
+    function c2a(record, index, areas) {
+      let area;
+      if (index !== record.index || index > areas.length) {
+        console.log('ERROR - Corrupted clipboard record with bad index');
+        return null;
+      }
+      area = (!record.isGrid)
+          ? bitarea.createFromRecord(record, wks.getParent())
+          : bitgrid.createFromRecord(record, wks.getParent(), wks.getGridParent(), areas);
+      return area;
+    }
+
     return {
-      setClipboard,
+      setClipboard, getClipboard,
       setCopyUnsafe : () => { if (!context.basic) context.unsafe = true; }, isCopyUnsafe : () => context.unsafe,
-      a2c
+      a2c, c2a, offset : () => context.offset
     }
 
   })();
@@ -628,7 +658,7 @@ console.log(context.data);
 
       function onDrawCancel(e) {
         e.preventDefault();
-        if (utils.keyCodes.ESC === e.keyCode) {
+        if ('Escape' === e.key) {
           context.aDrw.onCancel();
           exit();
         }
@@ -737,33 +767,33 @@ console.log(context.data);
 
       function onKeyAction(e) {
         e.preventDefault();
-        switch(e.keyCode) {
-        case utils.keyCodes.ESC:
+        switch(e.key) {
+        case 'Escape':
           if (ready() && utils.noMetaKey(e)) {
             context.aSel.onUnselectAll();
           }
           break;
-        case utils.keyCodes.DEL:
+        case 'Delete':
           if (ready() && utils.noMetaKey(e)) {
             context.aSel.onDeleteAll();
           }
           break;
-        case utils.keyCodes.a:
+        case 'a':
           if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onSelectAll();
           }
           break;
-        case utils.keyCodes.F8:
+        case 'F8':
           if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onFreeze();
           }
           break;
-        case utils.keyCodes.c:
+        case 'c':
           if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onCopySelection();
           }
           break;
-        case utils.keyCodes.v:
+        case 'v':
           if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onPasteSelection();
           }
@@ -868,7 +898,7 @@ console.log(context.data);
 
       function onMoveCancel(e) {
         e.preventDefault();
-        if (utils.keyCodes.ESC === e.keyCode) {
+        if ('Escape' === e.key) {
           context.aMov.onCancel();
           context.state = states.MOVED;
         }
@@ -876,8 +906,8 @@ console.log(context.data);
 
       function onMoveStep(e) {
         e.preventDefault();
-        switch(e.keyCode) {
-        case utils.keyCodes.LEFT:
+        switch(e.key) {
+        case 'ArrowLeft':
           if (ready()) {
             if (utils.noMetaKey(e)) {
               context.aMov.onStep(doms.drawarea, -1, 0);
@@ -886,7 +916,7 @@ console.log(context.data);
             }
           }
           break;
-        case utils.keyCodes.RIGHT:
+        case 'ArrowRight':
           if (ready()) {
             if (utils.noMetaKey(e)) {
               context.aMov.onStep(doms.drawarea, 1, 0);
@@ -895,12 +925,12 @@ console.log(context.data);
             }
           }
           break;
-        case utils.keyCodes.UP:
+        case 'ArrowUp':
           if (ready() && utils.noMetaKey(e)) {
             context.aMov.onStep(doms.drawarea, 0, -1);
           }
           break;
-        case utils.keyCodes.DOWN:
+        case 'ArrowDown':
           if (ready() && utils.noMetaKey(e)) {
             context.aMov.onStep(doms.drawarea, 0, 1);
           }
@@ -1004,7 +1034,7 @@ console.log(context.data);
 
       function onEditCancel(e) {
         e.preventDefault();
-        if (utils.keyCodes.ESC === e.keyCode) {
+        if ('Escape' === e.key) {
           context.aEdt.onCancel();
           context.state = states.EDITED;
         }
@@ -2284,9 +2314,9 @@ console.log(context.data);
     }
 
     function onKeyAction(e) {
-      switch(e.keyCode) {
-      case utils.keyCodes.s:
-        if (utils.ctrlKey(e)) {
+      switch(e.key) {
+      case 's':
+        if (utils.ctrlMetaKey(e)) {
           if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
             e.preventDefault();
             context.handlers.onSaveProject();
@@ -2980,15 +3010,25 @@ console.log(context.data);
 
       function onCopy() {
         if (_selected.length < 1) return;
-console.log('onCopy');
         clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
       }
 
       function onPaste() {
+        let areas;
         if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
           return;
-console.log('onPaste');
-        // TODO: Manage selection
+        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a);
+        if (areas.length > 0) {
+          mdl.addAreas(areas);
+          areas.forEach(e => {
+            e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
+            e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
+          });
+          setModified();
+          selector.unselectAll();
+          selector.selectSubset(areas);
+          mover.handlers.onStep(wks.getParent(), clp.offset(), clp.offset());
+        }
         setModified();
       }
 
