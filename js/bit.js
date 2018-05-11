@@ -2253,7 +2253,8 @@ var bit = (function() {
       loadProjectBtn    : $('load-project'),
       cleanProjectsBtn  : $('clean-projects'),
       generateBtn       : $('generate'),
-      loadHTMLBtn       : $('load-html')
+      loadHTMLBtn       : $('load-html'),
+      helpBtn           : $('help')
     },
     context = {
       handlers : null,
@@ -2305,6 +2306,12 @@ var bit = (function() {
         context.handlers.onLoadHTML();
     }
 
+    function onHelpBtnClick(e) {
+      e.preventDefault();
+      if (context.enabled)
+        context.handlers.onHelp();
+    }
+
     let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
     let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
     let release = () => {
@@ -2353,6 +2360,7 @@ var bit = (function() {
         doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
         doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
         doms.loadHTMLBtn.addEventListener('click', onLoadHTMLBtnClick, false);
+        doms.helpBtn.addEventListener('click', onHelpBtnClick, false);
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.add('disabled');
         doms.generateBtn.classList.add('disabled');
@@ -2564,7 +2572,7 @@ var bit = (function() {
       }
 
       function onHelp() {
-        console.log('F1 - Display help');
+        console.log('Display help');
       }
 
       return {
