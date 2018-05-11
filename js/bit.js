@@ -212,13 +212,13 @@ var bit = (function() {
 
     function fromClipboard(c, c2a, deep) {
       let area, copied = [];
-      if (!deep && !c.unsafe) {
+      if (c.basic || (!deep && !c.unsafe)) {
         c.selected.forEach(e => {
           area = c2a(c.areas[e], e, context.areas);
           copied.push(area);
         });
       } else {
-        // Deep copy
+        // Deep copy - include grid bonds if not originally selected
         let insert, index, deep;
         deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1);
         insert = deep.findIndex(e => c.areas[e].isGrid);
@@ -794,8 +794,11 @@ var bit = (function() {
           }
           break;
         case 'v':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onPasteSelection();
+        case 'V':
+          if (ready()) {
+            let deepCopy = utils.ctrlMetaShiftKey(e);
+            if (utils.ctrlMetaKey(e) || deepCopy)
+              context.aSel.onPasteSelection(deepCopy);
           }
           break;
         default:
@@ -3013,11 +3016,11 @@ var bit = (function() {
         clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
       }
 
-      function onPaste() {
+      function onPaste(forceDeepCopy) {
         let areas;
         if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
           return;
-        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a);
+        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a, forceDeepCopy);
         if (areas.length > 0) {
           mdl.addAreas(areas);
           areas.forEach(e => {
