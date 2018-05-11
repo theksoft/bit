@@ -10,18 +10,6 @@ var bit = (function() {
 
   var utils = (function() {
 
-    const keyCodes = {
-      ESC   : 27,
-      DEL   : 46,
-      LEFT  : 37,
-      UP    : 38,
-      RIGHT : 39,
-      DOWN  : 40,
-      a     : 65,
-      s     : 83,
-      F8    : 119
-    };
-      
     const fgTypes = {
       NONE          : 'none',
       HEXDTR        : 'hexDtr',
@@ -55,7 +43,9 @@ var bit = (function() {
       leftButtonHeld : e => Math.floor(e.buttons/2)*2 !== e.buttons ? true : false,
       noMetaKey : e => (!e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
-      keyCodes, fgTypes,
+      ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
+      ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
+      fgTypes,
       clsActions
 
     };
@@ -92,135 +82,178 @@ var bit = (function() {
       return false;
     }
 
-    return {
+    function reset() {
+      context.mode = 'new';
+      context.modified = false;
+      context.dataURL = context.filename = context.type = '';
+      context.size = 0;
+      context.name = context.alt = '';
+      context.width = context.height = 0;
+      context.areas.sort((a,b) => a.isGrid ? -1 : 1);
+      context.areas.forEach(e => e.remove());
+      context.areas.splice(0, context.areas.length);
+      return this;
+    }
 
+    function setFile(f) {
+      var reader = new FileReader();
+      if (validateImgFile(f)) {
+        reader.addEventListener('load', () => context.dataURL = reader.result, false);
+        reader.readAsDataURL(f);
+        context.filename = f.name;
+        context.type = f.type;
+        context.size = f.size;
+        return true;
+      }
+      return false;
+    }
+
+    function getFile() {
+      return context.filename; 
+    }
+
+    function setInfo(data) {
+      context.name = data.name;
+      context.alt = data.alt;
+    }
+
+    function getInfo() {
+      return { name : context.name, alt : context.alt };
+    }
+
+    function getAreas() {
+      return context.areas.slice();
+    }
+
+    function addArea(area) {
+      context.areas.push(area);
+    }
+
+    function addAreas(areas) {
+      areas.forEach(e => context.areas.push(e));
+    }
+
+    function removeArea(area) {
+      if(-1 != context.areas.indexOf(area)) {
+        if (!area.isGrid && area.hasBonds()) {
+          if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
+            return;
+          }
+          let bonds = area.copyBonds();
+          bonds.forEach(e => {
+            let j = context.areas.indexOf(e);
+            e.remove();
+            context.areas.splice(j, 1);
+          });
+          bonds.splice(0, bonds.length);
+        }
+        let i = context.areas.indexOf(area);
+        area.remove();
+        context.areas.splice(i, 1);
+      }
+    }
+
+    function findArea(obj) {
+      return context.areas.find(function(e) {
+        return e.is(obj);
+      });
+    }
+
+    function freezeGridArea(grid, areas, specialize) {
+      if (!grid.isGrid ||
+          false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
+        return false;
+      }
+      let i = context.areas.indexOf(grid);
+      grid.freezeTo(areas, specialize);
+      grid.remove();
+      context.areas.splice(i, 1);
+      areas.forEach(e => context.areas.push(e));
+      return true;
+    }
+
+    function toStore(a2s) {
+      let rtn = {};
+      rtn.dataURL = context.dataURL;
+      rtn.name = context.name;
+      rtn.alt = context.alt;
+      rtn.filename = context.filename;
+      rtn.type = context.type;
+      rtn.size = context.size;
+      rtn.areas = [];
+      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
+      context.areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)));
+      return rtn;
+    }
+    
+    function fromStore(project, s2a) {
+      context.modified = false;
+      context.dataURL = project.dataURL;
+      context.name = project.name;
+      context.alt = project.alt;
+      context.filename = project.filename;
+      context.type = project.type;
+      context.size = project.size;
+      context.areas = [];
+      project.areas.forEach((e,i) => context.areas.push(s2a(e, i, context.areas)));
+      return true;
+    }
+
+    function toClipboard(selected, a2c) {
+      let rtn = {};
+      rtn.areas = [];
+      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
+      context.areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i, a)));
+      rtn.selected = [];
+      selected.forEach((e) => rtn.selected.push(context.areas.indexOf(e)));
+      rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true);
+      return rtn;
+    }
+
+    function fromClipboard(c, c2a, deep) {
+      let area, copied = [];
+      if (c.basic || (!deep && !c.unsafe)) {
+        c.selected.forEach(e => {
+          area = c2a(c.areas[e], e, context.areas);
+          copied.push(area);
+        });
+      } else {
+        // Deep copy - include grid bonds if not originally selected
+        let insert, index, deep;
+        deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1);
+        insert = deep.findIndex(e => c.areas[e].isGrid);
+        c.selected.forEach(e => {
+          area = c.areas[e];
+          if (area.isGrid) {
+            index = deep.indexOf(area.bonds[0]);
+            if (-1 === index) {
+              deep.splice(insert, 0, area.bonds[0]);
+              index = insert++;
+            }
+            area.bonds[0] = index;
+          }
+        });
+        deep.forEach((e,i) => {
+          c.areas[e].index = i;
+          area = c2a(c.areas[e], i, copied);
+          copied.push(area);
+        });
+      }
+      return copied;
+    }
+
+    return {
       setModified : () => context.modified = true,
       setUnmodified : () => context.modified = false,
       isModified : () => context.modified,
-
-      reset : function() {
-        context.mode = 'new';
-        context.modified = false;
-        context.dataURL = context.filename = context.type = '';
-        context.size = 0;
-        context.name = context.alt = '';
-        context.width = context.height = 0;
-        context.areas.sort((a,b) => a.isGrid ? -1 : 1);
-        context.areas.forEach(e => e.remove());
-        context.areas.splice(0, context.areas.length);
-        return this;
-      },
-
-      validateImgFile,
-      setFile : function(f) {
-        var reader = new FileReader();
-        if (validateImgFile(f)) {
-          reader.addEventListener('load', () => context.dataURL = reader.result, false);
-          reader.readAsDataURL(f);
-          context.filename = f.name;
-          context.type = f.type;
-          context.size = f.size;
-          return true;
-        }
-        return false;
-      },
-
-      getFile : function() {
-        return context.filename; 
-      },
-
-      setInfo(data) {
-        context.name = data.name;
-        context.alt = data.alt;
-      },
-
-      getInfo() {
-        return {
-          name : context.name,
-          alt : context.alt
-        };
-      },
-
-      getAreas : function() {
-        return context.areas.slice();
-      },
-
-      addArea : function(area) {
-        context.areas.push(area);
-      },
-
-      addAreas(areas) {
-        areas.forEach(e => context.areas.push(e));
-      },
-
-      removeArea : function(area) {
-        if(-1 != context.areas.indexOf(area)) {
-          if (!area.isGrid && area.hasBonds()) {
-            if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
-              return;
-            }
-            let bonds = area.copyBonds();
-            bonds.forEach(e => {
-              let j = context.areas.indexOf(e);
-              e.remove();
-              context.areas.splice(j, 1);
-            });
-            bonds.splice(0, bonds.length);
-          }
-          let i = context.areas.indexOf(area);
-          area.remove();
-          context.areas.splice(i, 1);
-        }
-      },
-
-      findArea : function(obj) {
-        return context.areas.find(function(e) {
-          return e.is(obj);
-        });
-      },
-
+      reset,
+      validateImgFile, setFile, getFile,
+      setInfo, getInfo,
+      getAreas, addArea, addAreas, removeArea, findArea,
       forEachArea : f => context.areas.forEach(f),
-
-      freezeGridArea : function(grid, areas, specialize) {
-        if (!grid.isGrid ||
-            false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
-          return false;
-        }
-        let i = context.areas.indexOf(grid);
-        grid.freezeTo(areas, specialize);
-        grid.remove();
-        context.areas.splice(i, 1);
-        areas.forEach(e => context.areas.push(e));
-        return true;
-      },
-
-      toStore(a2s) {
-        let rtn = {};
-        rtn.dataURL = context.dataURL;
-        rtn.name = context.name;
-        rtn.alt = context.alt;
-        rtn.filename = context.filename;
-        rtn.type = context.type;
-        rtn.size = context.size;
-        rtn.areas = [];
-        context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-        context.areas.forEach((e, i, a) => rtn.areas.push(a2s(e, i, a)));
-        return rtn;
-      },
-      
-      fromStore(project, s2a) {
-        context.modified = false;
-        context.dataURL = project.dataURL;
-        context.name = project.name;
-        context.alt = project.alt;
-        context.filename = project.filename;
-        context.type = project.type;
-        context.size = project.size;
-        context.areas = [];
-        project.areas.forEach((e, i) => context.areas.push(s2a(e, i, context.areas)));
-        return true;
-      }
-
+      freezeGridArea,
+      toStore, fromStore,
+      toClipboard, fromClipboard
     };
 
   })(); /* DATA MODEL MANAGEMENT */
@@ -272,7 +305,7 @@ var bit = (function() {
     function s2a(stored, index, areas) {
       let area;
       if (index !== stored.index || index != areas.length) {
-        console.log('ERROR - Corrupted record with bad index');
+        console.log('ERROR - Corrupted stored record with bad index');
         return null;
       }
       area = (!stored.isGrid)
@@ -292,6 +325,60 @@ var bit = (function() {
 
   })();
 
+  /*
+   * PSEUDO-CLIPBOARD MANAGEMENT 
+   */
+
+  var clp = (function() {
+
+    var context = {
+        data  : null,
+        basic : true,
+        risky : false,
+        offset : 0
+    };
+
+    const COPY_OFFSET = 10;
+
+    function setClipboard(c) {
+      context.data = JSON.stringify(c);
+      context.basic = c.basic;
+      context.unsafe = false;
+      context.offset = 0;
+      c = null;
+    }
+
+    function getClipboard() {
+      let c = JSON.parse(context.data || '{}');
+      c.unsafe = context.unsafe;
+      context.offset += COPY_OFFSET;
+      return c;
+    }
+
+    function a2c(area, index, areas) {
+      return area.toRecord(index, areas);
+    }
+
+    function c2a(record, index, areas) {
+      let area;
+      if (index !== record.index || index > areas.length) {
+        console.log('ERROR - Corrupted clipboard record with bad index');
+        return null;
+      }
+      area = (!record.isGrid)
+          ? bitarea.createFromRecord(record, wks.getParent())
+          : bitgrid.createFromRecord(record, wks.getParent(), wks.getGridParent(), areas);
+      return area;
+    }
+
+    return {
+      setClipboard, getClipboard,
+      setCopyUnsafe : () => { if (!context.basic) context.unsafe = true; }, isCopyUnsafe : () => context.unsafe,
+      a2c, c2a, offset : () => context.offset
+    }
+
+  })();
+  
   /*
    * WORKAREA MANAGEMENT
    */
@@ -571,7 +658,7 @@ var bit = (function() {
 
       function onDrawCancel(e) {
         e.preventDefault();
-        if (utils.keyCodes.ESC === e.keyCode) {
+        if ('Escape' === e.key) {
           context.aDrw.onCancel();
           exit();
         }
@@ -680,25 +767,38 @@ var bit = (function() {
 
       function onKeyAction(e) {
         e.preventDefault();
-        switch(e.keyCode) {
-        case utils.keyCodes.ESC:
+        switch(e.key) {
+        case 'Escape':
           if (ready() && utils.noMetaKey(e)) {
             context.aSel.onUnselectAll();
           }
           break;
-        case utils.keyCodes.DEL:
+        case 'Delete':
           if (ready() && utils.noMetaKey(e)) {
             context.aSel.onDeleteAll();
           }
           break;
-        case utils.keyCodes.a:
-          if (ready() && utils.ctrlKey(e)) {
+        case 'a':
+          if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onSelectAll();
           }
           break;
-        case utils.keyCodes.F8:
-          if (ready() && utils.ctrlKey(e)) {
+        case 'F8':
+          if (ready() && utils.ctrlMetaKey(e)) {
             context.aSel.onFreeze();
+          }
+          break;
+        case 'c':
+          if (ready() && utils.ctrlMetaKey(e)) {
+            context.aSel.onCopySelection();
+          }
+          break;
+        case 'v':
+        case 'V':
+          if (ready()) {
+            let deepCopy = utils.ctrlMetaShiftKey(e);
+            if (utils.ctrlMetaKey(e) || deepCopy)
+              context.aSel.onPasteSelection(deepCopy);
           }
           break;
         default:
@@ -801,7 +901,7 @@ var bit = (function() {
 
       function onMoveCancel(e) {
         e.preventDefault();
-        if (utils.keyCodes.ESC === e.keyCode) {
+        if ('Escape' === e.key) {
           context.aMov.onCancel();
           context.state = states.MOVED;
         }
@@ -809,8 +909,8 @@ var bit = (function() {
 
       function onMoveStep(e) {
         e.preventDefault();
-        switch(e.keyCode) {
-        case utils.keyCodes.LEFT:
+        switch(e.key) {
+        case 'ArrowLeft':
           if (ready()) {
             if (utils.noMetaKey(e)) {
               context.aMov.onStep(doms.drawarea, -1, 0);
@@ -819,7 +919,7 @@ var bit = (function() {
             }
           }
           break;
-        case utils.keyCodes.RIGHT:
+        case 'ArrowRight':
           if (ready()) {
             if (utils.noMetaKey(e)) {
               context.aMov.onStep(doms.drawarea, 1, 0);
@@ -828,12 +928,12 @@ var bit = (function() {
             }
           }
           break;
-        case utils.keyCodes.UP:
+        case 'ArrowUp':
           if (ready() && utils.noMetaKey(e)) {
             context.aMov.onStep(doms.drawarea, 0, -1);
           }
           break;
-        case utils.keyCodes.DOWN:
+        case 'ArrowDown':
           if (ready() && utils.noMetaKey(e)) {
             context.aMov.onStep(doms.drawarea, 0, 1);
           }
@@ -937,7 +1037,7 @@ var bit = (function() {
 
       function onEditCancel(e) {
         e.preventDefault();
-        if (utils.keyCodes.ESC === e.keyCode) {
+        if ('Escape' === e.key) {
           context.aEdt.onCancel();
           context.state = states.EDITED;
         }
@@ -2217,9 +2317,9 @@ var bit = (function() {
     }
 
     function onKeyAction(e) {
-      switch(e.keyCode) {
-      case utils.keyCodes.s:
-        if (utils.ctrlKey(e)) {
+      switch(e.key) {
+      case 's':
+        if (utils.ctrlMetaKey(e)) {
           if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
             e.preventDefault();
             context.handlers.onSaveProject();
@@ -2284,14 +2384,16 @@ var bit = (function() {
       fileDropZone : $('file-drop-zone')
     };
 
-    var setModified = () => {
+    var setModified = unsafe => {
       mdl.setModified();
       mnu.canSave();
+      if (unsafe) clp.setCopyUnsafe();
     };
 
-    var setUnmodified = () => {
+    var setUnmodified = unsafe => {
       mdl.setUnmodified();
       mnu.preventSave();
+      if (unsafe) clp.setCopyUnsafe();
     };
 
     function freeze() {
@@ -2329,7 +2431,7 @@ var bit = (function() {
           mnu.switchToEditMode();
           ftr.info(data.file);
           wks.load(data.file);
-          setModified();
+          setModified(true);
           rtn = true;
         } else {
           ftr.error(data.file);
@@ -2350,7 +2452,7 @@ var bit = (function() {
             e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
           });
           mnu.switchToEditMode();
-          setUnmodified();
+          setUnmodified(true);
           rtn = true;
         } else {
           ftr.errorEx(project);
@@ -2371,7 +2473,7 @@ var bit = (function() {
               e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
               e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
             });
-            setModified();
+            setModified(true);
             selector.unselectAll();
             selector.selectSubset(areas);
             rtn = true;
@@ -2709,7 +2811,7 @@ var bit = (function() {
         case 'done':
           let fig = _generator.figure;
           mdl.addArea(fig);
-          setModified();
+          setModified(true);
           selector.select(fig);
           tls.release();
           fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
@@ -2890,7 +2992,7 @@ var bit = (function() {
         _selected.forEach(e => mdl.removeArea(e.figure));
         _selected.empty();
         tls.disableGridTools();
-        setModified();
+        setModified(true);
       }
 
       function onFreeze() {
@@ -2904,9 +3006,33 @@ var bit = (function() {
               _selected.get(0).highlight();
             _updateGridTools();
             newSel = null;
-            setModified();
+            setModified(true);
           }
         }
+      }
+
+      function onCopy() {
+        if (_selected.length < 1) return;
+        clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
+      }
+
+      function onPaste(forceDeepCopy) {
+        let areas;
+        if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
+          return;
+        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a, forceDeepCopy);
+        if (areas.length > 0) {
+          mdl.addAreas(areas);
+          areas.forEach(e => {
+            e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
+            e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
+          });
+          setModified();
+          selector.unselectAll();
+          selector.selectSubset(areas);
+          mover.handlers.onStep(wks.getParent(), clp.offset(), clp.offset());
+        }
+        setModified();
       }
 
       return {
@@ -2916,7 +3042,7 @@ var bit = (function() {
         handlers : {
           preventSelect, onSelect, onSelectAll, onUnselectAll,
           preventTracking, onTrackStart, onTrackProgress, onTrackEnd, onTrackExit, onTrackCancel,
-          onDeleteAll, onFreeze
+          onDeleteAll, onFreeze, onCopySelection : onCopy, onPasteSelection : onPaste
         }
       };
 
