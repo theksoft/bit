@@ -22,6 +22,7 @@
           <li id="preview"><a href="#">Preview</a></li>
           <li id="generate"><a href="#">Generate</a></li>
           <li id="load-html"><a href="#">Add HTML areas</a></li>
+          <li id="help"><a href="#">?</a></li>
         </ul>
       </nav>
     </header>
@@ -209,6 +210,115 @@
       <button class="clear">Clear</button>
       <button class="cancel">Cancel</button>
     </div>
+  </form>
+
+  <!-- Help display form -->
+  <form id="help-display" class="modal">
+    <header>
+      Boardgame Image Tool (BiT)<br>
+      &copy;2017 Herve Retaureau<br>
+      MIT License
+    </header>
+    <section>
+      <h1>Menu</h1>
+      <p><span class="menu">Clean projects</span> Manage local storage</p>
+      <p><span class="menu">New project</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">N</span></p>
+      <p><span class="menu">Load project</span> Load map project from local storage - <span class="key">CTRL</span> + <span class="key">L</span></p>
+      <p><span class="menu">Save project</span> Save map project in local storage - <span class="key">CTRL</span> + <span class="key">S</span></p>
+      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
+      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
+      <p><span class="menu">Add HTML areas</span> Add areas from HTML map code</p>
+      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
+    </section><hr>
+    <section>
+      <h1>Tools</h1>
+      <p>
+        <span class="icon"><img src="icons/hex_d.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/hex_r.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/rectangle.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/square.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/rhombus.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/triangle_e.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/triangle_i.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/triangle_r.png" width="16" height="16" alt="" title= "" /></span>
+        <span class="icon"><img src="icons/ellipse.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/circle_d.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/circle_c.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/polygon.png" width="16" height="16" alt="" title="" /></span>
+        Draw areas: hex, rectangle, square, rhombus, equilateral, isoceles &amp; right-angle triangles, ellipse, circle, polygon;
+        <span class="key">ESC</span> cancels drawing operation in progress
+      </p>
+      <p>
+        <span class="icon"><img src="icons/hex_d_grid.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/rectangle_grid.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/circle_d_grid.png" width="16" height="16" alt="" title="" /></span>
+        Draw grid area - hex, rectangle &amp; circular - griding an existing selected area
+      </p>
+      <p>
+        <span class="icon"><img src="icons/grid_inner.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/grid_outer.png" width="16" height="16" alt="" title="" /></span>
+        Change strict grid scope: grided areas are strictly limited to inner grid scope or not
+      </p>
+      <p>
+        <span class="icon"><img src="icons/grid_alg.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/grid_alt.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/grid_alt2.png" width="16" height="16" alt="" title="" /></span>
+        Change grid alignment: grided areas can be aligned differently depending on alternate alignment availability
+      </p>
+      <p><span class="lbl">Grid spacing</span> : Modify internal grid spacing</p>
+      <p><span class="lbl">href, alt, title, id</span> :  View or set selected or hovered area parameters. Pattern <b>[#]</b> in grid parameters is replaced with grid area numberwhen generated</p>
+      <p>
+        <span class="icon"><img src="icons/size.png" width="16" height="16" alt="" title="" /></span> / 
+        <span class="icon"><img src="icons/align_h.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/align_v.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/align_l.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/align_t.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/align_r.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/align_b.png" width="16" height="16" alt="" title="" /></span>
+        Resize &amp; align selected areas on first selected area - centered horizontally &amp; vertically or aligned on left, top, right &amp; bottom side 
+      </p>
+      <p>
+        <span class="icon"><img src="icons/order.png" width="16" height="16" alt="" title="" /></span> / 
+        <span class="icon"><img src="icons/ordering-1.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-2.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-3.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-4.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-5.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-6.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-7.png" width="16" height="16" alt="" title="" /></span>
+        <span class="icon"><img src="icons/ordering-8.png" width="16" height="16" alt="" title="" /></span>
+        Show internal grid ordering &amp; allow selecting different ordering methods
+      </p>
+    </section><hr>
+    <section>
+      <h1>Others</h1>
+      <h2>Scroll</h2>
+      <p>Background image can be scrolled with mouse by holding <span class="key">CTRL</span> key and using mouse down on background image.</p>
+      <h2>Area Selection</h2>
+      <p> 
+        Areas can be selected with mouse.
+        Area multi-selection is supported by holding <span class="key">SHIFT</span> key.
+        <span class="key">CTRL</span> + <span class="key">A</span> / <span class="key">ESC</span> selects all available areas or cancels current selections.
+        <span class="key">DEL</span> deletes all selected areas; deleting an area refered by grids deletes the related grids.
+      </p>
+      <h2>Copy &amp; Paste</h2>
+      <p> 
+        <span class="key">CTRL</span> + <span class="key">C</span> / <span class="key">CTRL</span> + <span class="key">V</span> copies and pastes the current selection.
+        Copied grid always refers the original area and not the copied one (if selected).
+        If selection has been modified between copy and paste, a deep copy of grid - if any selected - is done duplicating the original refered area.
+        <span class="key">CTRL</span> + <span class="key">SHIFT</span> + <span class="key">V</span> enforces a deep copy of grid.
+      </p>
+      <h2>Move</h2>
+      <p>
+        Selected areas can be moved by holding the mouse down on one of the selected area and moving the selection.
+        <span class="key">ESC</span> cancels selected area move in progress.
+        <span class="key">LEFT</span> / <span class="key">RIGHT</span> / <span class="key">UP</span> / <span class="key">DOWN</span> moves selected areas in the selected direction by step.
+        <span class="key">CTRL</span> + <span class="key">LEFT</span> / <span class="key">RIGHT</span> rotates a selected area anti-clockwise or clockwise (step rotation depending on area type).
+      </p>
+      <h2>Grid specifics</h2>
+      <p><span class="key">CTRL</span> + <span class="key">F8</span> freezes grid areas making each area independent and removing grid definition</p>
+    </section>
+    <button class="close">Close</button>
   </form>
 
   <script type="text/javascript" src="js/bitarea.js"></script>
