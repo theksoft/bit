@@ -2241,6 +2241,45 @@ var bit = (function() {
   })();
 
   /*
+   * help DISPLAY
+   */
+
+  var help = (function() {
+
+    var doms = {
+      help        : $('help-display'),
+      btnClose    : document.querySelector('#help-display .close')
+    },
+    context = {
+      handlers : null
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      hide(doms.help);
+      context.handlers.onClose();
+    }
+
+    return {
+
+      init(handlers) {
+        context.handlers = handlers;
+        doms.btnClose.addEventListener('click', onCloseClick, false);
+        return this;
+      },
+
+      show : function() {
+        show(doms.help);
+      }
+
+    };
+
+  })();
+
+  /*
    * MENU MANAGEMENT
    */
 
@@ -2253,7 +2292,8 @@ var bit = (function() {
       loadProjectBtn    : $('load-project'),
       cleanProjectsBtn  : $('clean-projects'),
       generateBtn       : $('generate'),
-      loadHTMLBtn       : $('load-html')
+      loadHTMLBtn       : $('load-html'),
+      helpBtn           : $('help')
     },
     context = {
       handlers : null,
@@ -2305,6 +2345,12 @@ var bit = (function() {
         context.handlers.onLoadHTML();
     }
 
+    function onHelpBtnClick(e) {
+      e.preventDefault();
+      if (context.enabled)
+        context.handlers.onHelp();
+    }
+
     let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
     let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
     let release = () => {
@@ -2330,6 +2376,18 @@ var bit = (function() {
       }
     }
 
+    function onCheckHelp(e) {
+      switch(e.key) {
+      case 'F1':
+        e.preventDefault();
+        if (context.enabled) {
+          context.handlers.onHelp();
+        }
+        break;
+      default:
+      }
+    }
+
     return {
 
       init : function(handlers) {
@@ -2341,11 +2399,13 @@ var bit = (function() {
         doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
         doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
         doms.loadHTMLBtn.addEventListener('click', onLoadHTMLBtnClick, false);
+        doms.helpBtn.addEventListener('click', onHelpBtnClick, false);
         doms.saveProjectBtn.classList.add('disabled');
         doms.previewBtn.classList.add('disabled');
         doms.generateBtn.classList.add('disabled');
         doms.loadHTMLBtn.classList.add('disabled');
         document.addEventListener('keydown', onKeyAction);
+        document.addEventListener('keydown', onCheckHelp);
         return this.reset();
       },
 
@@ -2550,10 +2610,15 @@ var bit = (function() {
         freeze();
       }
 
+      function onHelp() {
+        help.show();
+        freeze();
+      }
+
       return {
         handlers : {
           onNewProject, onPreview, onLoadProject, onSaveProject, onCleanProjects,
-          onGenerateCode, onLoadHTML
+          onGenerateCode, onLoadHTML, onHelp
         }
       };
 
@@ -3173,6 +3238,7 @@ var bit = (function() {
     ldr.init(projects.handlers);
     code.init(projects.handlers);
     htm.init(projects.handlers);
+    help.init(projects.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);
