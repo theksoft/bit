@@ -2330,6 +2330,18 @@ var bit = (function() {
       }
     }
 
+    function onCheckHelp(e) {
+      switch(e.key) {
+      case 'F1':
+        e.preventDefault();
+        if (context.enabled) {
+          context.handlers.onHelp();
+        }
+        break;
+      default:
+      }
+    }
+
     return {
 
       init : function(handlers) {
@@ -2346,6 +2358,7 @@ var bit = (function() {
         doms.generateBtn.classList.add('disabled');
         doms.loadHTMLBtn.classList.add('disabled');
         document.addEventListener('keydown', onKeyAction);
+        document.addEventListener('keydown', onCheckHelp);
         return this.reset();
       },
 
@@ -2550,10 +2563,14 @@ var bit = (function() {
         freeze();
       }
 
+      function onHelp() {
+        console.log('F1 - Display help');
+      }
+
       return {
         handlers : {
           onNewProject, onPreview, onLoadProject, onSaveProject, onCleanProjects,
-          onGenerateCode, onLoadHTML
+          onGenerateCode, onLoadHTML, onHelp
         }
       };
 
