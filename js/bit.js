@@ -2241,6 +2241,45 @@ var bit = (function() {
   })();
 
   /*
+   * help DISPLAY
+   */
+
+  var help = (function() {
+
+    var doms = {
+      help        : $('help-display'),
+      btnClose    : document.querySelector('#help-display .close')
+    },
+    context = {
+      handlers : null
+    };
+
+    var hide = (obj) => obj.style.display = 'none';
+    var show = (obj) => obj.style.display = 'block';
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      hide(doms.help);
+      context.handlers.onClose();
+    }
+
+    return {
+
+      init(handlers) {
+        context.handlers = handlers;
+        doms.btnClose.addEventListener('click', onCloseClick, false);
+        return this;
+      },
+
+      show : function() {
+        show(doms.help);
+      }
+
+    };
+
+  })();
+
+  /*
    * MENU MANAGEMENT
    */
 
@@ -2572,7 +2611,8 @@ var bit = (function() {
       }
 
       function onHelp() {
-        console.log('Display help');
+        help.show();
+        freeze();
       }
 
       return {
@@ -3198,6 +3238,7 @@ var bit = (function() {
     ldr.init(projects.handlers);
     code.init(projects.handlers);
     htm.init(projects.handlers);
+    help.init(projects.handlers);
     mnu.init(menu.handlers);
     wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
     tls.init(tooler.handlers);
