@@ -744,16 +744,30 @@ form.modal textarea {
 /* HELP */
 
 #help-display {
-  top: 2%;
+  top: 1%;
   left: 10%;
   width: 80%;
   min-width: 400px;
+  max-height: 98%;
   z-index: 20;
   background: rgba(60,60,100,1.0);
 }
 
 #help-display header {
-	text-align: right;
+  text-align: right;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  font-style: italic;
+}
+
+#help-display .title {
+  font-size: 18px;
+  color: #8ad;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  margin: auto;
 }
 
 #help-display section {
@@ -815,7 +829,7 @@ form.modal textarea {
 }
 
 #help-display hr {
-  background-color: #ccc;
+  background-color: #66a;
   height: 2px;
   border: 0;
   margin: 1em;
