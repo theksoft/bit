@@ -2522,6 +2522,12 @@ var bit = (function() {
           }
         }
         break;
+      case 'Escape':
+        if (context.enabled && !doms.previewBtn.classList.contains('disabled') && doms.previewBtn.classList.contains('selected')) {
+          e.preventDefault();
+          context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+        }
+        break;
       default:
       }
     }
