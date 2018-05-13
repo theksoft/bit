@@ -2364,11 +2364,41 @@ var bit = (function() {
 
     function onKeyAction(e) {
       switch(e.key) {
+      case 'm':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled)
+            e.preventDefault();
+            context.handlers.onNewProject();
+        }
+        break;
+      case 'l':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled)
+            e.preventDefault();
+            context.handlers.onLoadProject();
+        }
+        break;
       case 's':
         if (utils.ctrlMetaKey(e)) {
           if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
             e.preventDefault();
             context.handlers.onSaveProject();
+          }
+        }
+        break;
+      case 'p':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled && !doms.previewBtn.classList.contains('disabled')) {
+            e.preventDefault();
+            context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+          }
+        }
+        break;
+      case 'g':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled && !doms.generateBtn.classList.contains('disabled')) {
+            e.preventDefault();
+            context.handlers.onGenerateCode();
           }
         }
         break;
