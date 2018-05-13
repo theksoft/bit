@@ -1844,11 +1844,15 @@ var bit = (function() {
       return canClearAll;
     }
 
-    function onClose(e) {
-      e.preventDefault();
+    function close() {
       hide(doms.projects);
       doms.list.innerHTML = '';
       context.handlers.onClose();
+    }
+
+    function onClose(e) {
+      e.preventDefault();
+      close();
     }
 
     function onDelete(e) {
@@ -1872,6 +1876,13 @@ var bit = (function() {
       }
     }
 
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
+    }
+
     return {
 
       init : function(handlers) {
@@ -1879,6 +1890,7 @@ var bit = (function() {
         doms.closeBtn.addEventListener('click', onClose, false);
         doms.deleteBtn.addEventListener('click', onDelete, false);
         doms.clearBtn.addEventListener('click', onClear, false);
+        document.addEventListener('keydown', onKeyAction);
       },
 
       show : function() {
@@ -1943,6 +1955,12 @@ var bit = (function() {
       context.filename = '';
     }
 
+    function close() {
+      hide(doms.creator);
+      clear();
+      context.handlers.onClose();
+    }
+
     function error(obj) {
       obj.classList.add('error');
     }
@@ -1998,9 +2016,14 @@ var bit = (function() {
 
     function onCancelClick(e) {
       e.preventDefault();
-      hide(doms.creator);
-      clear();
-      context.handlers.onClose();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2015,6 +2038,7 @@ var bit = (function() {
         doms.dropZone.addEventListener('drop', onDrop, false);
         doms.inImageFile.addEventListener('change', onImageFileChange, false);
         doms.inMapName.addEventListener('input', onNameInput, false);
+        document.addEventListener('keydown', onKeyAction);
         return this.reset();
       },
 
@@ -2083,6 +2107,12 @@ var bit = (function() {
       }
     }
 
+    function close() {
+      hide(doms.loader);
+      clear();
+      context.handlers.onClose();
+    }
+
     function onSelect(e) {
       loadPreview();
     }
@@ -2097,9 +2127,14 @@ var bit = (function() {
 
     function onCancelClick(e) {
       e.preventDefault();
-      hide(doms.loader);
-      clear();
-      context.handlers.onClose();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2109,6 +2144,7 @@ var bit = (function() {
         doms.btnLoad.addEventListener('click', onLoadClick, false);
         doms.btnCancel.addEventListener('click', onCancelClick, false);
         doms.list.addEventListener('input', onSelect, false);
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
@@ -2139,11 +2175,22 @@ var bit = (function() {
     var hide = (obj) => obj.style.display = 'none';
     var show = (obj) => obj.style.display = 'block';
 
-    function onCloseClick(e) {
-      e.preventDefault();
+    function close() {
       hide(doms.codeViewer);
       reset();
       context.handlers.onClose();
+    }
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     function reset() {
@@ -2155,6 +2202,7 @@ var bit = (function() {
       init(handlers) {
         context.handlers = handlers;
         doms.btnClose.addEventListener('click', onCloseClick, false);
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
@@ -2199,6 +2247,12 @@ var bit = (function() {
       }
     }
 
+    function close() {
+      hide(doms.codeLoader);
+      clear();
+      context.handlers.onClose();
+    }
+
     function onCodeInput(e) {
       doms.btnLoad.disabled = (doms.code.value === '');
     }
@@ -2216,9 +2270,14 @@ var bit = (function() {
 
     function onCancelClick(e) {
       e.preventDefault();
-      hide(doms.codeLoader);
-      clear();
-      context.handlers.onClose();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2229,6 +2288,7 @@ var bit = (function() {
         doms.btnCancel.addEventListener('click', onCancelClick, false);
         doms.btnClear.addEventListener('click', onClearClick, false);
         doms.code.addEventListener('input', onCodeInput, false);
+        document.addEventListener('keydown', onKeyAction);
       },
 
       show() {
@@ -2257,10 +2317,21 @@ var bit = (function() {
     var hide = (obj) => obj.style.display = 'none';
     var show = (obj) => obj.style.display = 'block';
 
-    function onCloseClick(e) {
-      e.preventDefault();
+    function close() {
       hide(doms.help);
       context.handlers.onClose();
+    }
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2268,6 +2339,7 @@ var bit = (function() {
       init(handlers) {
         context.handlers = handlers;
         doms.btnClose.addEventListener('click', onCloseClick, false);
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
@@ -2407,14 +2479,10 @@ var bit = (function() {
     }
 
     function onCheckHelp(e) {
-      switch(e.key) {
-      case 'F1':
+      if ('F1' === e.key) {
         e.preventDefault();
-        if (context.enabled) {
+        if (context.enabled)
           context.handlers.onHelp();
-        }
-        break;
-      default:
       }
     }
 
