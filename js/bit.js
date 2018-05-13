@@ -466,14 +466,9 @@ var bit = (function() {
           let fc, ac, wc, width, height;
           fc = doms.footer.getBoundingClientRect();
           wc = doms.wks.getBoundingClientRect();
-          if (states.PREVIEW !== context.state) {
-            ac = doms.aside.getBoundingClientRect();
-            width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
-            height = Math.floor(fc.top - wc.top - 5);
-          } else {
-            width = Math.floor(fc.right - wc.left - 5);
-            height = Math.floor(fc.top - wc.top - 5);
-          }
+          ac = doms.aside.getBoundingClientRect();
+          width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
+          height = Math.floor(fc.top - wc.top - 5);
           doms.workarea.style.width = width + 'px';
           doms.workarea.style.height = height + 'px';
           return this;
@@ -1151,7 +1146,6 @@ var bit = (function() {
       },
 
       switchToPreview : function() {
-        hide(doms.aside);
         hide(doms.drawarea);
         hide(doms.gridarea);
         areaDrawer.disable();
@@ -1165,7 +1159,6 @@ var bit = (function() {
       },
 
       switchToEdit : function() {
-        show(doms.aside);
         show(doms.drawarea);
         show(doms.gridarea);
         areaDrawer.enable();
@@ -1276,7 +1269,9 @@ var bit = (function() {
       btnAlignR       : $('align-right'),
       btnAlignB       : $('align-bottom'),
       btnPropsSave    : $('area-props-save'),
-      btnPropsRestore : $('area-props-restore')
+      btnPropsRestore : $('area-props-restore'),
+      tools           : $('tools'),
+      mask            : document.querySelector('#tools .mask')
     };
 
     var context = {
@@ -1622,6 +1617,20 @@ var bit = (function() {
       e.preventDefault();
     }
 
+    function displayMask() {
+      let r;
+      doms.mask.style.display = 'block';
+      r = doms.tools.getBoundingClientRect();
+      doms.mask.style.width = r.width + 'px';
+      doms.mask.style.height = r.height + 'px';
+      doms.mask.style.left = r.left + 'px';
+      doms.mask.style.top = r.top+1 + 'px';
+    }
+
+    function hideMask() {
+      doms.mask.style.display = 'none';
+    }
+
     return {
 
       init : function(handlers) {
@@ -1675,6 +1684,7 @@ var bit = (function() {
         doms.btnAlignB.removeEventListener('click', onAlignBottom, false);
         doms.btnAlignCH.removeEventListener('click', onAlignCenterHorizontally, false);
         doms.btnAlignCV.removeEventListener('click', onAlignCenterVertically, false);
+        displayMask();
         context.freezed = true;
       },
 
@@ -1700,6 +1710,7 @@ var bit = (function() {
         doms.btnAlignB.addEventListener('click', onAlignBottom, false);
         doms.btnAlignCH.addEventListener('click', onAlignCenterHorizontally, false);
         doms.btnAlignCV.addEventListener('click', onAlignCenterVertically, false);
+        hideMask();
         context.freezed = false;
       },
 
@@ -2721,11 +2732,13 @@ var bit = (function() {
       function onPreview(activated) {
         if (activated) {
           let c, i;
+					tls.freeze();
           [c, i] = wks.switchToPreview();
           _mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
         } else {
           wks.switchToEdit();
           _mapper.cancelPreview();
+					tls.release();
         }
       }
 
