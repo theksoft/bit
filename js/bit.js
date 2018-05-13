@@ -37,6 +37,30 @@ var bit = (function() {
       EDITING       : 'editing'
     };
 
+    function selectText(node) {
+      if (document.body.createTextRange) {
+        const range = document.body.createTextRange()
+        range.moveToElementText(node)
+        range.select()
+      } else if (window.getSelection) {
+        const selection = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        selection.removeAllRanges()
+        selection.addRange(range)
+      } else {
+        console.warn("ERROR: Could not select text in node - Unsupported browser!")
+      }
+    }
+
+    function unselect() {
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges()
+      } else {
+        console.warn("ERROR: Could not clear selection - Unsupported browser!")
+      }
+    }
+
     return {
 
       leftButton : e => (0 === e.button) ? true : false,
@@ -45,6 +69,7 @@ var bit = (function() {
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
+      selectText, unselect,
       fgTypes,
       clsActions
 
@@ -2166,6 +2191,8 @@ var bit = (function() {
     var doms = {
       codeViewer  : $('project-code'),
       code        : $('code-result'),
+      btnSelect   : document.querySelector('#project-code .select'),
+      btnClear    : document.querySelector('#project-code .clear'),
       btnClose    : document.querySelector('#project-code .close')
     },
     context = {
@@ -2181,15 +2208,34 @@ var bit = (function() {
       context.handlers.onClose();
     }
 
+    function onSelectClick(e) {
+      e.preventDefault();
+      utils.selectText(doms.code);
+    }
+
+    function onClearClick(e) {
+      e.preventDefault();
+      utils.unselect();
+    }
+
     function onCloseClick(e) {
       e.preventDefault();
       close();
     }
 
     function onKeyAction(e) {
-      if('Escape' === e.key) {
+      switch(e.key) {
+      case 'a':
+        if (utils.ctrlMetaKey(e)) {
+          e.preventDefault();
+          utils.selectText(doms.code);
+        }
+        break;
+      case 'Escape':
         e.preventDefault();
         close();
+        break;
+      default:
       }
     }
 
@@ -2201,6 +2247,8 @@ var bit = (function() {
 
       init(handlers) {
         context.handlers = handlers;
+        doms.btnSelect.addEventListener('click', onSelectClick, false);
+        doms.btnClear.addEventListener('click', onClearClick, false);
         doms.btnClose.addEventListener('click', onCloseClick, false);
         document.addEventListener('keydown', onKeyAction);
         return this;

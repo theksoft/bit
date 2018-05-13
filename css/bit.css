@@ -682,9 +682,31 @@ form.modal textarea {
   font-family: monospace;
 }
 
-#project-code .close {
-	position: sticky;
-	bottom: 5px;
+#project-code > .buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  width: 100%;
+  position: sticky;
+  bottom: 5px;
+}
+
+#project-code > .buttons > .select {
+  order: 1;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#project-code > .buttons > .clear {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#project-code > .buttons > .close {
+  order: 3;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 /* HTML CODE FORM */
