@@ -789,6 +789,10 @@ var bitarea = (function() {
       return { x : d.xm, y : d.ym, width : d.xM - d.xm, height : d.yM - d.ym };
     }
 
+    getPoints(c) {
+      return this.copyCoords(c);
+    }
+
   } // POLYGON
 
   /*

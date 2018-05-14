@@ -37,6 +37,7 @@
         </div>
       </section>
       <aside id='tools'>
+        <div class="mask"></div>
         <div>
           <img id="hex-d" src="icons/hex_d.png" width="32" height="32" alt="" title="Hexagon (defined by a diagonal)" />
           <img id="hex-r" src="icons/hex_r.png" width="32" height="32" alt="" title="Hexagon (inscribed in rectangle)" />
@@ -132,7 +133,7 @@
         <hr>
       </aside>
     </div>
-    <footer id='footer'>
+    <footer id="footer">
       <div id="selected-file"><p>No image file selected</p></div>
       <div id="load-indicator"><p class="loading">Loading ...</p></div>
       <div id="coordinates"></div>
@@ -196,7 +197,11 @@
   <!-- HTML code display -->
   <form id="project-code" class="modal">
     <div id="code-result"></div>
-    <button class="close">Close</button>
+    <div class="buttons">
+      <button class="select">Select All</button>
+      <button class="clear">Unselect</button>
+      <button class="close">Close</button>
+    </div>
   </form>
 
   <!-- HTML code input -->
@@ -215,14 +220,19 @@
   <!-- Help display form -->
   <form id="help-display" class="modal">
     <header>
-      Boardgame Image Tool (BiT)<br>
-      &copy;2017 Herve Retaureau<br>
-      MIT License
-    </header>
+      <div>HTML map creator</div>
+	    <div class="title">
+	      Boardgame image Tool (BiT)
+	    </div>
+	    <div>
+	      &copy;2017 Herve Retaureau<br>
+	      MIT License
+	    </div>
+    </header><hr>
     <section>
       <h1>Menu</h1>
       <p><span class="menu">Clean projects</span> Manage local storage</p>
-      <p><span class="menu">New project</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">N</span></p>
+      <p><span class="menu">New project</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">M</span></p>
       <p><span class="menu">Load project</span> Load map project from local storage - <span class="key">CTRL</span> + <span class="key">L</span></p>
       <p><span class="menu">Save project</span> Save map project in local storage - <span class="key">CTRL</span> + <span class="key">S</span></p>
       <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
@@ -299,7 +309,7 @@
         Areas can be selected with mouse.
         Area multi-selection is supported by holding <span class="key">SHIFT</span> key.
         <span class="key">CTRL</span> + <span class="key">A</span> / <span class="key">ESC</span> selects all available areas or cancels current selections.
-        <span class="key">DEL</span> deletes all selected areas; deleting an area refered by grids deletes the related grids.
+        <span class="key">DEL</span> deletes all selected areas. Deleting an area refered by grids deletes the related grids.
       </p>
       <h2>Copy &amp; Paste</h2>
       <p> 

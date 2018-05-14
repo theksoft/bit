@@ -237,6 +237,20 @@ ul, ol {
   color: #ccc;
 }
 
+#tools .mask {
+  display: none;
+  z-index: 5;
+  position: absolute;
+  top: 1%;
+  left: 1%;
+  width: 98%;
+  height: 98%;
+  background-color: rgba(255,255,255,0.2);
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
 #tools div {
   margin: 5px;
 }
@@ -366,6 +380,11 @@ ul, ol {
 #area-props button:disabled {
   background-color: #333;
   color: #888;
+}
+
+area {  /* Map preview, FF does not change cursor */
+  display: block;
+  cursor: pointer;
 }
 
 /* FOOTER ELEMENTS */
@@ -682,9 +701,31 @@ form.modal textarea {
   font-family: monospace;
 }
 
-#project-code .close {
-	position: sticky;
-	bottom: 5px;
+#project-code > .buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  width: 100%;
+  position: sticky;
+  bottom: 5px;
+}
+
+#project-code > .buttons > .select {
+  order: 1;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+#project-code > .buttons > .clear {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#project-code > .buttons > .close {
+  order: 3;
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
 /* HTML CODE FORM */
@@ -744,16 +785,30 @@ form.modal textarea {
 /* HELP */
 
 #help-display {
-  top: 2%;
+  top: 1%;
   left: 10%;
   width: 80%;
   min-width: 400px;
+  max-height: 98%;
   z-index: 20;
   background: rgba(60,60,100,1.0);
 }
 
 #help-display header {
-	text-align: right;
+  text-align: right;
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  font-style: italic;
+}
+
+#help-display .title {
+  font-size: 18px;
+  color: #8ad;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  margin: auto;
 }
 
 #help-display section {
@@ -815,7 +870,7 @@ form.modal textarea {
 }
 
 #help-display hr {
-  background-color: #ccc;
+  background-color: #66a;
   height: 2px;
   border: 0;
   margin: 1em;

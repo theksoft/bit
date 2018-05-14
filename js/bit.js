@@ -37,6 +37,30 @@ var bit = (function() {
       EDITING       : 'editing'
     };
 
+    function selectText(node) {
+      if (document.body.createTextRange) {
+        const range = document.body.createTextRange()
+        range.moveToElementText(node)
+        range.select()
+      } else if (window.getSelection) {
+        const selection = window.getSelection()
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        selection.removeAllRanges()
+        selection.addRange(range)
+      } else {
+        console.warn("ERROR: Could not select text in node - Unsupported browser!")
+      }
+    }
+
+    function unselect() {
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges()
+      } else {
+        console.warn("ERROR: Could not clear selection - Unsupported browser!")
+      }
+    }
+
     return {
 
       leftButton : e => (0 === e.button) ? true : false,
@@ -45,6 +69,7 @@ var bit = (function() {
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
+      selectText, unselect,
       fgTypes,
       clsActions
 
@@ -161,7 +186,7 @@ var bit = (function() {
 
     function freezeGridArea(grid, areas, specialize) {
       if (!grid.isGrid ||
-          false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
+          false === confirm("Freezing this element will automatically delete grid dependencies and generate independent elements.\nDo you still want to proceed to grid freeze ?")) {
         return false;
       }
       let i = context.areas.indexOf(grid);
@@ -441,14 +466,9 @@ var bit = (function() {
           let fc, ac, wc, width, height;
           fc = doms.footer.getBoundingClientRect();
           wc = doms.wks.getBoundingClientRect();
-          if (states.PREVIEW !== context.state) {
-            ac = doms.aside.getBoundingClientRect();
-            width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
-            height = Math.floor(fc.top - wc.top - 5);
-          } else {
-            width = Math.floor(fc.right - wc.left - 5);
-            height = Math.floor(fc.top - wc.top - 5);
-          }
+          ac = doms.aside.getBoundingClientRect();
+          width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
+          height = Math.floor(fc.top - wc.top - 5);
           doms.workarea.style.width = width + 'px';
           doms.workarea.style.height = height + 'px';
           return this;
@@ -1126,7 +1146,6 @@ var bit = (function() {
       },
 
       switchToPreview : function() {
-        hide(doms.aside);
         hide(doms.drawarea);
         hide(doms.gridarea);
         areaDrawer.disable();
@@ -1140,7 +1159,6 @@ var bit = (function() {
       },
 
       switchToEdit : function() {
-        show(doms.aside);
         show(doms.drawarea);
         show(doms.gridarea);
         areaDrawer.enable();
@@ -1251,7 +1269,9 @@ var bit = (function() {
       btnAlignR       : $('align-right'),
       btnAlignB       : $('align-bottom'),
       btnPropsSave    : $('area-props-save'),
-      btnPropsRestore : $('area-props-restore')
+      btnPropsRestore : $('area-props-restore'),
+      tools           : $('tools'),
+      mask            : document.querySelector('#tools .mask')
     };
 
     var context = {
@@ -1328,6 +1348,11 @@ var bit = (function() {
         toggleSelect(evt.target);
         setDrawingMode();
       }
+    }
+
+    function clearDrawMode() {
+      toggleSelect(null);
+      setDrawingMode();
     }
 
     function canGrid(obj) {
@@ -1597,6 +1622,20 @@ var bit = (function() {
       e.preventDefault();
     }
 
+    function displayMask() {
+      let r;
+      doms.mask.style.display = 'block';
+      r = doms.tools.getBoundingClientRect();
+      doms.mask.style.width = r.width + 'px';
+      doms.mask.style.height = r.height + 'px';
+      doms.mask.style.left = r.left + 'px';
+      doms.mask.style.top = r.top+1 + 'px';
+    }
+
+    function hideMask() {
+      doms.mask.style.display = 'none';
+    }
+
     return {
 
       init : function(handlers) {
@@ -1619,7 +1658,7 @@ var bit = (function() {
         this.release();
       },
 
-      getDrawingMode : () => context.mode,
+      getDrawingMode : () => context.mode, clearDrawMode,
       getGridScope,
       getGridAlign,
       getGridOrder,
@@ -1650,6 +1689,7 @@ var bit = (function() {
         doms.btnAlignB.removeEventListener('click', onAlignBottom, false);
         doms.btnAlignCH.removeEventListener('click', onAlignCenterHorizontally, false);
         doms.btnAlignCV.removeEventListener('click', onAlignCenterVertically, false);
+        displayMask();
         context.freezed = true;
       },
 
@@ -1675,6 +1715,7 @@ var bit = (function() {
         doms.btnAlignB.addEventListener('click', onAlignBottom, false);
         doms.btnAlignCH.addEventListener('click', onAlignCenterHorizontally, false);
         doms.btnAlignCV.addEventListener('click', onAlignCenterVertically, false);
+        hideMask();
         context.freezed = false;
       },
 
@@ -1763,7 +1804,7 @@ var bit = (function() {
         var output = [];
         output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
             f.size, ' bytes, last modified: ',
-            f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a');      
+            f.lastModified ? (new Date(f.lastModified)).toLocaleDateString() : 'n/a');      
         var info = document.createElement('p');
         info.innerHTML = output.join(''); 
         var image = document.createElement('img');
@@ -1844,11 +1885,15 @@ var bit = (function() {
       return canClearAll;
     }
 
-    function onClose(e) {
-      e.preventDefault();
+    function close() {
       hide(doms.projects);
       doms.list.innerHTML = '';
       context.handlers.onClose();
+    }
+
+    function onClose(e) {
+      e.preventDefault();
+      close();
     }
 
     function onDelete(e) {
@@ -1872,6 +1917,13 @@ var bit = (function() {
       }
     }
 
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
+    }
+
     return {
 
       init : function(handlers) {
@@ -1879,6 +1931,7 @@ var bit = (function() {
         doms.closeBtn.addEventListener('click', onClose, false);
         doms.deleteBtn.addEventListener('click', onDelete, false);
         doms.clearBtn.addEventListener('click', onClear, false);
+        document.addEventListener('keydown', onKeyAction);
       },
 
       show : function() {
@@ -1943,6 +1996,12 @@ var bit = (function() {
       context.filename = '';
     }
 
+    function close() {
+      hide(doms.creator);
+      clear();
+      context.handlers.onClose();
+    }
+
     function error(obj) {
       obj.classList.add('error');
     }
@@ -1998,9 +2057,14 @@ var bit = (function() {
 
     function onCancelClick(e) {
       e.preventDefault();
-      hide(doms.creator);
-      clear();
-      context.handlers.onClose();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2015,6 +2079,7 @@ var bit = (function() {
         doms.dropZone.addEventListener('drop', onDrop, false);
         doms.inImageFile.addEventListener('change', onImageFileChange, false);
         doms.inMapName.addEventListener('input', onNameInput, false);
+        document.addEventListener('keydown', onKeyAction);
         return this.reset();
       },
 
@@ -2083,12 +2148,19 @@ var bit = (function() {
       }
     }
 
+    function close() {
+      hide(doms.loader);
+      clear();
+      context.handlers.onClose();
+    }
+
     function onSelect(e) {
       loadPreview();
     }
 
     function onLoadClick(e) {
       let value;
+      e.preventDefault();
       value = doms.list.options[doms.list.selectedIndex].value;
       hide(doms.loader);
       clear();
@@ -2097,9 +2169,14 @@ var bit = (function() {
 
     function onCancelClick(e) {
       e.preventDefault();
-      hide(doms.loader);
-      clear();
-      context.handlers.onClose();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2109,6 +2186,7 @@ var bit = (function() {
         doms.btnLoad.addEventListener('click', onLoadClick, false);
         doms.btnCancel.addEventListener('click', onCancelClick, false);
         doms.list.addEventListener('input', onSelect, false);
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
@@ -2130,6 +2208,8 @@ var bit = (function() {
     var doms = {
       codeViewer  : $('project-code'),
       code        : $('code-result'),
+      btnSelect   : document.querySelector('#project-code .select'),
+      btnClear    : document.querySelector('#project-code .clear'),
       btnClose    : document.querySelector('#project-code .close')
     },
     context = {
@@ -2139,11 +2219,41 @@ var bit = (function() {
     var hide = (obj) => obj.style.display = 'none';
     var show = (obj) => obj.style.display = 'block';
 
-    function onCloseClick(e) {
-      e.preventDefault();
+    function close() {
       hide(doms.codeViewer);
       reset();
       context.handlers.onClose();
+    }
+
+    function onSelectClick(e) {
+      e.preventDefault();
+      utils.selectText(doms.code);
+    }
+
+    function onClearClick(e) {
+      e.preventDefault();
+      utils.unselect();
+    }
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      close();
+    }
+
+    function onKeyAction(e) {
+      switch(e.key) {
+      case 'a':
+        if (utils.ctrlMetaKey(e)) {
+          e.preventDefault();
+          utils.selectText(doms.code);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        close();
+        break;
+      default:
+      }
     }
 
     function reset() {
@@ -2154,7 +2264,10 @@ var bit = (function() {
 
       init(handlers) {
         context.handlers = handlers;
+        doms.btnSelect.addEventListener('click', onSelectClick, false);
+        doms.btnClear.addEventListener('click', onClearClick, false);
         doms.btnClose.addEventListener('click', onCloseClick, false);
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
@@ -2199,26 +2312,39 @@ var bit = (function() {
       }
     }
 
+    function close() {
+      hide(doms.codeLoader);
+      clear();
+      context.handlers.onClose();
+    }
+
     function onCodeInput(e) {
       doms.btnLoad.disabled = (doms.code.value === '');
     }
 
     function onLoadClick(e) {
+      e.preventDefault();
       hide(doms.codeLoader);
       clear();
       context.handlers.onLoadCode(doms.code.value);
     }
 
     function onClearClick(e) {
+      e.preventDefault();
       doms.code.value = '';
       doms.btnLoad.disabled = true;
     }
 
     function onCancelClick(e) {
       e.preventDefault();
-      hide(doms.codeLoader);
-      clear();
-      context.handlers.onClose();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2229,6 +2355,7 @@ var bit = (function() {
         doms.btnCancel.addEventListener('click', onCancelClick, false);
         doms.btnClear.addEventListener('click', onClearClick, false);
         doms.code.addEventListener('input', onCodeInput, false);
+        document.addEventListener('keydown', onKeyAction);
       },
 
       show() {
@@ -2257,10 +2384,21 @@ var bit = (function() {
     var hide = (obj) => obj.style.display = 'none';
     var show = (obj) => obj.style.display = 'block';
 
-    function onCloseClick(e) {
-      e.preventDefault();
+    function close() {
       hide(doms.help);
       context.handlers.onClose();
+    }
+
+    function onCloseClick(e) {
+      e.preventDefault();
+      close();
+    }
+
+    function onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault();
+        close();
+      }
     }
 
     return {
@@ -2268,6 +2406,7 @@ var bit = (function() {
       init(handlers) {
         context.handlers = handlers;
         doms.btnClose.addEventListener('click', onCloseClick, false);
+        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
@@ -2364,6 +2503,20 @@ var bit = (function() {
 
     function onKeyAction(e) {
       switch(e.key) {
+      case 'm':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled)
+            e.preventDefault();
+            context.handlers.onNewProject();
+        }
+        break;
+      case 'l':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled)
+            e.preventDefault();
+            context.handlers.onLoadProject();
+        }
+        break;
       case 's':
         if (utils.ctrlMetaKey(e)) {
           if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
@@ -2372,19 +2525,37 @@ var bit = (function() {
           }
         }
         break;
+      case 'p':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled && !doms.previewBtn.classList.contains('disabled')) {
+            e.preventDefault();
+            context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+          }
+        }
+        break;
+      case 'g':
+        if (utils.ctrlMetaKey(e)) {
+          if (context.enabled && !doms.generateBtn.classList.contains('disabled')) {
+            e.preventDefault();
+            context.handlers.onGenerateCode();
+          }
+        }
+        break;
+      case 'Escape':
+        if (context.enabled && !doms.previewBtn.classList.contains('disabled') && doms.previewBtn.classList.contains('selected')) {
+          e.preventDefault();
+          context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+        }
+        break;
       default:
       }
     }
 
     function onCheckHelp(e) {
-      switch(e.key) {
-      case 'F1':
+      if ('F1' === e.key) {
         e.preventDefault();
-        if (context.enabled) {
+        if (context.enabled)
           context.handlers.onHelp();
-        }
-        break;
-      default:
       }
     }
 
@@ -2569,11 +2740,13 @@ var bit = (function() {
       function onPreview(activated) {
         if (activated) {
           let c, i;
+					tls.freeze();
           [c, i] = wks.switchToPreview();
           _mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
         } else {
           wks.switchToEdit();
           _mapper.cancelPreview();
+					tls.release();
         }
       }
 
@@ -2957,7 +3130,7 @@ var bit = (function() {
       function _areaSelectAll() {
         if (_selected.length > 0)
           _selected.get(0).trivialize();
-        __selected.empty();
+        _selected.empty();
         mdl.forEachArea(e => _selected.add(e));
         if (_selected.length > 0)
           _selected.get(0).highlight();
@@ -2965,10 +3138,12 @@ var bit = (function() {
       }
 
       function _areaUnselectAll() {
+        let rtn = _selected.length;
         if (_selected.length > 0)
           _selected.get(0).trivialize();
         _selected.empty();
         tls.disableGridTools();
+        return rtn;
       }
 
       var getSelectedCount  = () => _selected.length,
@@ -3010,7 +3185,8 @@ var bit = (function() {
       }
 
       function onUnselectAll() {
-        _areaUnselectAll();
+        if (!_areaUnselectAll())
+          tls.clearDrawMode();
       }
 
       function preventTracking(e) {

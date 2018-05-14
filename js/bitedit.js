@@ -395,7 +395,7 @@ var bitedit = (function() {
 
     computeRotateCoords(direction, wmax, hmax) {
       let rtn = this._figure.copyCoords();
-      let w2 = Math.round(rtn.width / 2), h2 = Math.round(rtn.height / 2)
+      let w2 = Math.round(rtn.width / 2), h2 = Math.round(rtn.height / 2);
       rtn.x += w2 - h2;
       rtn.y += h2 - w2;
       let tmp = rtn.width;
@@ -1701,7 +1701,7 @@ var fEquilateralTriangle = (function() {
 
     computeMoveCoords(dx, dy) {
       let rtn = this._figure.copyCoords();
-      rtn.forEach(function(e) {
+      rtn.forEach(e => {
         e.x += dx;
         e.y += dy;
       });
@@ -1709,7 +1709,23 @@ var fEquilateralTriangle = (function() {
     }
 
     computeRotateCoords(direction, wmax, hmax) {
-      return this._figure.coords;
+      // Rotate bounding rect 90 degrees in required direction
+      let rtn = this._figure.copyCoords();
+      const r = this._figure.rect;
+      const w2 = Math.round(r.width/2), h2 = Math.round(r.height/2), xr = r.x + w2 - h2, yr = r.y + h2 - w2;
+      if (xr >= 0 && xr + r.height <= wmax &&
+          yr >= 0 && yr + r.width <= hmax) {
+        const org = { x : r.x + Math.round(r.width/2), y : r.y + Math.round(r.height/2) };
+        rtn.forEach(e => {
+          let d, tmp = e.x;
+          d = (e.y - org.y) * ((direction === directions.RCLK) ? -1 : 1);
+          e.x = org.x + d;
+          d = (tmp - org.x) * ((direction === directions.RCLK) ? 1 : -1);
+          e.y = org.y + d;
+        });
+        return rtn;
+      }
+      return null;
     }
 
     gripCoords(id, coords) {
