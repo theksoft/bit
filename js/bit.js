@@ -1350,6 +1350,11 @@ var bit = (function() {
       }
     }
 
+    function clearDrawMode() {
+      toggleSelect(null);
+      setDrawingMode();
+    }
+
     function canGrid(obj) {
       let rtn = true;
       switch(obj.type) {
@@ -1653,7 +1658,7 @@ var bit = (function() {
         this.release();
       },
 
-      getDrawingMode : () => context.mode,
+      getDrawingMode : () => context.mode, clearDrawMode,
       getGridScope,
       getGridAlign,
       getGridOrder,
@@ -3133,10 +3138,12 @@ var bit = (function() {
       }
 
       function _areaUnselectAll() {
+        let rtn = _selected.length;
         if (_selected.length > 0)
           _selected.get(0).trivialize();
         _selected.empty();
         tls.disableGridTools();
+        return rtn;
       }
 
       var getSelectedCount  = () => _selected.length,
@@ -3178,7 +3185,8 @@ var bit = (function() {
       }
 
       function onUnselectAll() {
-        _areaUnselectAll();
+        if (!_areaUnselectAll())
+          tls.clearDrawMode();
       }
 
       function preventTracking(e) {
