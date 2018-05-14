@@ -186,7 +186,7 @@ var bit = (function() {
 
     function freezeGridArea(grid, areas, specialize) {
       if (!grid.isGrid ||
-          false === confirm("Freezing this element will automatically delete grid dependencies and generate independant elements.\nDo you still want to proceed to grid freeze ?")) {
+          false === confirm("Freezing this element will automatically delete grid dependencies and generate independent elements.\nDo you still want to proceed to grid freeze ?")) {
         return false;
       }
       let i = context.areas.indexOf(grid);
