@@ -1799,7 +1799,7 @@ var bit = (function() {
         var output = [];
         output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
             f.size, ' bytes, last modified: ',
-            f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a');      
+            f.lastModified ? (new Date(f.lastModified)).toLocaleDateString() : 'n/a');      
         var info = document.createElement('p');
         info.innerHTML = output.join(''); 
         var image = document.createElement('img');
