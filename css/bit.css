@@ -1,7 +1,9 @@
 /**
  * Boardgame image tool (BiT)
+ * https://github.com/theksoft/bit
+ *
  * Copyright 2017 Herve Retaureau
- * MIT license
+ * Released under the MIT license
  */
 
 @charset "UTF-8";
@@ -810,6 +812,13 @@ form.modal textarea {
   font-weight: bold;
   text-align: center;
   margin: auto;
+}
+
+#help-display a:link,
+#help-display a:visited,
+#help-display a:hover,
+#help-display a:active {
+  color: #8ad;
 }
 
 #help-display section {

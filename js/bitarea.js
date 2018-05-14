@@ -1,7 +1,9 @@
 /**
  * Boardgame image tool (BiT) Area Definition
+ * https://github.com/theksoft/bit
+ *
  * Copyright 2017 Herve Retaureau
- * MIT License
+ * Released under the MIT license
  */
 
 var bitarea = (function() {

@@ -1,7 +1,9 @@
 /**
  * Boardgame image tool (BiT) Grid Area Definition
+ * https://github.com/theksoft/bit
+ *
  * Copyright 2017 Herve Retaureau
- * MIT license
+ * Released under the MIT license
  */
 
 var bitgrid = (function() {

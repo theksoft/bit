@@ -1,7 +1,9 @@
 /**
  * Boardgame image tool (BiT) Area Generators
+ * https://github.com/theksoft/bit
+ *
  * Copyright 2017 Herve Retaureau
- * MIT license
+ * Released under the MIT license
  */
 
 var bitgen = (function() {
