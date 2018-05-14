@@ -3122,7 +3122,7 @@ var bit = (function() {
       function _areaSelectAll() {
         if (_selected.length > 0)
           _selected.get(0).trivialize();
-        __selected.empty();
+        _selected.empty();
         mdl.forEachArea(e => _selected.add(e));
         if (_selected.length > 0)
           _selected.get(0).highlight();
