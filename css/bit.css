@@ -382,6 +382,11 @@ ul, ol {
   color: #888;
 }
 
+area {  /* Map preview, FF does not change cursor */
+  display: block;
+  cursor: pointer;
+}
+
 /* FOOTER ELEMENTS */
 
 #footer {
