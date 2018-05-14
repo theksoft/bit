@@ -1,6 +1,9 @@
 /**
- * Boardgame image tool (BIT) Area Editors
+ * Boardgame image tool (BiT) Area Editors
+ * https://github.com/theksoft/bit
+ *
  * Copyright 2017 Herve Retaureau
+ * Released under the MIT license
  */
 
 var bitedit = (function() {
