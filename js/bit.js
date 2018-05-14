@@ -2155,6 +2155,7 @@ var bit = (function() {
 
     function onLoadClick(e) {
       let value;
+      e.preventDefault();
       value = doms.list.options[doms.list.selectedIndex].value;
       hide(doms.loader);
       clear();
