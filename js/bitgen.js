@@ -1,6 +1,7 @@
 /**
- * Boardgame image tool (BIT) Area Generators
+ * Boardgame image tool (BiT) Area Generators
  * Copyright 2017 Herve Retaureau
+ * MIT license
  */
 
 var bitgen = (function() {

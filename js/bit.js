@@ -1,6 +1,7 @@
 /**
- * Boardgame image tool (BIT)
+ * Boardgame image tool (BiT)
  * Copyright 2017 Herve Retaureau
+ * MIT license
  */
 
 var bit = (function() {

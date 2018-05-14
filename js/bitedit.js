@@ -1,6 +1,7 @@
 /**
- * Boardgame image tool (BIT) Area Editors
+ * Boardgame image tool (BiT) Area Editors
  * Copyright 2017 Herve Retaureau
+ * MIT license
  */
 
 var bitedit = (function() {
