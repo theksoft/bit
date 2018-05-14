@@ -2318,6 +2318,7 @@ var bit = (function() {
     }
 
     function onLoadClick(e) {
+      e.preventDefault();
       hide(doms.codeLoader);
       clear();
       context.handlers.onLoadCode(doms.code.value);
