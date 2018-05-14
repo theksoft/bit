@@ -2324,6 +2324,7 @@ var bit = (function() {
     }
 
     function onClearClick(e) {
+      e.preventDefault();
       doms.code.value = '';
       doms.btnLoad.disabled = true;
     }
