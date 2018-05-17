@@ -788,11 +788,11 @@ form.modal textarea {
 /* HELP */
 
 #help-display {
-  top: 1%;
-  left: 10%;
-  width: 80%;
+  top: 2%;
+  left: 24%;
+  width: 52%;
   min-width: 400px;
-  max-height: 98%;
+  max-height: 96%;
   z-index: 20;
   background: rgba(60,60,100,1.0);
 }
