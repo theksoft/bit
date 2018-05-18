@@ -509,37 +509,11 @@ var bit = (function() {
     // COORDINATE TRACKER
     // Images coordinates are set when moving within workarea.
 
-    var coordTracker = (function() {
-
-      var enabled = false;
-
-      function onWorkareaMove(e) {
-        console.log('state : ' + context.state);
-        e.preventDefault();
-        ftr.coords.set(viewport.computeCoords(e.pageX, e.pageY));
-      }
-
-      function onWorkareaLeave(e) {
-        e.preventDefault();
-        ftr.coords.clear();
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousemove', onWorkareaMove);
-          addWel('mouseleave', onWorkareaLeave);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          rmWel('mousemove', onWorkareaMove);
-          rmWel('mouseleave', onWorkareaLeave);
-          enabled = false;
-        }
-      };
-
-    })(); // coordTracker
+    var coordTracker = new bitgui.MousePositionTracker({
+      trackedElement: doms.workarea,
+      displayElement : $('coordinates'),
+      translate : viewport.computeCoords
+    });
 
     // BACKGROUND IMAGE DRAGGER
     // Dragging start with a mouse down on image and CTRL key
@@ -1761,13 +1735,6 @@ var bit = (function() {
       load : $('load-indicator')
     };
 
-    var coords = (function() {
-      return {
-        set : (ci) => doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y,
-        clear : () => doms.cursor.innerHTML = ''
-      };
-    })();
-
     var loading = (function() {
       return {
         show : () => doms.load.style.display = 'inline',
@@ -1844,7 +1811,6 @@ var bit = (function() {
         doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px';
       },
 
-      coords,
       loading
 
     };
