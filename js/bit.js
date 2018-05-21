@@ -1200,7 +1200,6 @@ var bit = (function() {
     var context = {
         handlers    : null,
         selected    : null,
-//        mode        : modes.NONE,
         allowGrid   : false,
         freezed     : true,
         scope       : scopes.INNER,
@@ -1489,7 +1488,7 @@ var bit = (function() {
       getGridOrder,
       getGridSpace,
       
-      none : () => modes.NONE === context.mode ? true : false,
+      none : () => modes.NONE === drawMode.value ? true : false,
 
       freeze : function() {
         if (context.freezed) return;
