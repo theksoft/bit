@@ -399,6 +399,46 @@ var bitgui = (function(){
 
   }
 
+  class LocalProjectStore {
+
+    constructor( appKey ) {
+      this._appKey = appKey
+    }
+
+    _getAppStore() {
+      return JSON.parse(window.localStorage.getItem(this._appKey) || '{}');
+    }
+
+    _setAppStore(s) {
+      window.localStorage.setItem(this._appKey, JSON.stringify(s));      
+    }
+
+    write(projectName, value) {
+      let s = this._getAppStore();
+      s[projectName] = value;
+      this._setAppStore(s);
+    }
+
+    read(projectName) {
+      return this._getAppStore()[projectName];
+    }
+
+    remove(projectName) {
+      let s = this._getAppStore();
+      delete s[projectName];
+      this._setAppStore(s);
+    }
+
+    list() {
+      return Object.keys(this._getAppStore());
+    }
+
+    reset() {
+      window.localStorage.removeItem(this._appKey);
+    }
+
+  }
+
   /*
    * EXPORTS
    */
@@ -406,7 +446,8 @@ var bitgui = (function(){
   return {
     TButton, TToggle, TState, TRadioToggles,
     TNumber,
-    MousePositionTracker, ContainerMask
+    MousePositionTracker, ContainerMask,
+    LocalProjectStore
   }
 
 }()); // GUI definitions

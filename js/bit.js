@@ -290,47 +290,14 @@ var bit = (function() {
    * STORE
    */
 
-  var store = (function() {
-
-    const storageKey = 'BiT';
-
-    function getStore() {
-      return JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+  class Store extends bitgui.LocalProjectStore {
+    constructor() {
+      super('BiT')
     }
-
-    function setStore(s) {
-      window.localStorage.setItem(storageKey, JSON.stringify(s));      
-    }
-
-    function write(name, value) {
-      let s = getStore();
-      s[name] = value;
-      setStore(s);
-    }
-
-    function read(name) {
-      return getStore()[name];
-    }
-
-    function remove(name) {
-      let s = getStore();
-      delete s[name];
-      setStore(s);
-    }
-
-    function list() {
-      return Object.keys(getStore());
-    }
-
-    function reset() {
-      window.localStorage.removeItem(storageKey);
-    }
-
-    function a2s(area, index, areas) {
+    a2s(area, index, areas) {
       return area.toRecord(index, areas);
     }
-
-    function s2a(stored, index, areas) {
+    s2a(stored, index, areas) {
       let area;
       if (index !== stored.index || index != areas.length) {
         console.log('ERROR - Corrupted stored record with bad index');
@@ -341,17 +308,8 @@ var bit = (function() {
           : bitgrid.createFromRecord(stored, wks.getParent(), wks.getGridParent(), areas);
       return area;
     }
-
-    return {
-      list,
-      read,
-      write,
-      remove,
-      reset,
-      a2s, s2a
-    }
-
-  })();
+  }
+  const store = new Store();
 
   /*
    * PSEUDO-CLIPBOARD MANAGEMENT 
