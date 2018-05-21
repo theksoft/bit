@@ -1,12 +1,12 @@
 /**
- * Boardgame image tool (BiT) GUI Definition
+ * Boardgame image tool (BiT) Tools Definition
  * https://github.com/theksoft/bit
  *
  * Copyright 2017 Herve Retaureau
  * Released under the MIT license
  */
 
-var bitgui = (function(){
+var bittls = (function(){
 
   'use strict'
 

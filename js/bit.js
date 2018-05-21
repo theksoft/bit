@@ -290,7 +290,7 @@ var bit = (function() {
    * STORE
    */
 
-  class Store extends bitgui.LocalProjectStore {
+  class Store extends bittls.LocalProjectStore {
     constructor() {
       super('BiT')
     }
@@ -467,7 +467,7 @@ var bit = (function() {
     // COORDINATE TRACKER
     // Images coordinates are set when moving within workarea.
 
-    var coordTracker = new bitgui.MousePositionTracker({
+    var coordTracker = new bittls.MousePositionTracker({
       trackedElement: doms.workarea,
       displayElement : $('coordinates'),
       translate : viewport.computeCoords
@@ -1167,7 +1167,7 @@ var bit = (function() {
         gParam      : true
     };
 
-    const disabler = new bitgui.ContainerMask({
+    const disabler = new bittls.ContainerMask({
       containerElement : $('tools'),
       maskElement : document.querySelector('#tools .mask')
     });
@@ -1186,7 +1186,7 @@ var bit = (function() {
       utils.fgTypes.POLYGON
     ];
 
-    const drawMode = new bitgui.TRadioToggles({
+    const drawMode = new bittls.TRadioToggles({
       map : [
         { element : $('hex-d'),           value : modes.HEXDTR },
         { element : $('hex-r'),           value : modes.HEXRCT },
@@ -1232,7 +1232,7 @@ var bit = (function() {
       }
     }
 
-    const gridScope = new bitgui.TToggle({
+    const gridScope = new bittls.TToggle({
       map : [
         { element : $('grid-scope-inner'),  value : scopes.INNER },
         { element : $('grid-scope-outer'),  value : scopes.OUTER }
@@ -1248,7 +1248,7 @@ var bit = (function() {
     const setGridScope = v => gridScope.value = v || context.scope;
     const getGridScope = () => context.scope;
 
-    const gridAlign = new bitgui.TToggle({
+    const gridAlign = new bittls.TToggle({
       map : [ 
         { element : $('grid-algn-std'),     value : aligns.STANDARD },
         { element : $('grid-algn-alt'),     value : aligns.ALT_HORIZONTAL },
@@ -1265,7 +1265,7 @@ var bit = (function() {
     const setGridAlign = v => gridAlign.value = v || context.align;
     const getGridAlign = () => context.align;
 
-    const gridSpace = new bitgui.TNumber({
+    const gridSpace = new bittls.TNumber({
       element : $('grid-space'),
       initialValue : context.space,
       action : v => {
@@ -1278,7 +1278,7 @@ var bit = (function() {
     const setGridSpace = v => gridSpace.value = (v === 0) ? 0 : (v || context.space);
     const getGridSpace = () => context.space;
 
-    const gridOrder = new bitgui.TToggle({
+    const gridOrder = new bittls.TToggle({
       map : [ 
         { element : $('grid-order-tl'),     value : orders.TOPLEFT },
         { element : $('grid-order-lt'),     value : orders.LEFTTOP },
@@ -1300,7 +1300,7 @@ var bit = (function() {
     const setGridOrder = v => gridOrder.value = v || context.order;
     const getGridOrder = () => context.order;
 
-    const showOrder = new bitgui.TState({
+    const showOrder = new bittls.TState({
       element : $('show-order'), 
       action : v => {
         blurAreaProps();
@@ -1384,37 +1384,37 @@ var bit = (function() {
       doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
 
-    const resize = new bitgui.TButton({
+    const resize = new bittls.TButton({
       element : $('resize'),
       action : () => context.handlers.onResize()
     });
 
-    const alignLeft = new bitgui.TButton({
+    const alignLeft = new bittls.TButton({
       element : $('align-left'),
       action : () => context.handlers.onAlignLeft()
     });
 
-    const alignTop = new bitgui.TButton({
+    const alignTop = new bittls.TButton({
       element : $('align-top'),
       action : () => context.handlers.onAlignTop()
     });
 
-    const alignRight = new bitgui.TButton({
+    const alignRight = new bittls.TButton({
       element : $('align-right'),
       action : () => context.handlers.onAlignRight()
     });
 
-    const alignBottom = new bitgui.TButton({
+    const alignBottom = new bittls.TButton({
       element : $('align-bottom'),
       action : () => context.handlers.onAlignBottom()
     });
 
-    const alignCenterHorizontally = new bitgui.TButton({
+    const alignCenterHorizontally = new bittls.TButton({
       element : $('align-center-h'),
       action : () => context.handlers.onAlignCenterHorizontally()
     });
 
-    const alignCenterVertically = new bitgui.TButton({
+    const alignCenterVertically = new bittls.TButton({
       element : $('align-center-v'),
       action : () => context.handlers.onAlignCenterVertically()
     });
