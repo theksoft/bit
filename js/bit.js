@@ -1185,49 +1185,6 @@ var bit = (function() {
     const orders = bitgrid.orders;
     const properties = bitmap.properties;
 
-    const btnsMode = [
-      { dom : $('hex-d'),             mode : modes.HEXDTR },
-      { dom : $('hex-r'),             mode : modes.HEXRCT },
-      { dom : $('rectangle'),         mode : modes.RECTANGLE },
-      { dom : $('square'),            mode : modes.SQUARE },
-      { dom : $('rhombus'),           mode : modes.RHOMBUS },
-      { dom : $('triangle-e'),        mode : modes.TRIANGLEEQL },
-      { dom : $('triangle-i'),        mode : modes.TRIANGLEISC },
-      { dom : $('triangle-r'),        mode : modes.TRIANGLERCT },
-      { dom : $('ellipse'),           mode : modes.ELLIPSE },
-      { dom : $('circle-d'),          mode : modes.CIRCLEDTR },
-      { dom : $('circle-c'),          mode : modes.CIRCLECTR },
-      { dom : $('polygon'),           mode : modes.POLYGON }
-    ];
-
-    const btnsGridMode = [
-      { dom : $('hex-grid'),          mode : modes.GRIDHEX },
-      { dom : $('rectangle-grid'),    mode : modes.GRIDRECTANGLE },
-      { dom : $('circle-grid'),       mode : modes.GRIDCIRCLE }
-    ];
-
-    const btnsGridScope = [
-      { dom : $('grid-scope-inner'),  scope : scopes.INNER },
-      { dom : $('grid-scope-outer'),  scope : scopes.OUTER }
-    ];
-    
-    const btnsGridAlign = [
-      { dom : $('grid-algn-std'),     align : aligns.STANDARD },
-      { dom : $('grid-algn-alt'),     align : aligns.ALT_HORIZONTAL },
-      { dom : $('grid-algn-alt2'),    align : aligns.ALT_VERTICAL }
-    ];
-
-    const btnsOrder = [
-      { dom : $('grid-order-tl'),     order : orders.TOPLEFT },
-      { dom : $('grid-order-lt'),     order : orders.LEFTTOP },
-      { dom : $('grid-order-lb'),     order : orders.LEFTBOTTOM },
-      { dom : $('grid-order-bl'),     order : orders.BOTTOMLEFT },
-      { dom : $('grid-order-br'),     order : orders.BOTTOMRIGHT },
-      { dom : $('grid-order-rb'),     order : orders.RIGHTBOTTOM },
-      { dom : $('grid-order-rt'),     order : orders.RIGHTTOP },
-      { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
-    ];
-
     const inForm = [
       { dom : $('href-prop'),         prop  : properties.HREF },
       { dom : $('alt-prop'),          prop  : properties.ALT },
@@ -1236,264 +1193,170 @@ var bit = (function() {
     ];
 
     const doms = {
-      inGridSpace     : $('grid-space'),
-      btnShowOrder    : $('show-order'),
-      btnResize       : $('resize'),
-      btnAlignCH      : $('align-center-h'),
-      btnAlignCV      : $('align-center-v'),
-      btnAlignL       : $('align-left'),
-      btnAlignT       : $('align-top'),
-      btnAlignR       : $('align-right'),
-      btnAlignB       : $('align-bottom'),
       btnPropsSave    : $('area-props-save'),
-      btnPropsRestore : $('area-props-restore'),
-      tools           : $('tools'),
-      mask            : document.querySelector('#tools .mask')
+      btnPropsRestore : $('area-props-restore')
     };
 
     var context = {
         handlers    : null,
         selected    : null,
-        mode        : modes.NONE,
+//        mode        : modes.NONE,
         allowGrid   : false,
         freezed     : true,
-        scope       : btnsGridScope[0].scope,
-        align       : btnsGridAlign[0].align,
-        order       : btnsOrder[0].order,
-        gParam      : true,
+        scope       : scopes.INNER,
+        align       : aligns.STANDARD,
+        order       : orders.TOPLEFT,
         space       : 0,
-        showOrder   : false
+        gParam      : true
     };
 
-    function setDrawingMode() {
-      let m = btnsMode.find(e => (context.selected === e.dom)) ||
-              btnsGridMode.find(e => (context.selected === e.dom)) ;
-      context.mode = (m && m.mode) || modes.NONE;
-    }
+    const disabler = new bitgui.ContainerMask({
+      containerElement : $('tools'),
+      maskElement : document.querySelector('#tools .mask')
+    });
 
-    function isGridDrawingModeSelected() {
-      return (-1 !== btnsGridMode.findIndex(e => (context.selected === e.dom)));
-    }
+    const gridModes = [
+      modes.GRIDHEX,
+      modes.GRIDRECTANGLE,
+      modes.GRIDCIRCLE
+    ];
 
-    function select(obj) {
-      if (null != obj) {
-        obj.classList.add(bitedit.clsStatus.SELECTED);
+    const noPattern = [
+      utils.fgTypes.NONE,
+      utils.fgTypes.GRIDRECTANGLE,
+      utils.fgTypes.GRIDHEX,
+      utils.fgTypes.GRIDCIRCLE,
+      utils.fgTypes.POLYGON
+    ];
+
+    const drawMode = new bitgui.TRadioToggles({
+      map : [
+        { element : $('hex-d'),           value : modes.HEXDTR },
+        { element : $('hex-r'),           value : modes.HEXRCT },
+        { element : $('rectangle'),       value : modes.RECTANGLE },
+        { element : $('square'),          value : modes.SQUARE },
+        { element : $('rhombus'),         value : modes.RHOMBUS },
+        { element : $('triangle-e'),      value : modes.TRIANGLEEQL },
+        { element : $('triangle-i'),      value : modes.TRIANGLEISC },
+        { element : $('triangle-r'),      value : modes.TRIANGLERCT },
+        { element : $('ellipse'),         value : modes.ELLIPSE },
+        { element : $('circle-d'),        value : modes.CIRCLEDTR },
+        { element : $('circle-c'),        value : modes.CIRCLECTR },
+        { element : $('polygon'),         value : modes.POLYGON },
+        { element : $('hex-grid'),        value : modes.GRIDHEX },
+        { element : $('rectangle-grid'),  value : modes.GRIDRECTANGLE },
+        { element : $('circle-grid'),     value : modes.GRIDCIRCLE }
+      ],
+      noneValue : modes.NONE,
+      initialValue : modes.NONE,
+      action : () => {
+        blurAreaProps();
       }
-      context.selected = obj;
-    }
+    });
 
-    function unselect(obj) {
-      if (obj != null) {
-        obj.classList.remove(bitedit.clsStatus.SELECTED);
-      }
-      context.selected = null;
-    }
-
-    function toggleSelect(obj) {
-      var sel = (context.selected === obj) ? false : true;
-      unselect(context.selected);
-      if (sel) { select(obj); }
-    }
-
-    function toggleState(objFrom, objTo) {
-      objFrom.style.display = 'none';
-      objTo.style.display = 'inline';
-    }
-
-    function toggleTableState(table, target, action) {
-      let i, next;
-      i = table.findIndex(e => (e.dom === target));
-      if (i !== -1) {
-        action = action || (() => {});
-        next = table[(i+1) % table.length];
-        toggleState(target, next.dom);
-        action(next);
-      }
-    }
-
-    function onDrawModeSelect(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleSelect(evt.target);
-      setDrawingMode();
-    }
-
-    function onDrawGridModeSelect(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      if(context.allowGrid) {
-        toggleSelect(evt.target);
-        setDrawingMode();
-      }
-    }
-
-    function clearDrawMode() {
-      toggleSelect(null);
-      setDrawingMode();
-    }
-
-    function canGrid(obj) {
-      let rtn = true;
-      switch(obj.type) {
-      case utils.fgTypes.NONE:
-      case utils.fgTypes.GRIDRECTANGLE:
-      case utils.fgTypes.GRIDHEX:
-      case utils.fgTypes.GRIDCIRCLE:
-      case utils.fgTypes.POLYGON:
-        rtn = false;
-        break;
-      default:
-      }
-      return rtn;
-    }
-
-    function gridEnable() {
-      btnsGridMode.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
-    }
-
-    function gridDisable() {
-      btnsGridMode.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
-    }
-
+    const isGridDrawModeSelected = () => (gridModes.find(e => (e === drawMode.value)));
+    const getDrawMode = () => drawMode.value;
+    const clearDrawMode = () => drawMode.value = modes.NONE;
+    const canGrid = obj => (noPattern.find(e => (e === obj.type))) ? false : true;
     function enableGridMode(obj) {
       if (!context.allowGrid && canGrid(obj)) {
-        gridEnable();
+        drawMode.enable(gridModes);
         context.allowGrid = true;
       } else if (context.allowGrid && !canGrid(obj)) {
-        if (isGridDrawingModeSelected()) {
-          toggleSelect(null);
-          context.mode = modes.NONE;
-        }
-        gridDisable();
+        drawMode.disable(gridModes);
         context.allowGrid = false;
       }
     }
 
     function disableGridMode() {
       if (context.allowGrid) {
-        if (isGridDrawingModeSelected()) {
-          toggleSelect(null);
-          context.mode = modes.NONE;
-        }
-        gridDisable();
+        drawMode.disable(gridModes);
         context.allowGrid = false;
       }
     }
 
-    function onGridScopeChange(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleTableState(btnsGridScope, evt.target, e => {
+    const gridScope = new bitgui.TToggle({
+      map : [
+        { element : $('grid-scope-inner'),  value : scopes.INNER },
+        { element : $('grid-scope-outer'),  value : scopes.OUTER }
+      ],
+      initialValue : context.scope,
+      action : v => {
+        blurAreaProps();
         if (context.gParam)
-          context.scope = e.scope;
-        context.handlers.onGridScopeChange(e.scope);
-      });
-    }
+          context.scope = v;
+        context.handlers.onGridScopeChange(v);
+      }
+    });
+    const setGridScope = v => gridScope.value = v || context.scope;
+    const getGridScope = () => context.scope;
 
-    function setGridScope(value) {
-      let v = value || context.scope;
-      btnsGridScope.forEach(e => {
-        if (e.dom.style.display !== 'none' && v !== e.scope)
-          e.dom.style.display = 'none';
-        if (v === e.scope)
-          e.dom.style.display = 'inline';
-      });
-    }
-
-    var getGridScope = () => context.scope;
-
-    function onGridAlignChange(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleTableState(btnsGridAlign, evt.target, e => {
+    const gridAlign = new bitgui.TToggle({
+      map : [ 
+        { element : $('grid-algn-std'),     value : aligns.STANDARD },
+        { element : $('grid-algn-alt'),     value : aligns.ALT_HORIZONTAL },
+        { element : $('grid-algn-alt2'),    value : aligns.ALT_VERTICAL }
+      ],
+      initialValue : context.align,
+      action : v => {
+        blurAreaProps();
         if (context.gParam)
-          context.align = e.align;
-        context.handlers.onGridAlignChange(e.align);
-      });
-    }
+          context.align = v;
+        context.handlers.onGridAlignChange(v);
+      }
+    });
+    const setGridAlign = v => gridAlign.value = v || context.align;
+    const getGridAlign = () => context.align;
 
-    function setGridAlign(value) {
-      let v = value || context.align;
-      btnsGridAlign.forEach(e => {
-        if (e.dom.style.display !== 'none' && v !== e.align)
-          e.dom.style.display = 'none';
-        if (v === e.align)
-          e.dom.style.display = 'inline';
-      });
-    }
-
-    var getGridAlign = () => context.align;
-
-    function onGridSpaceChange(e) {
-      blurAreaProps();
-      let v, d;
-      d = parseInt(doms.inGridSpace.defaultValue);
-      v = getGridSpace();
-      if (d !== v) {
-        doms.inGridSpace.defaultValue = v.toString();
-        if (context.gParam) {
+    const gridSpace = new bitgui.TNumber({
+      element : $('grid-space'),
+      initialValue : context.space,
+      action : v => {
+        blurAreaProps();
+        if (context.gParam)
           context.space = v;
-        }
         context.handlers.onGridSpaceChange(v);
       }
-    }
+    });
+    const setGridSpace = v => gridSpace.value = (v === 0) ? 0 : (v || context.space);
+    const getGridSpace = () => context.space;
 
-    var setGridSpace = (v) => { 
-      doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v === 0) ? "0" : (v || context.space).toString();
-    }
-    var getGridSpace = () => parseInt(doms.inGridSpace.value);
-
-    function onGridOrderChange(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleTableState(btnsOrder, evt.target, e => {
+    const gridOrder = new bitgui.TToggle({
+      map : [ 
+        { element : $('grid-order-tl'),     value : orders.TOPLEFT },
+        { element : $('grid-order-lt'),     value : orders.LEFTTOP },
+        { element : $('grid-order-lb'),     value : orders.LEFTBOTTOM },
+        { element : $('grid-order-bl'),     value : orders.BOTTOMLEFT },
+        { element : $('grid-order-br'),     value : orders.BOTTOMRIGHT },
+        { element : $('grid-order-rb'),     value : orders.RIGHTBOTTOM },
+        { element : $('grid-order-rt'),     value : orders.RIGHTTOP },
+        { element : $('grid-order-tr'),     value : orders.TOPRIGHT }
+      ],
+      initialValue : context.order,
+      action : v => {
+        blurAreaProps();
         if (context.gParam)
-          context.order = e.order;
-        context.handlers.onGridOrderChange(e.order);
-      });
-    }
+          context.order = v;
+        context.handlers.onGridOrderChange(v);
+      }
+    });
+    const setGridOrder = v => gridOrder.value = v || context.order;
+    const getGridOrder = () => context.order;
 
-    function setGridOrder(value) {
-      let v = value || context.order;
-      btnsOrder.forEach(e => {
-        if (e.dom.style.display !== 'none' && v !== e.order)
-          e.dom.style.display = 'none';
-        if (v === e.order)
-          e.dom.style.display = 'inline';
-      });
-    }
-
-    var getGridOrder = () => context.order;
+    const showOrder = new bitgui.TState({
+      element : $('show-order'), 
+      action : v => {
+        blurAreaProps();
+        context.handlers.onShowOrder(v);
+      }
+    }); 
 
     function gridParamsReset() {
-      toggleState(btnsGridScope[1].dom, btnsGridScope[0].dom);
-      toggleState((btnsGridAlign[2].align === context.align) ? btnsGridAlign[2].dom : btnsGridAlign[1].dom, btnsGridAlign[0].dom);
-      doms.inGridSpace.defaultValue = "0";
-      doms.inGridSpace.value = "0";
-      context.showOrder = false;
-      setGridOrder(btnsOrder[0].order);
-    }
-
-    function onShowOrder(e) {
-      blurAreaProps();
-      if(!context.showOrder) {
-        doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
-        doms.btnShowOrder.addEventListener('mouseup', onHideOrder, false);
-        doms.btnShowOrder.addEventListener('mouseleave', onHideOrder, false);
-        context.handlers.onShowOrder(true);
-        context.showOrder = true;
-      }
-    }
-
-    function onHideOrder(e) {
-      blurAreaProps();
-      if(context.showOrder) {
-        doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
-        doms.btnShowOrder.removeEventListener('mouseup', onHideOrder, false);
-        doms.btnShowOrder.removeEventListener('mouseleave', onHideOrder, false);
-        context.handlers.onShowOrder(false);
-        context.showOrder = false;
-      }
+      gridScope.reset();
+      gridAlign.reset();
+      gridSpace.reset();
+      gridOrder.reset();
+      showOrder.reset();
     }
 
     function updateGridParams(obj) {
@@ -1564,54 +1427,40 @@ var bit = (function() {
       doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
     }
 
-    function onResize(e) {
-      context.handlers.onResize();
-      e.preventDefault();
-    }
+    const resize = new bitgui.TButton({
+      element : $('resize'),
+      action : () => context.handlers.onResize()
+    });
 
-    function onAlignLeft(e) {
-      context.handlers.onAlignLeft();
-      e.preventDefault();
-    }
+    const alignLeft = new bitgui.TButton({
+      element : $('align-left'),
+      action : () => context.handlers.onAlignLeft()
+    });
 
-    function onAlignTop(e) {
-      context.handlers.onAlignTop();
-      e.preventDefault();
-    }
+    const alignTop = new bitgui.TButton({
+      element : $('align-top'),
+      action : () => context.handlers.onAlignTop()
+    });
 
-    function onAlignRight(e) {
-      context.handlers.onAlignRight();
-      e.preventDefault();
-    }
+    const alignRight = new bitgui.TButton({
+      element : $('align-right'),
+      action : () => context.handlers.onAlignRight()
+    });
 
-    function onAlignBottom(e) {
-      context.handlers.onAlignBottom();
-      e.preventDefault();
-    }
+    const alignBottom = new bitgui.TButton({
+      element : $('align-bottom'),
+      action : () => context.handlers.onAlignBottom()
+    });
 
-    function onAlignCenterHorizontally(e) {
-      context.handlers.onAlignCenterHorizontally();
-      e.preventDefault();
-    }
+    const alignCenterHorizontally = new bitgui.TButton({
+      element : $('align-center-h'),
+      action : () => context.handlers.onAlignCenterHorizontally()
+    });
 
-    function onAlignCenterVertically(e) {
-      context.handlers.onAlignCenterVertically();
-      e.preventDefault();
-    }
-
-    function displayMask() {
-      let r;
-      doms.mask.style.display = 'block';
-      r = doms.tools.getBoundingClientRect();
-      doms.mask.style.width = r.width + 'px';
-      doms.mask.style.height = r.height + 'px';
-      doms.mask.style.left = r.left + 'px';
-      doms.mask.style.top = r.top+1 + 'px';
-    }
-
-    function hideMask() {
-      doms.mask.style.display = 'none';
-    }
+    const alignCenterVertically = new bitgui.TButton({
+      element : $('align-center-v'),
+      action : () => context.handlers.onAlignCenterVertically()
+    });
 
     return {
 
@@ -1621,21 +1470,20 @@ var bit = (function() {
       },
 
       reset : function() {
-        toggleSelect(null);
-        gridDisable();
-        context.mode = modes.NONE;
+        drawMode.disable(gridModes);
+        drawMode.value = modes.NONE;
         context.allowGrid = false;
         gridParamsReset();
         context.gParam = true;
-        context.scope = btnsGridScope[0].scope;
-        context.align = btnsGridAlign[0].align;
         context.space = 0;
-        context.order = btnsOrder[0].order;
+        context.scope = gridScope.value;
+        context.align = gridAlign.value;
+        context.order = gridOrder.value;
         disableAreaProps();
         this.release();
       },
 
-      getDrawingMode : () => context.mode, clearDrawMode,
+      getDrawMode, clearDrawMode,
       getGridScope,
       getGridAlign,
       getGridOrder,
@@ -1645,13 +1493,6 @@ var bit = (function() {
 
       freeze : function() {
         if (context.freezed) return;
-        btnsMode.forEach(e => e.dom.removeEventListener('click', onDrawModeSelect, false));
-        btnsGridMode.forEach(e => e.dom.removeEventListener('click', onDrawGridModeSelect, false));
-        btnsGridScope.forEach(e => e.dom.removeEventListener('click', onGridScopeChange, false));
-        btnsGridAlign.forEach(e => e.dom.removeEventListener('click', onGridAlignChange, false));
-        doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
-        doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
-        btnsOrder.forEach(e => e.dom.removeEventListener('click', onGridOrderChange, false));
         doms.btnPropsSave.removeEventListener('click', onPropsSave, false);
         doms.btnPropsRestore.removeEventListener('click', onPropsRestore, false);
         inForm.forEach(e => {
@@ -1659,44 +1500,23 @@ var bit = (function() {
           e.dom.removeEventListener('input', onPropsInput, false)
           e.dom.blur();
         });
-        doms.btnResize.removeEventListener('click', onResize, false);
-        doms.btnAlignL.removeEventListener('click', onAlignLeft, false);
-        doms.btnAlignT.removeEventListener('click', onAlignTop, false);
-        doms.btnAlignR.removeEventListener('click', onAlignRight, false);
-        doms.btnAlignB.removeEventListener('click', onAlignBottom, false);
-        doms.btnAlignCH.removeEventListener('click', onAlignCenterHorizontally, false);
-        doms.btnAlignCV.removeEventListener('click', onAlignCenterVertically, false);
-        displayMask();
+        disabler.maskElement();
         context.freezed = true;
       },
 
       release : function() {
         if (!context.freezed) return;
-        btnsMode.forEach(e => e.dom.addEventListener('click', onDrawModeSelect, false));
-        btnsGridMode.forEach(e => e.dom.addEventListener('click', onDrawGridModeSelect, false));
-        btnsGridScope.forEach(e => e.dom.addEventListener('click', onGridScopeChange, false));
-        btnsGridAlign.forEach(e => e.dom.addEventListener('click', onGridAlignChange, false));
-        doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
-        doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
-        btnsOrder.forEach(e => e.dom.addEventListener('click', onGridOrderChange, false));
         doms.btnPropsSave.addEventListener('click', onPropsSave, false);
         doms.btnPropsRestore.addEventListener('click', onPropsRestore, false);
         inForm.forEach(e => {
           e.dom.addEventListener('input', onPropsInput, false)
           e.dom.addEventListener('keydown', onPropsKey, false)
         });
-        doms.btnResize.addEventListener('click', onResize, false);
-        doms.btnAlignL.addEventListener('click', onAlignLeft, false);
-        doms.btnAlignT.addEventListener('click', onAlignTop, false);
-        doms.btnAlignR.addEventListener('click', onAlignRight, false);
-        doms.btnAlignB.addEventListener('click', onAlignBottom, false);
-        doms.btnAlignCH.addEventListener('click', onAlignCenterHorizontally, false);
-        doms.btnAlignCV.addEventListener('click', onAlignCenterVertically, false);
-        hideMask();
+        disabler.unmaskElement();
         context.freezed = false;
       },
 
-      isGridDrawingModeSelected,
+      isGridDrawModeSelected,
 
       enableGridTools : function(obj) {
         enableGridMode(obj);
@@ -2963,7 +2783,7 @@ var bit = (function() {
       var _generator = null;
 
       function _create(parent, alt) {
-        let figGen = _factory[tls.getDrawingMode()];
+        let figGen = _factory[tls.getDrawMode()];
         if (!figGen) {
           console.log('ERROR - Drawing mode not handled');
           return null;
@@ -2972,7 +2792,7 @@ var bit = (function() {
       }
 
       function _createGrid(parent, bond, gridParent) {
-        let figGen = _gridFactory[tls.getDrawingMode()];
+        let figGen = _gridFactory[tls.getDrawMode()];
         if (!figGen) {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
@@ -2988,7 +2808,7 @@ var bit = (function() {
       }
 
       function onStart(parent, pt, alt, gridParent) {
-        let bondElt = (tls.isGridDrawingModeSelected()) ? selector.first().figure : null;
+        let bondElt = (tls.isGridDrawModeSelected()) ? selector.first().figure : null;
         selector.empty();
         _generator = (null === bondElt)
                     ? _create(parent, alt)
