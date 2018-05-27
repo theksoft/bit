@@ -1260,95 +1260,88 @@ var bit = (function() {
    * FOOTER DISPLAY MANAGEMENT
    */
 
-  var ftr = (function() {
+  class Footer {
 
-    var doms = {
-      info : $('selected-file'),
-      cursor : $('coordinates'),
-      load : $('load-indicator')
-    };
-
-    var loading = (function() {
-      return {
-        show : () => doms.load.style.display = 'inline',
-        hide : () => doms.load.style.display = 'none'
-      };
-    })();
-
-    function clear() {
-      while(doms.info.firstChild) {
-        doms.info.removeChild(doms.info.firstChild);
-      }
-      doms.info.classList.remove('error');
-      return this;
+    constructor(c) {
+      this._doms = c.doms
     }
 
-    return {
+    _clear() {
+      while(this._doms.info.firstChild) {
+        this._doms.info.removeChild(this._doms.info.firstChild)
+      }
+      this._doms.info.classList.remove('error')
+      return this
+    }
 
-      reset : function() {
-        clear();
-        var info = document.createElement('p');
-        info.textContent = 'No image file selected';
-        doms.info.appendChild(info);
-        return this;
-      },
+    reset() {
+      this._clear()
+      let info = document.createElement('p')
+      info.textContent = 'No image file selected'
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      error : function(f) {
-        clear();
-        var info = document.createElement('p');
-        info.textContent = 'No image file selected - ' + ((f == null) ? 'Too many files selected' : ( 'Selected file is not an image file: ' + f.name ));
-        doms.info.classList.add('error');
-        doms.info.appendChild(info);
-        return this;
-      },
+    error(f) {
+      this._clear();
+      let info = document.createElement('p')
+      info.textContent = 'No image file selected - ' + ((f == null) ? 'Too many files selected' : ( 'Selected file is not an image file: ' + f.name ))
+      this._doms.info.classList.add('error')
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      info : function(f) {
-        clear();
-        var output = [];
-        output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
-            f.size, ' bytes, last modified: ',
-            f.lastModified ? (new Date(f.lastModified)).toLocaleDateString() : 'n/a');      
-        var info = document.createElement('p');
-        info.innerHTML = output.join(''); 
-        var image = document.createElement('img');
-        image.src = window.URL.createObjectURL(f);
-        doms.info.appendChild(image);
-        doms.info.appendChild(info);
-        return this;
-      },
+    info(f) {
+      this._clear()
+      let output = []
+      output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+          f.size, ' bytes, last modified: ',
+          f.lastModified ? (new Date(f.lastModified)).toLocaleDateString() : 'n/a')
+      let info = document.createElement('p')
+      info.innerHTML = output.join('')
+      let image = document.createElement('img')
+      image.src = window.URL.createObjectURL(f)
+      this._doms.info.appendChild(image)
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      errorEx : function(p) {
-        clear();
-        var info = document.createElement('p');
-        info.textContent = 'Project "' + p.name + '" / Image "' + p.filename + '" - Corrupted record!';
-        doms.info.classList.add('error');
-        doms.info.appendChild(info);
-        return this;
-      },
+    errorEx(p) {
+      this._clear()
+      let info = document.createElement('p')
+      info.textContent = 'Project "' + p.name + '" / Image "' + p.filename + '" - Corrupted record!'
+      this._doms.info.classList.add('error')
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      infoEx : function(p) {
-        clear();
-        var output = [];
-        output.push('<strong>', escape(p.filename), '</strong> (', p.type || 'n/a', ') - ',
-            p.size, ' bytes, last modified: n/a');      
-        var info = document.createElement('p');
-        info.innerHTML = output.join(''); 
-        var image = document.createElement('img');
-        image.src = p.dataURL;
-        doms.info.appendChild(image);
-        doms.info.appendChild(info);
-        return this;
-      },
+    infoEx(p) {
+      this._clear()
+      let output = []
+      output.push('<strong>', escape(p.filename), '</strong> (', p.type || 'n/a', ') - ',
+          p.size, ' bytes, last modified: n/a')
+      let info = document.createElement('p')
+      info.innerHTML = output.join('')
+      let image = document.createElement('img')
+      image.src = p.dataURL
+      this._doms.info.appendChild(image)
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      infoUpdate(width, height) {
-        doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px';
-      },
+    infoUpdate(width, height) {
+      this._doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px'
+    }
 
-      loading
+    get loading() {
+      return {
+        show : () => this._doms.load.style.display = 'inline',
+        hide : () => this._doms.load.style.display = 'none'
+      };
+    }
 
-    };
-
-  })(); /* FOOTER DISPLAY MANAGEMENT */
+  }
+  let footer = null;
 
   /*
    * MAP PROJECT MANAGER
@@ -2162,12 +2155,12 @@ var bit = (function() {
         if (mdl.setFile(data.file)) {
           mdl.setInfo(data);
           mnu.switchToEditMode();
-          ftr.info(data.file);
+          footer.info(data.file);
           wks.load(data.file);
           setModified(true);
           rtn = true;
         } else {
-          ftr.error(data.file);
+          footer.error(data.file);
         }
         release();
         return rtn;
@@ -2177,7 +2170,7 @@ var bit = (function() {
         let rtn, project;
         rtn = false;
         project = store.read(name);
-        ftr.infoEx(project);
+        footer.infoEx(project);
         wks.loadEx(project);
         if(mdl.fromStore(project, store.s2a)) {
           mdl.forEachArea(e => {
@@ -2188,7 +2181,7 @@ var bit = (function() {
           setUnmodified(true);
           rtn = true;
         } else {
-          ftr.errorEx(project);
+          footer.errorEx(project);
         }
         release();
         return rtn;
@@ -2228,7 +2221,7 @@ var bit = (function() {
  
       function onNewProject() {
         if (!mdl.isModified() || confirm('Discard all changes?')) {
-          ftr.reset();
+          footer.reset();
           wks.reset();
           tls.reset();
           mnu.reset();
@@ -2254,7 +2247,7 @@ var bit = (function() {
 
       function onLoadProject() {
         if (!mdl.isModified() || confirm('Discard all changes?')) {
-          ftr.reset();
+          footer.reset();
           wks.reset();
           tls.reset();
           mnu.reset();
@@ -2925,6 +2918,12 @@ var bit = (function() {
     htm.init(projects.handlers);
     help.init(projects.handlers);
     mnu.init(menu.handlers);
+    footer = new Footer({
+      doms : {
+        info : $('selected-file'),
+        load : $('load-indicator')
+      }
+    })
     wks = new Workspace({
       doms : {
         wks       : $('wks-wrap'),
@@ -2944,7 +2943,7 @@ var bit = (function() {
         mover : mover.handlers,
         editor : editor.handlers
       },
-      ftr : ftr
+      ftr : footer
     })
     store = new Store({ workspace : wks })
     clipboard = new Clipboard({ workspace : wks, copyOffset : COPY_OFFSET })
