@@ -291,79 +291,91 @@ var bit = (function() {
    */
 
   class Store extends bittls.LocalProjectStore {
-    constructor() {
+    constructor(c) {
       super('BiT')
+      this._workspace = c.workspace
+      this.a2s = this._a2s.bind(this)
+      this.s2a = this._s2a.bind(this)
     }
-    a2s(area, index, areas) {
-      return area.toRecord(index, areas);
+    _a2s(area, index, areas) {
+      return area.toRecord(index, areas)
     }
-    s2a(stored, index, areas) {
-      let area;
+    _s2a(stored, index, areas) {
+      let area
       if (index !== stored.index || index != areas.length) {
-        console.log('ERROR - Corrupted stored record with bad index');
-        return null;
+        console.log('ERROR - Corrupted stored record with bad index')
+        return null
       }
       area = (!stored.isGrid)
-          ? bitarea.createFromRecord(stored, wks.getParent())
-          : bitgrid.createFromRecord(stored, wks.getParent(), wks.getGridParent(), areas);
-      return area;
+          ? bitarea.createFromRecord(stored, this._workspace.getParent())
+          : bitgrid.createFromRecord(stored, this._workspace.getParent(), this._workspace.getGridParent(), areas)
+      return area
     }
   }
-  const store = new Store();
+  let store = null;
 
   /*
    * PSEUDO-CLIPBOARD MANAGEMENT 
    */
 
-  var clp = (function() {
+  class Clipboard {
 
-    var context = {
-        data  : null,
-        basic : true,
-        risky : false,
-        offset : 0
-    };
-
-    const COPY_OFFSET = 10;
-
-    function setClipboard(c) {
-      context.data = JSON.stringify(c);
-      context.basic = c.basic;
-      context.unsafe = false;
-      context.offset = 0;
-      c = null;
+    constructor(c) {
+      this._workspace = c.workspace
+      this._copyOffset = c.copyOffset
+      this._data = null
+      this._basic = true
+      this._unsafe = false
+      this._offset = 0
+      this.a2c = this._a2c.bind(this)
+      this.c2a = this._c2a.bind(this)
     }
 
-    function getClipboard() {
-      let c = JSON.parse(context.data || '{}');
-      c.unsafe = context.unsafe;
-      context.offset += COPY_OFFSET;
-      return c;
+    get offset() {
+      return this._offset
     }
 
-    function a2c(area, index, areas) {
-      return area.toRecord(index, areas);
+    set data(c) {
+      this._data = JSON.stringify(c)
+      this._basic = c.basic
+      this._unsafe = false
+      this._offset = 0
+      c = null
     }
 
-    function c2a(record, index, areas) {
-      let area;
+    get data() {
+      let c = JSON.parse(this._data || '{}')
+      c.unsafe = this._unsafe
+      this._offset += this._copyOffset
+      return c
+    }
+
+    isCopyUnsafe() {
+      return this._unsafe
+    }
+
+    setCopyUnsafe() {
+      if (!this._basic) this._unsafe = true
+    }
+
+    _a2c(area, index, areas) {
+      return area.toRecord(index, areas)
+    }
+
+    _c2a(record, index, areas) {
+      let area
       if (index !== record.index || index > areas.length) {
-        console.log('ERROR - Corrupted clipboard record with bad index');
-        return null;
+        console.log('ERROR - Corrupted clipboard record with bad index')
+        return null
       }
       area = (!record.isGrid)
-          ? bitarea.createFromRecord(record, wks.getParent())
-          : bitgrid.createFromRecord(record, wks.getParent(), wks.getGridParent(), areas);
-      return area;
+          ? bitarea.createFromRecord(record, this._workspace.getParent())
+          : bitgrid.createFromRecord(record, this._workspace.getParent(), this._workspace.getGridParent(), areas)
+      return area
     }
 
-    return {
-      setClipboard, getClipboard,
-      setCopyUnsafe : () => { if (!context.basic) context.unsafe = true; }, isCopyUnsafe : () => context.unsafe,
-      a2c, c2a, offset : () => context.offset
-    }
-
-  })();
+  }
+  let clipboard = null;
 
   /*
    * WORKAREA MANAGEMENT
@@ -746,6 +758,8 @@ var bit = (function() {
       this._drawarea = c.drawarea
     }
   }
+
+  // WORKSPACE FOR GRAPHIC OPERATIONS
 
   class Workspace {
 
@@ -2106,13 +2120,15 @@ var bit = (function() {
     var setModified = unsafe => {
       mdl.setModified();
       mnu.canSave();
-      if (unsafe) clp.setCopyUnsafe();
+//      if (unsafe) clp.setCopyUnsafe();
+      if (unsafe) clipboard.setCopyUnsafe();
     };
 
     var setUnmodified = unsafe => {
       mdl.setUnmodified();
       mnu.preventSave();
-      if (unsafe) clp.setCopyUnsafe();
+//      if (unsafe) clp.setCopyUnsafe();
+      if (unsafe) clipboard.setCopyUnsafe();
     };
 
     function freeze() {
@@ -2747,14 +2763,17 @@ var bit = (function() {
 
       function onCopy() {
         if (_selected.length < 1) return;
-        clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
+//        clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
+        clipboard.data = mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clipboard.a2c);
       }
 
       function onPaste(forceDeepCopy) {
         let areas;
-        if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
+//        if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
+        if (clipboard.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
           return;
-        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a, forceDeepCopy);
+//        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a, forceDeepCopy);
+        areas = mdl.fromClipboard(clipboard.data, clipboard.c2a, forceDeepCopy);
         if (areas.length > 0) {
           mdl.addAreas(areas);
           areas.forEach(e => {
@@ -2764,7 +2783,8 @@ var bit = (function() {
           setModified();
           selector.unselectAll();
           selector.selectSubset(areas);
-          mover.handlers.onStep(wks.getParent(), clp.offset(), clp.offset());
+//          mover.handlers.onStep(wks.getParent(), clp.offset(), clp.offset());
+          mover.handlers.onStep(wks.getParent(), clipboard.offset, clipboard.offset);
         }
         setModified();
       }
@@ -2902,6 +2922,8 @@ var bit = (function() {
     window.addEventListener("dragover", preventWindowDrop);
     window.addEventListener("drop", preventWindowDrop);
 
+    const COPY_OFFSET = 10;
+
     prj.init(projects.handlers);
     ctr.init(projects.handlers);
     ldr.init(projects.handlers);
@@ -2930,6 +2952,8 @@ var bit = (function() {
       },
       ftr : ftr
     })
+    store = new Store({ workspace : wks })
+    clipboard = new Clipboard({ workspace : wks, copyOffset : COPY_OFFSET })
     tls.init(tooler.handlers);
 
   })(); /* APPLICATION MANAGEMENT */
