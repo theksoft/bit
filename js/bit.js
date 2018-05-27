@@ -2120,14 +2120,12 @@ var bit = (function() {
     var setModified = unsafe => {
       mdl.setModified();
       mnu.canSave();
-//      if (unsafe) clp.setCopyUnsafe();
       if (unsafe) clipboard.setCopyUnsafe();
     };
 
     var setUnmodified = unsafe => {
       mdl.setUnmodified();
       mnu.preventSave();
-//      if (unsafe) clp.setCopyUnsafe();
       if (unsafe) clipboard.setCopyUnsafe();
     };
 
@@ -2763,16 +2761,13 @@ var bit = (function() {
 
       function onCopy() {
         if (_selected.length < 1) return;
-//        clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
         clipboard.data = mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clipboard.a2c);
       }
 
       function onPaste(forceDeepCopy) {
         let areas;
-//        if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
         if (clipboard.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
           return;
-//        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a, forceDeepCopy);
         areas = mdl.fromClipboard(clipboard.data, clipboard.c2a, forceDeepCopy);
         if (areas.length > 0) {
           mdl.addAreas(areas);
@@ -2783,7 +2778,6 @@ var bit = (function() {
           setModified();
           selector.unselectAll();
           selector.selectSubset(areas);
-//          mover.handlers.onStep(wks.getParent(), clp.offset(), clp.offset());
           mover.handlers.onStep(wks.getParent(), clipboard.offset, clipboard.offset);
         }
         setModified();
