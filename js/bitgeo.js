@@ -14,12 +14,12 @@ var bitgeo = (function(){
     constructor(x, y) {
       x = x || 0
       y = y || 0
-      this._coord = { x : x, y : y }
+      this._coords = { x : x, y : y }
     }
     get x() { return this._coords.x }
     set x(x) { this._coords.x = x }
     get y() { return this._coords.y }
-    set y(y) { this._coords.x = x }
+    set y(y) { this._coords.y = y }
     get coords() { return Object.assign({}, this._coords) }
     set coords(c) { Object.assign(this._coords, c) }
   }

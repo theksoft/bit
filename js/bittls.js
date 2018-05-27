@@ -332,6 +332,204 @@ var bittls = (function(){
 
   }
 
+  class MouseStateMachine {
+
+    constructor(c, g) {
+      if (!c.element)
+        throw new Error('ERROR[MouseStateMachine] Mouse state machine must be configured with a valid element!')
+      this._element = c.element
+      this._translate = c.translate || ((x, y) => new bitgeo.Point(x,y))
+      this._startOnPress = c.startOnPress || false
+      this._trigger = c.trigger || (() => false)
+      this._start = c.onStart || (() => true)
+      this._progress = c.onProgress || (() => {})
+      this._end = c.onEnd || (() => true)
+      this._exit = c.onExit || (() => {})
+      this._cancel = c.onCancel || (() => {})
+      this._state = 'inactive'
+      this._enabled = true
+      this.onTryStart = this._onTryStart.bind(this);
+      this.onProgress = this._onProgress.bind(this);
+      this.onCheckEnd = this._onCheckEnd.bind(this);
+      this.onExit = this._onExit.bind(this);
+      this.onCheckCancel = this._onCheckCancel.bind(this);
+      this._element.addEventListener((c.startOnPress) ? 'mousedown' : 'click', this.onTryStart, false)
+      this._g = g
+      if (g && !g.group.contains(this))
+        g.group.add([{ machine : this, state : g.state }])
+    }
+
+    _activate() {
+      if (this._startOnPress) {
+        this._element.removeEventListener('mousedown', this.onTryStart, false)
+        this._element.addEventListener('mouseup', this.onCheckEnd, false)
+        this._element.addEventListener('click', this.onExit, false)
+        this._element.addEventListener('mousemove',this.onProgress, false)
+      } else {
+        this._element.removeEventListener('click', this.onTryStart, false)
+        this._element.addEventListener('click', this.onCheckEnd, false)
+        this._element.addEventListener('mousemove',this.onProgress, false)
+      }
+      document.addEventListener('keydown', this.onCheckCancel, false)
+      if (this._g)
+        this._g.group.activate(this)
+    }
+
+    _inactivate() {
+      document.removeEventListener('keydown', this.onCheckCancel, false)
+      if (this._startOnPress) {
+        this._element.removeEventListener('mousemove',this.onProgress, false)
+        this._element.removeEventListener('click', this.onExit, false)
+        this._element.removeEventListener('mouseup', this.onCheckEnd, false)
+        this._element.addEventListener('mousedown', this.onTryStart, false)
+      } else {
+        this._element.removeEventListener('mousemove',this.onProgress, false)
+        this._element.removeEventListener('click', this.onCheckEnd, false)
+        this._element.addEventListener('click', this.onTryStart, false)
+      }
+      if (this._g)
+        this._g.group.inactivate(this)
+    }
+
+    _onTryStart(e) {
+      e.preventDefault()
+      if (!this._trigger(e)) return
+      if (0 === e.button) {
+        if (this._start(this._translate(e.pageX, e.pageY), e, this._element)) {
+          this._activate()
+          this._state = 'active'
+        }
+      }
+    }
+
+    _onProgress(e) {
+      e.preventDefault()
+      if (this._startOnPress && (Math.floor(e.buttons/2)*2 === e.buttons)) {
+        this._cancel(this._element)
+        this._inactivate()
+        this._exit(this._element)
+        this._state = 'inactive'
+      }
+      if ('active' === this._state)
+        this._progress(this._translate(e.pageX, e.pageY), e, this._element)
+    }
+
+
+    _onCheckEnd(e) {
+      e.preventDefault()
+      if ('active' === this._state) {
+        if (!this._startOnPress && !(0 === e.button)) return
+        if (this._end(this._translate(e.pageX, e.pageY), e, this._element)) {
+          this._state = 'done'
+          if (!this._startOnPress) {
+            this._inactivate()
+            this._exit(this._element)
+            this._state = 'inactive'
+          }
+        }
+      }
+    }
+  
+    _onExit(e) {
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      this._inactivate()
+      this._exit(this._element)
+      this._state = 'inactive'
+    }
+
+    _onCheckCancel(e) {
+      e.preventDefault()
+      if ('Escape' === e.key) {
+        this._cancel(this._element)
+        this._state = 'done'
+        if (!this._startOnPress) {
+          this._inactivate();
+          this._exit(this._element)
+          this._state = 'inactive'
+        }
+      }
+    }
+
+    enable() {
+      if (!this._enabled) {
+        this._element.addEventListener((this._startOnPress) ? 'mousedown' : 'click', this.onTryStart, false)
+        this._enabled = true;
+      }
+    }
+
+    disable() {
+      if (this._enabled) {
+        if ('active' === this._state) {
+          this._cancel(this._element)
+          this._state = 'done';
+        }
+        if ('done' === this._state) {
+          this._inactivate()
+          this._state = 'inactive'
+        }
+        this._element.removeEventListener((this._startOnPress) ? 'mousedown' : 'click', this.onTryStart, false)
+        this._enabled = false
+      }
+    }
+
+  }
+
+  class MouseStateMachineRadioGroup {
+
+    constructor(list, noneState) {
+      this._list = list || []
+      this._state = this._noneState = noneState
+    }
+    
+    inactivate(skip) {
+      this._list.forEach(e => { if (e.machine !== skip) e.machine.enable() })
+      this._state = this._noneState
+    }
+
+    activate(skip) {
+      this._list.forEach(e => {
+        if (e.machine !== skip) e.machine.disable()
+        else this._state = e.state
+      })
+    }
+
+    enable() {
+      this.inactivate()
+    }
+
+    disable() {
+      this.activate()
+    }
+
+    contains(item) {
+      return this._list.find(e => (e.machine === item))
+    }
+
+    add(itemList) {
+      itemList.forEach(e => this._list.push(e))
+    }
+
+    ready() {
+      return (this._noneState === this._state)
+    }
+
+    get state() {
+      return this._state
+    }
+
+    set state(s) {
+      const enableAll = (s === this._noneState)
+      this._list.forEach(e => {
+        if (!enableAll && e.state !== s)
+          e.machine.disable()
+        else
+          e.machine.enable()
+      })
+    }
+
+  }
+
   class MousePositionTracker {
 
     constructor(c) {
@@ -341,21 +539,23 @@ var bittls = (function(){
       this._display = c.displayElement;
       this._translate = c.translate || ((x, y) => new bitgeo.Point(x,y))
       this._enabled = false
+      this.onMove = this._onMove.bind(this)
+      this.onLeave = this._onLeave.bind(this)
     }
 
-    onMove(e) {
+    _onMove(e) {
       const p = this._translate(e.pageX, e.pageY)
       this._display.innerHTML = 'x: ' + p.x + ', y: ' + p.y
     }
 
-    onLeave(e) {
+    _onLeave(e) {
       this._display.innerHTML = ''
     }
 
     enable() {
       if (!this._enabled) {
-        this._tracked.addEventListener('mousemove', this.onMove.bind(this), false)
-        this._tracked.addEventListener('mouseleave', this.onLeave.bind(this), false)
+        this._tracked.addEventListener('mousemove', this.onMove, false)
+        this._tracked.addEventListener('mouseleave', this.onLeave, false)
         this._enabled = true
       }
     }
@@ -402,6 +602,8 @@ var bittls = (function(){
   class LocalProjectStore {
 
     constructor( appKey ) {
+      if (!appKey)
+        throw new Error('ERROR[LocalProjectStore] Application name must be defined!')
       this._appKey = appKey
     }
 
@@ -446,6 +648,7 @@ var bittls = (function(){
   return {
     TButton, TToggle, TState, TRadioToggles,
     TNumber,
+    MouseStateMachine, MouseStateMachineRadioGroup,
     MousePositionTracker, ContainerMask,
     LocalProjectStore
   }

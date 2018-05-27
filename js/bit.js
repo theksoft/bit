@@ -364,772 +364,514 @@ var bit = (function() {
     }
 
   })();
-  
+
   /*
    * WORKAREA MANAGEMENT
    */
 
-  var wks = (function() {
-
-    var doms = {
-      wks       : $('wks-wrap'),
-      aside     : $('tools'),
-      footer    : $('footer'),
-      workarea  : $('workarea'),
-      container : $('container'),
-      image     : $('img-display'),
-      drawarea  : $('draw-area'),
-      gridarea  : $('grid-area')
-    };
-
-    const states = {
-        OPEN      : 'open',
-        READY     : 'ready',
-        DRAGGING  : 'dragging',
-        DRAWING   : 'drawing',
-        SELECTING : 'selecting',
-        SELECTED  : 'selected',
-        MOVING    : 'moving',
-        MOVED     : 'moved',
-        EDITING   : 'editing',
-        EDITED    : 'edited',
-        PREVIEW   : 'preview'
-      };
-
-    var context = {
-      state : states.OPEN,
-      offset : { x : 0, y : 0 },
-      iDrg : null, aDrw : null, aSel : null, aMov : null, aEdt : null
-    };
-
-    var addWel = (t, f) => doms.workarea.addEventListener(t, f, false);
-    var rmWel = (t, f) => doms.workarea.removeEventListener(t, f, false);
-    var ready = () => states.READY === context.state ? true : false;
-
-    // VIEWPORT COMPUTATION 
-    // Workarea elements size and coordinate offsets.
-
-    var viewport = (function() {
-
-      return {
-
-        setWorkingDims : function(w,h) {
-          doms.drawarea.setAttribute('width', w);
-          doms.drawarea.setAttribute('height', h);
-          doms.gridarea.setAttribute('width', w);
-          doms.gridarea.setAttribute('height', h);
-          doms.container.style.width = w + 'px';
-          doms.container.style.height = h + 'px';
-          return this;
-        },
-
-        setViewDims : function() {
-          let fc, ac, wc, width, height;
-          fc = doms.footer.getBoundingClientRect();
-          wc = doms.wks.getBoundingClientRect();
-          ac = doms.aside.getBoundingClientRect();
-          width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
-          height = Math.floor(fc.top - wc.top - 5);
-          doms.workarea.style.width = width + 'px';
-          doms.workarea.style.height = height + 'px';
-          return this;
-        },
-
-        resize : function() {
-          this.setViewDims()
-              .computeOffset();
-          return this;
-        },
-
-        computeOffset : function() {
-          var coords = doms.container.getBoundingClientRect();
-          context.offset.x = Math.round(coords.left + window.pageXOffset);
-          context.offset.y = Math.round(coords.top + window.pageYOffset);
-          return this;
-        },
-
-        computeCoords : function(x, y) {
-          return {
-            x : x - context.offset.x,
-            y : y - context.offset.y
-          };
-        },
-
-        isPointerInImage : function(x, y) {
-          var coords = this.computeCoords(x, y);
-          return (0 > coords.x || 0 > coords.y || doms.image.width < coords.x || doms.image.height < coords.y) ? false : true;
-        }
-
-      };
-
-    })(); // viewport
-
-    // COORDINATE TRACKER
-    // Images coordinates are set when moving within workarea.
-
-    var coordTracker = new bittls.MousePositionTracker({
-      trackedElement: doms.workarea,
-      displayElement : $('coordinates'),
-      translate : viewport.computeCoords
-    });
-
-    // BACKGROUND IMAGE DRAGGER
-    // Dragging start with a mouse down on image and CTRL key
-    // Dragging is active as long as the pointer is in the workarea and button is down
-    // Dragging stop on mouse up or if a move w/o buttons down is caught
-    // Dragging move and top listeners are installed only if an image drag is started.
-
-    var imageDragger = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.workarea.classList.add(utils.clsActions.DRAGGING);
-        addWel('mouseup', onImageDragStop);
-        addWel('mousemove', onImageDragMove);
-        tls.freeze();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        context.state = states.DRAGGING;
-      } 
-
-      function exit() {
-        doms.workarea.classList.remove(utils.clsActions.DRAGGING);
-        rmWel('mouseup', onImageDragStop);
-        rmWel('mousemove', onImageDragMove);
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        tls.release();
-        context.state = states.READY;
-      }
-
-      function move(dx, dy) {
-        doms.workarea.scrollLeft -= dx;
-        doms.workarea.scrollTop  -= dy;
-      }
-
-      function onImageDragStart(e) {
-        e.preventDefault();
-        if (!ready() || context.iDrg.prevent(e)) return;
-        if (utils.leftButton(e) && utils.ctrlKey(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
-          enter();
-        }
-      }
-
-      function onImageDragStop(e) {
-        e.preventDefault();
-        exit();
-      }
-
-      function onImageDragMove(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e) || !utils.ctrlKey(e)) {
-          exit();
-        } else {
-          move(e.movementX, e.movementY);
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onImageDragStart);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.DRAGGING == context.state) {
-            exit();
-          }
-          rmWel('mousedown', onImageDragStart);
-          enabled = false;
-        }
-      };
-
-    })(); // imageDragger
-
-    // AREA DRAWER MANAGEMENT
-    // Drawing start with a click on image
-    // Additional click add points to some drawing e.g. polygon
-    // Drawing stop on further click if drawer asserts it
-    // Drawing is canceled on ESC key pressed
-
-    var areaDrawer = (function () {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.DRAWING);
-        imageDragger.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        rmWel('click', onDrawStart);
-        addWel('click', onDrawEnd);
-        addWel('mousemove', onDrawProgress);
-        document.addEventListener('keydown', onDrawCancel);
-        context.state = states.DRAWING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.DRAWING);
-        imageDragger.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        rmWel('click', onDrawEnd);
-        rmWel('mousemove', onDrawProgress);
-        addWel('click', onDrawStart);
-        document.removeEventListener('keydown', onDrawCancel);
-        context.state = states.READY;
-      }
-
-      function onDrawStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aDrw.prevent(e)) return;
-        if (utils.leftButton(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
-          if (context.aDrw.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), e.altKey, doms.gridarea)) {
-            enter();
-          }
-        }
-      }
-
-      function onDrawProgress(e) {
-        e.preventDefault();
-        context.aDrw.onProgress(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY));
-      }
-
-      function onDrawEnd(e) {
-        e.preventDefault();
-        if (!utils.leftButton(e)) return;
-        if (context.aDrw.onEnd(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY))) {
-          exit();
-        }
-      }
-
-      function onDrawCancel(e) {
-        e.preventDefault();
-        if ('Escape' === e.key) {
-          context.aDrw.onCancel();
-          exit();
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('click', onDrawStart);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.DRAWING === context.state) {
-            context.aDrw.onCancel();
-            exit();
-          }
-          rmWel('click', onDrawStart);
-          enabled = false;
-        }
-      };
-
-    })(); // AREA DRAWER
-
-    // AREA SELECTOR
-    // Area selection is achieved by clicking on existing area.
-    // Simple click select the desired area unselecting others.
-    // Holding shift key while clicking on existing areas achieves multiple selection (toggle effect).
-    // ESC key unselect all selected areas.
-    // DELETE key suppress all selected areas.
-
-    var areaSelector = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.TRACKING);
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        rmWel('click', onSelect);
-        rmWel('mousedown', onTrackStart);
-        addWel('click', onTrackExit);
-        addWel('mouseup', onTrackEnd);
-        addWel('mousemove', onTrackProgress);
-        document.removeEventListener('keydown', onKeyAction);
-        context.state = states.SELECTING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.TRACKING);
-        rmWel('click', onTrackExit);
-        rmWel('mouseup', onTrackEnd);
-        rmWel('mousemove', onTrackProgress);
-        addWel('mousedown', onTrackStart);
-        addWel('click', onSelect);
-        document.addEventListener('keydown', onKeyAction);
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        context.state = states.READY;
-      }
-
-      function onSelect(e) {
-        e.preventDefault();
-        if (!ready() || context.aSel.preventSelect(e)) return;
-        context.aSel.onSelect(e.target, e.shiftKey);
-      }
-
-      function onTrackStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aSel.preventTracking(e)) return;
-        if (utils.leftButton(e)) {
-          context.aSel.onTrackStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY));
-          enter();
-        }
-      }
-
-      function onTrackProgress(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e)) {
-          if (states.SELECTED !== context.state) {
-            context.aSel.onTrackCancel();
-          }
-          exit();
-        } else if (states.SELECTING === context.state) {
-          context.aSel.onTrackProgress(viewport.computeCoords(e.pageX, e.pageY));
-        }
-      }
-
-      function onTrackEnd(e) {
-        e.preventDefault();
-        if (states.SELECTING === context.state) {
-          context.aSel.onTrackEnd();
-          context.state = states.SELECTED;
-        }
-      }
-
-      function onTrackExit(e) {
-        e.preventDefault();
-        context.aSel.onTrackExit();
-        exit();
-      }
-
-      function onKeyAction(e) {
-        e.preventDefault();
-        switch(e.key) {
-        case 'Escape':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aSel.onUnselectAll();
-          }
-          break;
-        case 'Delete':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aSel.onDeleteAll();
-          }
-          break;
-        case 'a':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onSelectAll();
-          }
-          break;
-        case 'F8':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onFreeze();
-          }
-          break;
-        case 'c':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onCopySelection();
-          }
-          break;
-        case 'v':
-        case 'V':
-          if (ready()) {
-            let deepCopy = utils.ctrlMetaShiftKey(e);
-            if (utils.ctrlMetaKey(e) || deepCopy)
-              context.aSel.onPasteSelection(deepCopy);
-          }
-          break;
-        default:
-        }
-      }
-
-      return {
-
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onTrackStart);
-          addWel('click', onSelect);
-          document.addEventListener('keydown', onKeyAction);
-          enabled = true;
-        },
-
-        disable : function() {
-          if (!enabled) return;
-          rmWel('mousedown', onTrackStart);
-          rmWel('click', onSelect);
-          document.removeEventListener('keydown', onKeyAction);
-          enabled = false;
-        }
-
-      };
-
-    })(); // AREA SELECTOR
-
-    // AREA MOVER
-    // Area moving starts by pressing mouse down on a selection of areas.
-    // Moves are constrained so that moved figures remains in SVG container.
-    // ESC key cancels selection move.
-
-    var areaMover = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.MOVING);
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        rmWel('mousedown', onMoveStart);
-        addWel('click', onMoveExit);
-        addWel('mouseup', onMoveEnd);
-        addWel('mousemove', onMoveProgress);
-        document.removeEventListener('keydown', onMoveStep);
-        document.addEventListener('keydown', onMoveCancel);
-        context.state = states.MOVING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.MOVING);
-        rmWel('click', onMoveExit);
-        rmWel('mouseup', onMoveEnd);
-        rmWel('mousemove', onMoveProgress);
-        document.removeEventListener('keydown', onMoveCancel);
-        addWel('mousedown', onMoveStart);
-        document.addEventListener('keydown', onMoveStep);
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        context.state = states.READY;
-      }
-
-      function onMoveStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aMov.prevent(e)) return;
-        if(utils.leftButton(e) && utils.noMetaKey(e)) {
-          context.aMov.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY))
-          enter();
-        }
-      }
- 
-      function onMoveProgress(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e)) {
-          context.aMov.onCancel();
-          exit();
-        } else if (states.MOVING === context.state) {
-          context.aMov.onProgress(viewport.computeCoords(e.pageX, e.pageY));
-        }
-      }
-
-      function onMoveEnd(e) {
-        e.preventDefault();
-        if (states.MOVING === context.state) {
-          context.aMov.onEnd(viewport.computeCoords(e.pageX, e.pageY));
-          context.state = states.MOVED;
-        }
-      }
-
-      function onMoveExit(e) {
-        e.preventDefault();
-        context.aMov.onExit();
-        exit();
-      }
-
-      function onMoveCancel(e) {
-        e.preventDefault();
-        if ('Escape' === e.key) {
-          context.aMov.onCancel();
-          context.state = states.MOVED;
-        }
-      }
-
-      function onMoveStep(e) {
-        e.preventDefault();
-        switch(e.key) {
-        case 'ArrowLeft':
-          if (ready()) {
-            if (utils.noMetaKey(e)) {
-              context.aMov.onStep(doms.drawarea, -1, 0);
-            } else if (utils.ctrlKey(e)) {
-              context.aMov.onRotate(doms.drawarea, bitedit.directions.RACLK);
-            }
-          }
-          break;
-        case 'ArrowRight':
-          if (ready()) {
-            if (utils.noMetaKey(e)) {
-              context.aMov.onStep(doms.drawarea, 1, 0);
-            } else if (utils.ctrlKey(e)) {
-              context.aMov.onRotate(doms.drawarea, bitedit.directions.RCLK);
-            }
-          }
-          break;
-        case 'ArrowUp':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aMov.onStep(doms.drawarea, 0, -1);
-          }
-          break;
-        case 'ArrowDown':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aMov.onStep(doms.drawarea, 0, 1);
-          }
-          break;
-        default:
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onMoveStart);
-          document.addEventListener('keydown', onMoveStep);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.MOVING === context.state) {
-            context.aMov.onCancel();
-          }
-          if (states.MOVING === context.state || states.MOVED === context.state) {
-            exit();
-          }
-          rmWel('mousedown', onMoveStart);
-          document.removeEventListener('keydown', onMoveStep);
-          enabled = false;
-        }
-      };
-
-    })(); // AREA MOVER
- 
-    // AREA EDITOR
-    // Area editing starts by pressing mouse down on grabber of a selected area.
-    // ESC key cancels selection editing.
-    // Resizing cannot invert some figure dimension e.g. rectangle width becoming negative.
-
-    var areaEditor = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.EDITING);
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaSelector.disable();
-        rmWel('mousedown', onEditStart);
-        addWel('click', onEditExit);
-        addWel('mouseup', onEditEnd);
-        addWel('mousemove', onEditProgress);
-        document.addEventListener('keydown', onEditCancel);
-        context.state = states.EDITING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.EDITING);
-        rmWel('click', onEditExit);
-        rmWel('mouseup', onEditEnd);
-        rmWel('mousemove', onEditProgress);
-        document.removeEventListener('keydown', onEditCancel);
-        addWel('mousedown', onEditStart);
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaMover.enable();
-        areaSelector.enable();
-        context.state = states.READY;
-      }
-
-      function onEditStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aEdt.prevent(e)) return;
-        if(utils.leftButton(e) && utils.noMetaKey(e)) {
-          context.aEdt.onStart(doms.drawarea, e.target, viewport.computeCoords(e.pageX, e.pageY));
-          enter();
-        }
-      }
- 
-      function onEditProgress(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e)) {
-          context.aEdt.onCancel();
-          exit();
-        } else if (states.EDITING === context.state) {
-          context.aEdt.onProgress(viewport.computeCoords(e.pageX, e.pageY));
-        }
-      }
-
-      function onEditEnd(e) {
-        e.preventDefault();
-        if (states.EDITING === context.state) {
-          context.aEdt.onEnd(viewport.computeCoords(e.pageX, e.pageY));
-          context.state = states.EDITED;
-        }
-      }
-
-      function onEditExit(e) {
-        e.preventDefault();
-        context.aEdt.onExit();
-        exit();
-      }
-
-      function onEditCancel(e) {
-        e.preventDefault();
-        if ('Escape' === e.key) {
-          context.aEdt.onCancel();
-          context.state = states.EDITED;
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onEditStart);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.EDITING === context.state) {
-            context.aEdt.onCancel();
-          }
-          if (states.EDITING === context.state || states.EDITED === context.state) {
-            exit();
-          }
-          rmWel('mousedown', onEditStart);
-          enabled = false;
-        }
-      };
-
-    })(); // AREA EDITOR
- 
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function onLoadImage() {
-      ftr.loading.hide();
-      ftr.infoUpdate(doms.image.naturalWidth, doms.image.naturalHeight);
-      show(doms.aside);
-      show(doms.workarea);
-      viewport.setWorkingDims(doms.image.width, doms.image.height)
-              .resize();
-      context.state = states.READY;
-      coordTracker.enable();
-      imageDragger.enable();
-      areaDrawer.enable();
-      areaMover.enable();
-      areaEditor.enable();
-      areaSelector.enable();
+  const states = {
+    OPEN      : 'open',
+    READY     : 'ready',
+    DRAGGING  : 'dragging',
+    DRAWING   : 'drawing',
+    SELECTING : 'selecting',
+    MOVING    : 'moving',
+    EDITING   : 'editing',
+    PREVIEW   : 'preview'
+  };
+
+  // VIEWPORT COMPUTATION 
+  // Workarea elements size and coordinate offsets.
+
+  class Viewport {
+
+    constructor(c) {
+      this._wks = c.wks
+      this._footer = c.footer
+      this._aside = c.aside
+      this._container = c.container
+      this._workarea = c.workarea
+      this._drawarea = c.drawarea
+      this._gridarea = c.gridarea
+      this._image = c.image
+      this._offset = new bitgeo.Point()
+      this.translateCoords = this.computeCoords.bind(this)
+      c.workarea.addEventListener('scroll', this.computeOffset.bind(this), false)
+      window.addEventListener('resize', this.resize.bind(this), false)
     }
 
-    return {
+    setWorkingDims(w,h) {
+      this._drawarea.setAttribute('width', w)
+      this._drawarea.setAttribute('height', h)
+      this._gridarea.setAttribute('width', w)
+      this._gridarea.setAttribute('height', h)
+      this._container.style.width = w + 'px'
+      this._container.style.height = h + 'px'
+      return this
+    }
 
-      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers, aMovHandlers, aEdtHandlers) {
-        context.iDrg = iDrgHandlers;
-        context.aDrw = aDrwHandlers;
-        context.aSel = aSelHandlers;
-        context.aMov = aMovHandlers;
-        context.aEdt = aEdtHandlers;
-        addWel('scroll', function(e) { viewport.computeOffset(); }, false );
-        window.addEventListener('resize', function(e) { viewport.resize(); }, false);
-        return this;
-      },
+    setViewDims() {
+      let fc, ac, wc, width, height
+      fc = this._footer.getBoundingClientRect()
+      wc = this._wks.getBoundingClientRect()
+      ac = this._aside.getBoundingClientRect()
+      width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5)
+      height = Math.floor(fc.top - wc.top - 5)
+      this._workarea.style.width = width + 'px'
+      this._workarea.style.height = height + 'px'
+      return this
+    }
 
-      reset : function() {
-        coordTracker.disable();
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        doms.image.src = '';
-        hide(doms.workarea);
-        hide(doms.aside);
-        show(doms.drawarea);
-        show(doms.gridarea);
-        context.state = states.OPEN;
-      },
+    resize() {
+      this.setViewDims()
+          .computeOffset()
+      return this
+    }
 
-      load : function(f) {
-        ftr.loading.show();
-        doms.image.onload = onLoadImage;
-        doms.image.src = window.URL.createObjectURL(f);
-        return this;
-      },
+    computeOffset() {
+      const coords = this._container.getBoundingClientRect()
+      this._offset.x = Math.round(coords.left + window.pageXOffset)
+      this._offset.y = Math.round(coords.top + window.pageYOffset)
+      return this
+    }
 
-      loadEx: function(p) {
-        ftr.loading.show();
-        doms.image.onload = onLoadImage;
-        doms.image.src = p.dataURL;
-        return this;
-      },
+    computeCoords(x,y) {
+      const p = new bitgeo.Point(x - this._offset.x, y - this._offset.y)
+      return p.coords
+    }
 
-      switchToPreview : function() {
-        hide(doms.drawarea);
-        hide(doms.gridarea);
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        context.state = states.PREVIEW;
-        viewport.setWorkingDims(doms.image.width, doms.image.height)
-                .resize();
-        return [doms.container, doms.image];
-      },
+    isPointerInImage(x, y) {
+      const coords = this.computeCoords(x, y)
+      return (0 > coords.x || 0 > coords.y || this._image.width < coords.x || this._image.height < coords.y) ? false : true
+    }
 
-      switchToEdit : function() {
-        show(doms.drawarea);
-        show(doms.gridarea);
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        context.state = states.READY;
-        viewport.setWorkingDims(doms.image.width, doms.image.height)
-                .resize();
-      },
-      
-      release : function() {
-        coordTracker.enable();
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-      },
+  }
 
-      freeze : function() {
-        coordTracker.disable();
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-      },
+  // BACKGROUND IMAGE DRAGGER
+  // Dragging start with a mouse down on image and CTRL key
+  // Dragging is active as long as the pointer is in the workarea and button is down
+  // Dragging stop on mouse up or if a move w/o buttons down is caught
+  // Dragging move and top listeners are installed only if an image drag is started.
+  
+  class ImageDragger extends bittls.MouseStateMachine {
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.ctrlKey(e) && this._viewport.isPointerInImage(e))
+        },
+        onStart : (p,e,w) => {
+          w.classList.add(utils.clsActions.DRAGGING);
+          tls.freeze(); // TODO: to be transferred
+          return true;
+        },
+        onProgress : (p,e,w) => {
+          w.scrollLeft -= e.movementX;
+          w.scrollTop  -= e.movementY;
+        },
+        onExit : w => {
+          w.classList.remove(utils.clsActions.DRAGGING);
+          tls.release(); // TODO: to be transferred
+        }
+      }, { group : c.group, state : states.DRAGGING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+    }
+  }
+  
+  // AREA DRAWER MANAGEMENT
+  // Drawing start with a click on image
+  // Additional click add points to some drawing e.g. polygon
+  // Drawing stop on further click if drawer asserts it
+  // Drawing is canceled on ESC key pressed
 
-      getParent : () => doms.drawarea,
-      getGridParent : () => doms.gridarea,
-      getDims : () => { return { width: doms.image.width, height: doms.image.height } }
+  class AreaDrawer extends bittls.MouseStateMachine {
+    constructor(c) {
+      super({
+        startOnPress : false,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && this._viewport.isPointerInImage(e))
+        },
+        onStart : (p,e) => {
+          if (this._handlers.onStart(this._drawarea, p, e.altKey, this._gridarea)) {
+            this._drawarea.classList.add(utils.clsActions.DRAWING)
+            return true
+          }
+          return false
+        },
+        onProgress : p => this._handlers.onProgress(this._drawarea, p),
+        onEnd : p => this._handlers.onEnd(this._drawarea, p),
+        onExit : () => this._drawarea.classList.remove(utils.clsActions.DRAWING),
+        onCancel : () => this._handlers.onCancel()
+      }, { group : c.group, state : states.DRAWING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+      this._gridarea = c.gridarea
+    }
+  }
+  
+  // AREA SELECTOR
+  // Area selection is achieved by clicking on existing area.
+  // Simple click select the desired area unselecting others.
+  // Holding shift key while clicking on existing areas achieves multiple selection (toggle effect).
+  // ESC key unselect all selected areas.
+  // DELETE key suppress all selected areas.
+  
+  class AreaSelector extends bittls.MouseStateMachine {
 
-    };
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.preventTracking(e))
+        },
+        onStart : (p,e) => {
+          this._handlers.onTrackStart(this._drawarea, p);
+          this._drawarea.classList.add(utils.clsActions.TRACKING);
+          return true;
+        },
+        onProgress : p => this._handlers.onTrackProgress(p),
+        onEnd : () => this._handlers.onTrackEnd(),
+        onExit : () => {
+          this._handlers.onTrackExit();
+          this._drawarea.classList.remove(utils.clsActions.TRACKING);
+        },
+        onCancel : () => this._handlers.onTrackCancel()
+      }, { group : c.group, state : states.SELECTING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+      this.onSelect = this._onSelect.bind(this)
+      this.onKeyAction = this._onKeyAction.bind(this)
+    }
 
-  })(); /* WORKSPACE MANAGEMENT */
+    _activate() {
+      this._element.removeEventListener('click', this.onSelect)
+      document.removeEventListener('keydown', this.onKeyAction)
+      super._activate()
+    }
+
+    _inactivate() {
+      this._element.addEventListener('click', this.onSelect)
+      document.addEventListener('keydown', this.onKeyAction)
+      super._inactivate()
+    }
+
+    enable() {
+      if (!this._enabled) {
+        super.enable()
+        this._element.addEventListener('click', this.onSelect)
+        document.addEventListener('keydown', this.onKeyAction)
+      }
+    }
+
+    disable() {
+      if (this._enabled) {
+        super.disable()
+        this._element.removeEventListener('click', this.onSelect)
+        document.removeEventListener('keydown', this.onKeyAction)
+      }
+    }
+
+    _onSelect(e) {
+      e.preventDefault()
+      if (!this._g.group.ready() || this._handlers.preventSelect(e)) return
+      this._handlers.onSelect(e.target, e.shiftKey)
+    }
+
+    _onKeyAction(e) {
+      e.preventDefault()
+      switch(e.key) {
+      case 'Escape':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onUnselectAll()
+        break
+      case 'Delete':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onDeleteAll()
+        break
+      case 'a':
+        if (this._g.group.ready() && utils.ctrlMetaKey(e))
+          this._handlers.onSelectAll()
+        break
+      case 'F8':
+        if (this._g.group.ready() && utils.ctrlMetaKey(e))
+          this._handlers.onFreeze()
+        break
+      case 'c':
+        if (this._g.group.ready() && utils.ctrlMetaKey(e))
+          this._handlers.onCopySelection()
+        break
+      case 'v':
+      case 'V':
+        if (this._g.group.ready()) {
+          let deepCopy = utils.ctrlMetaShiftKey(e)
+          if (utils.ctrlMetaKey(e) || deepCopy)
+            this._handlers.onPasteSelection(deepCopy)
+        }
+        break
+      default:
+      }
+    }
+    
+  }
+
+  // AREA MOVER
+  // Area moving starts by pressing mouse down on a selection of areas.
+  // Moves are constrained so that moved figures remains in SVG container.
+  // ESC key cancels selection move.
+
+  class AreaMover extends bittls.MouseStateMachine {
+
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.noMetaKey(e))
+        },
+        onStart : (p,e) => {
+          this._handlers.onStart(this._drawarea, p)
+          this._drawarea.classList.add(utils.clsActions.MOVING)
+          return true;
+        },
+        onProgress : p => this._handlers.onProgress(p),
+        onEnd : p => this._handlers.onEnd(p),
+        onExit : () => {
+          this._handlers.onExit();
+          this._drawarea.classList.remove(utils.clsActions.MOVING)
+        },
+        onCancel : () => this._handlers.onCancel()
+      }, { group : c.group, state : states.MOVING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+      this.onMoveStep = this._onMoveStep.bind(this)
+    }
+
+    _activate() {
+      document.removeEventListener('keydown', this.onMoveStep)
+      super._activate()
+    }
+
+    _inactivate() {
+      document.addEventListener('keydown', this.onMoveStep)
+      super._inactivate()
+    }
+
+    enable() {
+      if (!this._enabled) {
+        super.enable()
+        document.addEventListener('keydown', this.onMoveStep)
+      }
+    }
+
+    disable() {
+      if (this._enabled) {
+        super.disable()
+        document.removeEventListener('keydown', this.onMoveStep)
+      }
+    }
+
+    _onMoveStep(e) {
+      e.preventDefault()
+      switch(e.key) {
+      case 'ArrowLeft':
+        if (this._g.group.ready()) {
+          if (utils.noMetaKey(e))
+            this._handlers.onStep(this._drawarea, -1, 0)
+          else if (utils.ctrlKey(e))
+            this._handlers.onRotate(this._drawarea, bitedit.directions.RACLK)
+        }
+        break
+      case 'ArrowRight':
+        if (this._g.group.ready()) {
+          if (utils.noMetaKey(e))
+            this._handlers.onStep(this._drawarea, 1, 0)
+          else if (utils.ctrlKey(e))
+            this._handlers.onRotate(this._drawarea, bitedit.directions.RCLK)
+        }
+        break
+      case 'ArrowUp':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onStep(this._drawarea, 0, -1)
+        break
+      case 'ArrowDown':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onStep(this._drawarea, 0, 1)
+        break
+      default:
+      }
+    }
+    
+  }
+
+  // AREA EDITOR
+  // Area editing starts by pressing mouse down on grabber of a selected area.
+  // ESC key cancels selection editing.
+  // Resizing cannot invert some figure dimension e.g. rectangle width becoming negative.
+
+  class AreaEditor extends bittls.MouseStateMachine {
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.noMetaKey(e))
+        },
+        onStart : (p,e) => {
+          this._handlers.onStart(this._drawarea, e.target, p);
+          this._drawarea.classList.add(utils.clsActions.EDITING);
+          return true;
+        },
+        onProgress : p => this._handlers.onProgress(p),
+        onEnd : p => this._handlers.onEnd(p),
+        onExit : () => {
+          this._handlers.onExit();
+          this._drawarea.classList.remove(utils.clsActions.EDITING);
+        },
+        onCancel : () => this._handlers.onCancel()
+      }, { group : c.group, state : states.EDITING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+    }
+  }
+
+  class Workspace {
+
+    constructor(c) {
+      this._doms = c.doms;
+      this._ftr = c.ftr;
+      this._group = new bittls.MouseStateMachineRadioGroup([], states.READY)
+      this._group.state = states.OPEN
+      this._viewport = new Viewport ({
+        wks : c.doms.wks, footer : c.doms.footer, aside : c.doms.aside, container : c.doms.container,
+        workarea : c.doms.workarea, drawarea : c.doms.drawarea, gridarea : c.doms.gridarea,
+        image : c.doms.image
+      })
+      this._coordTracker = new bittls.MousePositionTracker({
+        trackedElement: c.doms.workarea,
+        displayElement : c.doms.coords,
+        translate : this._viewport.translateCoords
+      })
+      this._imageDragger = new ImageDragger({
+        workarea : c.doms.workarea,
+        viewport : this._viewport, handlers : c.handlers.dragger, group : this._group
+      })
+      this._areaDrawer = new AreaDrawer({
+        workarea : c.doms.workarea, drawarea : c.doms.drawarea, gridarea : c.doms.gridarea,
+        viewport : this._viewport, handlers : c.handlers.drawer, group : this._group
+      })
+      this._areaSelector = new AreaSelector({
+        workarea : c.doms.workarea, drawarea : c.doms.drawarea,
+        viewport : this._viewport, handlers : c.handlers.selector, group : this._group
+      })
+      this._areaMover = new AreaMover({
+        workarea : c.doms.workarea, drawarea : c.doms.drawarea,
+        viewport : this._viewport, handlers : c.handlers.mover, group : this._group
+      })
+      this._areaEditor = new AreaEditor({
+        workarea : c.doms.workarea, drawarea : c.doms.drawarea,
+        viewport : this._viewport, handlers : c.handlers.editor, group : this._group
+      })
+    }
+
+    _hide(obj) { obj.style.display = 'none' }
+    _show(obj) { obj.style.display = 'block' }
+
+    _onLoadImage() {
+      this._ftr.loading.hide()
+      this._ftr.infoUpdate(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
+      this._show(this._doms.aside)
+      this._show(this._doms.workarea)
+      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                    .resize()
+      this._coordTracker.enable()
+      this._group.enable()
+    }
+
+    ready() {
+      return this._group.ready()
+    }
+
+    reset() {
+      this._coordTracker.disable()
+      this._group.disable()
+      this._group.state = states.OPEN
+      this._doms.image.src = ''
+      this._hide(this._doms.workarea)
+      this._hide(this._doms.aside)
+      this._show(this._doms.drawarea)
+      this._show(this._doms.gridarea)
+    }
+
+    load(f) {
+      this._ftr.loading.show()
+      this._doms.image.onload = this._onLoadImage.bind(this)
+      this._doms.image.src = window.URL.createObjectURL(f)
+      return this
+    }
+
+    loadEx(p) {
+      this._ftr.loading.show()
+      this._doms.image.onload = this._onLoadImage.bind(this)
+      this._doms.image.src = p.dataURL
+      return this
+    }
+
+    switchToPreview() {
+      this._hide(this._doms.drawarea)
+      this._hide(this._doms.gridarea)
+      this._group.disable()
+      this._group.state = states.PREVIEW
+      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                    .resize()
+      return [this._doms.container, this._doms.image]
+    }
+
+    switchToEdit() {
+      this._show(this._doms.drawarea)
+      this._show(this._doms.gridarea)
+      this._group.enable()
+      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                    .resize()
+    }
+    
+    release() {
+      this._coordTracker.enable()
+      this._group.enable()
+    }
+
+    freeze() {
+      this._coordTracker.disable()
+      this._group.disable()
+    }
+
+    getParent() {
+      return this._doms.drawarea
+    }
+
+    getGridParent() {
+      return this._doms.gridarea
+    }
+    
+    getDims() {
+      return { width : this._doms.image.width, height : this._doms.image.height }
+    }
+
+  }
+
+  let wks = null;
 
   /*
    * TOOLS PALETTE MANAGEMENT 
@@ -2956,8 +2698,10 @@ var bit = (function() {
       }
 
       function onTrackEnd() {
-        _tracker.cancel();
-        _tracker = null;
+        if (null != _tracker) {
+          _tracker.cancel();
+          _tracker = null;
+        }
         if (_selected.length > 0)
           _selected.get(0).highlight();
       }
@@ -2969,8 +2713,11 @@ var bit = (function() {
       }
 
       function onTrackCancel() {
-        _tracker.cancel();
-        _tracker = null;
+        if (null != _tracker) {
+          _tracker.cancel();
+          _tracker = null;
+        }
+        _areaUnselectAll();
         tls.release();
       }
 
@@ -3162,7 +2909,27 @@ var bit = (function() {
     htm.init(projects.handlers);
     help.init(projects.handlers);
     mnu.init(menu.handlers);
-    wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
+    wks = new Workspace({
+      doms : {
+        wks       : $('wks-wrap'),
+        aside     : $('tools'),
+        footer    : $('footer'),
+        workarea  : $('workarea'),
+        container : $('container'),
+        image     : $('img-display'),
+        drawarea  : $('draw-area'),
+        gridarea  : $('grid-area'),
+        coords    : $('coordinates')
+      },
+      handlers : {
+        dragger : dragger.handlers,
+        drawer : drawer.handlers,
+        selector : selector.handlers,
+        mover : mover.handlers,
+        editor : editor.handlers
+      },
+      ftr : ftr
+    })
     tls.init(tooler.handlers);
 
   })(); /* APPLICATION MANAGEMENT */
