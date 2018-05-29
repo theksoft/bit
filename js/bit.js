@@ -891,25 +891,95 @@ var bit = (function() {
    * TOOLS PALETTE MANAGEMENT 
    */
 
+  class AreaProperties {
+
+    constructor(c) {
+      this._inputs = [
+        { dom : c.doms.href,  prop  : bitmap.properties.HREF },
+        { dom : c.doms.alt,   prop  : bitmap.properties.ALT },
+        { dom : c.doms.title, prop  : bitmap.properties.TITLE },
+        { dom : c.doms.id,    prop  : bitmap.properties.ID }
+      ]
+      this._btns = {
+        save : { dom : c.doms.btnPropsSave, action : c.handlers.onPropsSave },
+        restore : { dom : c.doms.btnPropsRestore, action : c.handlers.onPropsRestore }
+      }
+      this._btns.save.dom.addEventListener('click', this._onSave.bind(this), false)
+      this._btns.restore.dom.addEventListener('click', this._onRestore.bind(this), false)
+      this._inputs.forEach(e => {
+        e.dom.addEventListener('input', this._onInput.bind(this), false)
+        e.dom.addEventListener('keydown', this._onKey.bind(this), false)
+      })
+    }
+
+    blur() {
+      this._inputs.forEach(e => e.dom.blur())
+    }
+
+    reset() {
+      this._inputs.forEach(e => e.dom.defaultValue = e.dom.value = "...")
+    }
+
+    display(obj) {
+      let props = obj.areaProperties
+      this._inputs.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "")
+    }
+
+    enable(obj) {
+      this._inputs.forEach(e => e.dom.disabled = false)
+      this.display(obj)
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = true
+    }
+
+    disable() {
+      this._inputs.forEach(e => {
+        e.dom.defaultValue = e.dom.value = "..."
+        e.dom.blur()
+        e.dom.disabled = true
+      })
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = true
+    }
+
+    save(obj, p) {
+      obj.areaProperties = p
+      this._inputs.forEach(e => e.dom.defaultValue = e.dom.value);
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = true;
+    }
+
+    restore(obj) {
+      this.display(obj);
+      this._btns.save.dom.disabled = this._btns.restore.domdisabled = true;
+    }
+
+    _onKey(e) {
+      e.stopPropagation()
+    }
+
+    _onInput(e) {
+      let d = this._inputs.reduce( (a,e) => a && (e.dom.defaultValue === e.dom.value), true)
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = d;
+    }
+
+    _onSave(e) {
+      let p = {}
+      this._inputs.forEach(e => p[e.prop] = e.dom.value)
+      this._btns.save.action(p)
+      e.preventDefault()
+    }
+
+    _onRestore(e) {
+      this._btns.restore.action()
+      e.preventDefault()
+    }
+
+  }
+
   var tls = (function() {
 
     const modes = utils.fgTypes;
     const scopes = bitgrid.scopes;
     const aligns = bitgrid.aligns;
     const orders = bitgrid.orders;
-    const properties = bitmap.properties;
-
-    const inForm = [
-      { dom : $('href-prop'),         prop  : properties.HREF },
-      { dom : $('alt-prop'),          prop  : properties.ALT },
-      { dom : $('title-prop'),        prop  : properties.TITLE },
-      { dom : $('id-prop'),           prop  : properties.ID }
-    ];
-
-    const doms = {
-      btnPropsSave    : $('area-props-save'),
-      btnPropsRestore : $('area-props-restore')
-    };
 
     var context = {
         handlers    : null,
@@ -1088,57 +1158,13 @@ var bit = (function() {
       }
     }
 
-    var blurAreaProps = () => inForm.forEach(e => e.dom.blur());
-    var onPropsKey = (e) => e.stopPropagation();
-    var resetAreaProps = () => inForm.forEach(e => e.dom.defaultValue = e.dom.value = "...");
-
-    function displayAreaProps(obj) {
-      let props = obj.areaProperties;
-      inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "");
-    }
-
-    function enableAreaProps(obj) {
-      inForm.forEach(e => e.dom.disabled = false);
-      displayAreaProps(obj);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function disableAreaProps() {
-      inForm.forEach(e => {
-        e.dom.defaultValue = e.dom.value = "...";
-        e.dom.blur();
-        e.dom.disabled = true;
-      });
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function onPropsInput(e) {
-      let d = inForm.reduce( (a,e) => a && (e.dom.defaultValue === e.dom.value), true);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = d;
-    }
-
-    function onPropsSave(e) {
-      let p = {};
-      inForm.forEach(e => p[e.prop] = e.dom.value);
-      context.handlers.onPropsSave(p);
-      e.preventDefault();
-    }
-
-    function onPropsRestore(e) {
-      context.handlers.onPropsRestore();
-      e.preventDefault();
-    }
-
-    function saveAreaProps(obj, p) {
-      obj.areaProperties = p;
-      inForm.forEach(e => e.dom.defaultValue = e.dom.value);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function restoreAreaProps(obj) {
-      displayAreaProps(obj);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
+    let props = null;
+    var blurAreaProps = () => props.blur()
+    var resetAreaProps = () => props.reset()
+    var disableAreaProps = () => props.disable()
+    var displayAreaProps = (e) => props.display(e)
+    var saveAreaProps = (e, p) => props.save(e, p)
+    var restoreAreaProps = (e) => props.restore(e)
 
     const resize = new bittls.TButton({
       element : $('resize'),
@@ -1179,6 +1205,20 @@ var bit = (function() {
 
       init : function(handlers) {
         context.handlers = handlers;
+        props = new AreaProperties({
+          doms : {
+            href            : $('href-prop'),
+            alt             : $('alt-prop'),
+            title           : $('title-prop'),
+            id              : $('id-prop'),
+            btnPropsSave    : $('area-props-save'),
+            btnPropsRestore : $('area-props-restore')
+          },
+          handlers : {
+            onPropsSave     : context.handlers.onPropsSave,
+            onPropsRestore  : context.handlers.onPropsRestore
+          }
+        })
         this.release();
       },
 
@@ -1192,7 +1232,7 @@ var bit = (function() {
         context.scope = gridScope.value;
         context.align = gridAlign.value;
         context.order = gridOrder.value;
-        disableAreaProps();
+        props.disable();
         this.release();
       },
 
@@ -1206,25 +1246,14 @@ var bit = (function() {
 
       freeze : function() {
         if (context.freezed) return;
-        doms.btnPropsSave.removeEventListener('click', onPropsSave, false);
-        doms.btnPropsRestore.removeEventListener('click', onPropsRestore, false);
-        inForm.forEach(e => {
-          e.dom.removeEventListener('keydown', onPropsKey, false);
-          e.dom.removeEventListener('input', onPropsInput, false)
-          e.dom.blur();
-        });
+        props.blur();
         disabler.maskElement();
         context.freezed = true;
       },
 
       release : function() {
         if (!context.freezed) return;
-        doms.btnPropsSave.addEventListener('click', onPropsSave, false);
-        doms.btnPropsRestore.addEventListener('click', onPropsRestore, false);
-        inForm.forEach(e => {
-          e.dom.addEventListener('input', onPropsInput, false)
-          e.dom.addEventListener('keydown', onPropsKey, false)
-        });
+        props.blur();
         disabler.unmaskElement();
         context.freezed = false;
       },
@@ -1234,13 +1263,13 @@ var bit = (function() {
       enableGridTools : function(obj) {
         enableGridMode(obj);
         updateGridParams(obj);
-        enableAreaProps(obj);
+        props.enable(obj);
       },
 
       disableGridTools() {
         disableGridMode();
         updateGridParams();
-        disableAreaProps();
+        props.disable();
       },
 
       blurAreaProps,
@@ -2844,7 +2873,6 @@ var bit = (function() {
     code.init(projects.handlers);
     htm.init(projects.handlers);
     help.init(projects.handlers);
-//    mnu.init(menu.handlers);
     mnu = new Menu({
       doms : {
         newProjectBtn     : $('new-project'),
