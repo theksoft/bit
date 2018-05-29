@@ -21,8 +21,12 @@ var bittls = (function(){
       this._element.addEventListener('click', this.onClick.bind(this), false)
     }
 
+    get element() {
+      return this._element
+    }
+
     isDisabled() {
-      return !this._enabled;
+      return !this._enabled
     }
 
     disable() {
@@ -35,13 +39,22 @@ var bittls = (function(){
       this._enabled = true
     }
 
+    freeze() {
+      this._enabled = false
+    }
+
+    release() {
+      this._enabled = !this._element.classList.contains('disabled')
+    }
+
+    tryAction() {
+      if (this._enabled)
+        this._action()
+    }
+
     onClick(evt) {
       evt.preventDefault()
-      if (this._enabled) {
-        if (this._element !== evt.target)
-          throw new Error('ERROR[TButton] Target clicked is not the expected element!')
-        this._action()
-      }
+      this.tryAction()
     }
 
   }
@@ -60,12 +73,16 @@ var bittls = (function(){
       this._element.addEventListener('mouseleave', this.onUp.bind(this), false)
     }
 
+    get element() {
+      return this._element
+    }
+
     reset() {
       this._down = false
     }
 
     isDisabled() {
-      return !this._enabled;
+      return !this._enabled
     }
 
     disable() {
@@ -81,8 +98,6 @@ var bittls = (function(){
     onDown(evt) {
       evt.preventDefault()
       if (this._enabled && !this._down) {
-        if (this._element !== evt.target)
-          throw new Error('ERROR[TButton] Target with mouse down is not the expected element!')
         this._action(true)
         this._down = true
       }
@@ -91,8 +106,6 @@ var bittls = (function(){
     onUp(evt) {
       evt.preventDefault()
       if (this._enabled && this._down) {
-        if (this._element !== evt.target)
-          throw new Error('ERROR[TButton] Target with mouse up is not the expected element!')
         this._action(false)
         this._down = false
       }
@@ -147,7 +160,7 @@ var bittls = (function(){
     }
 
     isDisabled() {
-      return !this._enabled;
+      return !this._enabled
     }
 
     disable() {
@@ -163,8 +176,6 @@ var bittls = (function(){
     onClick(evt) {
       evt.preventDefault()
       if (this._enabled) {
-        if (this._map[this._state].element !== evt.target)
-          throw new Error('ERROR[TToggle] Target clicked is not part of the toggle map!')
         this._switchTo((this._state + 1) % this._map.length)
         this._action(this._map[this._state].value)
       }
@@ -209,8 +220,6 @@ var bittls = (function(){
     }
 
     onClick(evt) {
-      if (this._element !== evt.target)
-        throw new Error('ERROR[TNumber] Target clicked is not the expected element!')
       const v = this.value;
       if (parseInt(this._element.defaultValue) !== v) {
         this._element.defaultValue = v.toString()
@@ -251,7 +260,7 @@ var bittls = (function(){
     }
 
     isDisabled() {
-      return !this._enabled;
+      return !this._enabled
     }
 
     disable(listValues) {

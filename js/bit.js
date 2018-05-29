@@ -1917,188 +1917,115 @@ var bit = (function() {
    * MENU MANAGEMENT
    */
 
-  var mnu = (function() {
+  class Menu {
 
-    var doms = {
-      newProjectBtn     : $('new-project'),
-      previewBtn        : $('preview'),
-      saveProjectBtn    : $('save-project'),
-      loadProjectBtn    : $('load-project'),
-      cleanProjectsBtn  : $('clean-projects'),
-      generateBtn       : $('generate'),
-      loadHTMLBtn       : $('load-html'),
-      helpBtn           : $('help')
-    },
-    context = {
-      handlers : null,
-      enabled : true
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'inline';
-
-    function onNewProjectBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onNewProject();
+    constructor(c) {
+      this._btns = Object.assign({}, {
+        newProject    : new bittls.TButton({ element : c.doms.newProjectBtn,    action : c.handlers.onNewProject }),
+        preview       : new bittls.TButton({ element : c.doms.previewBtn,       action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
+        saveProject   : new bittls.TButton({ element : c.doms.saveProjectBtn,   action : c.handlers.onSaveProject }),
+        loadProject   : new bittls.TButton({ element : c.doms.loadProjectBtn,   action : c.handlers.onLoadProject }),
+        cleanProjects : new bittls.TButton({ element : c.doms.cleanProjectsBtn, action : c.handlers.onCleanProjects }),
+        generate      : new bittls.TButton({ element : c.doms.generateBtn,      action : c.handlers.onGenerateCode }),
+        loadHTML      : new bittls.TButton({ element : c.doms.loadHTMLBtn,      action : c.handlers.onLoadHTML }),
+        help          : new bittls.TButton({ element : c.doms.helpBtn,          action : c.handlers.onHelp })
+      })
+      this._btns.saveProject.disable()
+      this._btns.preview.disable()
+      this._btns.generate.disable()
+      this._btns.loadHTML.disable()
+      this.onKeyAction = this._onKeyAction.bind(this)
+      document.addEventListener('keydown', this.onKeyAction);
+      document.addEventListener('keydown', this.onCheckHelp.bind(this));
+      return this.reset();
     }
 
-    function onPreviewBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled && !doms.previewBtn.classList.contains('disabled'))
-        context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+    canSave() {
+      this._btns.saveProject.enable()
+    }
+    
+    preventSave() {
+      this._btns.saveProject.disable()
     }
 
-    function onSaveProjectBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onSaveProject();
+    release() {
+      Object.values(this._btns).forEach(e => e.release())
+      document.addEventListener('keydown', this.onKeyAction);
     }
 
-    function onLoadProjectBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onLoadProject();
+    freeze() {
+      Object.values(this._btns).forEach(e => e.freeze())
+      document.removeEventListener('keydown', this.onKeyAction);
     }
 
-    function onCleanProjectsBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onCleanProjects();
-    }
-
-    function onGenerateBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled && !doms.generateBtn.classList.contains('disabled'))
-        context.handlers.onGenerateCode();
-    }
-
-    function onLoadHTMLBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled && !doms.loadHTMLBtn.classList.contains('disabled'))
-        context.handlers.onLoadHTML();
-    }
-
-    function onHelpBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onHelp();
-    }
-
-    let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
-    let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
-    let release = () => {
-      context.enabled = true;
-      document.addEventListener('keydown', onKeyAction);
-    }
-    let freeze = () => {
-      context.enabled = false;
-      document.removeEventListener('keydown', onKeyAction);
-    }
-
-    function onKeyAction(e) {
+    _onKeyAction(e) {
       switch(e.key) {
       case 'm':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled)
-            e.preventDefault();
-            context.handlers.onNewProject();
+          e.preventDefault()
+          this._btns.newProject.tryAction()
         }
         break;
       case 'l':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled)
-            e.preventDefault();
-            context.handlers.onLoadProject();
+          e.preventDefault()
+          this._btns.loadProject.tryAction()
         }
         break;
       case 's':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
-            e.preventDefault();
-            context.handlers.onSaveProject();
-          }
+          e.preventDefault()
+          this._btns.saveProject.tryAction()
         }
         break;
       case 'p':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled && !doms.previewBtn.classList.contains('disabled')) {
-            e.preventDefault();
-            context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
-          }
+          e.preventDefault()
+          this._btns.preview.tryAction()
         }
         break;
       case 'g':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled && !doms.generateBtn.classList.contains('disabled')) {
-            e.preventDefault();
-            context.handlers.onGenerateCode();
-          }
+          e.preventDefault()
+          this._btns.generate.tryAction()
         }
         break;
       case 'Escape':
-        if (context.enabled && !doms.previewBtn.classList.contains('disabled') && doms.previewBtn.classList.contains('selected')) {
-          e.preventDefault();
-          context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+        if(this._btns.preview.element.classList.contains('selected')) {
+          e.preventDefault()
+          this._btns.preview.tryAction()
         }
         break;
       default:
       }
     }
 
-    function onCheckHelp(e) {
-      if ('F1' === e.key) {
-        e.preventDefault();
-        if (context.enabled)
-          context.handlers.onHelp();
-      }
+    onCheckHelp(e) {
+      e.preventDefault()
+      if ('F1' === e.key)
+        this._btns.help.tryAction()
     }
 
-    return {
+    reset() {
+      this._btns.saveProject.disable()
+      this._btns.preview.element.classList.remove('selected')
+      this._btns.preview.disable()
+      this._btns.generate.disable()
+      this._btns.loadHTML.disable()
+      document.addEventListener('keydown', this.onKeyAction);
+      return this;
+    }
 
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
-        doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
-        doms.saveProjectBtn.addEventListener('click', onSaveProjectBtnClick, false);
-        doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
-        doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
-        doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
-        doms.loadHTMLBtn.addEventListener('click', onLoadHTMLBtnClick, false);
-        doms.helpBtn.addEventListener('click', onHelpBtnClick, false);
-        doms.saveProjectBtn.classList.add('disabled');
-        doms.previewBtn.classList.add('disabled');
-        doms.generateBtn.classList.add('disabled');
-        doms.loadHTMLBtn.classList.add('disabled');
-        document.addEventListener('keydown', onKeyAction);
-        document.addEventListener('keydown', onCheckHelp);
-        return this.reset();
-      },
+    switchToEditMode() {
+      this._btns.preview.enable()
+      this._btns.preview.element.classList.remove('selected')
+      this._btns.generate.enable()
+      this._btns.loadHTML.enable()
+      return this;
+    }
 
-      reset : function() {
-        doms.saveProjectBtn.classList.add('disabled');
-        doms.previewBtn.classList.remove('selected');
-        doms.previewBtn.classList.add('disabled');
-        doms.generateBtn.classList.add('disabled');
-        doms.loadHTMLBtn.classList.add('disabled');
-        document.addEventListener('keydown', onKeyAction);
-        return this;
-      },
-
-      switchToEditMode : function() {
-        doms.previewBtn.classList.remove('disabled');
-        doms.previewBtn.classList.remove('selected');
-        doms.generateBtn.classList.remove('disabled');
-        doms.loadHTMLBtn.classList.remove('disabled');
-        return this;
-      },
-
-      canSave, preventSave,
-      freeze, release
-
-    };
-
-  })(); /* MENU MANAGEMENT */
+  }
+  let mnu = null;
 
   /*
    * APPLICATION
@@ -2917,7 +2844,20 @@ var bit = (function() {
     code.init(projects.handlers);
     htm.init(projects.handlers);
     help.init(projects.handlers);
-    mnu.init(menu.handlers);
+//    mnu.init(menu.handlers);
+    mnu = new Menu({
+      doms : {
+        newProjectBtn     : $('new-project'),
+        previewBtn        : $('preview'),
+        saveProjectBtn    : $('save-project'),
+        loadProjectBtn    : $('load-project'),
+        cleanProjectsBtn  : $('clean-projects'),
+        generateBtn       : $('generate'),
+        loadHTMLBtn       : $('load-html'),
+        helpBtn           : $('help')
+      },
+      handlers : menu.handlers
+    })
     footer = new Footer({
       doms : {
         info : $('selected-file'),
