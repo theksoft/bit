@@ -764,38 +764,49 @@ var bit = (function() {
   class Workspace {
 
     constructor(c) {
-      this._doms = c.doms;
-      this._ftr = c.ftr;
+      const doms = {
+        wks       : $('wks-wrap'),
+        aside     : $('tools'),
+        footer    : $('footer'),
+        workarea  : $('workarea'),
+        container : $('container'),
+        image     : $('img-display'),
+        drawarea  : $('draw-area'),
+        gridarea  : $('grid-area'),
+        coords    : $('coordinates')
+      }
+      this._doms = doms
+      this._ftr = c.ftr
       this._group = new bittls.MouseStateMachineRadioGroup([], states.READY)
       this._group.state = states.OPEN
       this._viewport = new Viewport ({
-        wks : c.doms.wks, footer : c.doms.footer, aside : c.doms.aside, container : c.doms.container,
-        workarea : c.doms.workarea, drawarea : c.doms.drawarea, gridarea : c.doms.gridarea,
-        image : c.doms.image
+        wks : doms.wks, footer : doms.footer, aside : doms.aside, container : doms.container,
+        workarea : doms.workarea, drawarea : doms.drawarea, gridarea : doms.gridarea,
+        image : doms.image
       })
       this._coordTracker = new bittls.MousePositionTracker({
-        trackedElement: c.doms.workarea,
-        displayElement : c.doms.coords,
+        trackedElement: doms.workarea,
+        displayElement : doms.coords,
         translate : this._viewport.translateCoords
       })
       this._imageDragger = new ImageDragger({
-        workarea : c.doms.workarea,
+        workarea : doms.workarea,
         viewport : this._viewport, handlers : c.handlers.dragger, group : this._group
       })
       this._areaDrawer = new AreaDrawer({
-        workarea : c.doms.workarea, drawarea : c.doms.drawarea, gridarea : c.doms.gridarea,
+        workarea : doms.workarea, drawarea : doms.drawarea, gridarea : doms.gridarea,
         viewport : this._viewport, handlers : c.handlers.drawer, group : this._group
       })
       this._areaSelector = new AreaSelector({
-        workarea : c.doms.workarea, drawarea : c.doms.drawarea,
+        workarea : doms.workarea, drawarea : doms.drawarea,
         viewport : this._viewport, handlers : c.handlers.selector, group : this._group
       })
       this._areaMover = new AreaMover({
-        workarea : c.doms.workarea, drawarea : c.doms.drawarea,
+        workarea : doms.workarea, drawarea : doms.drawarea,
         viewport : this._viewport, handlers : c.handlers.mover, group : this._group
       })
       this._areaEditor = new AreaEditor({
-        workarea : c.doms.workarea, drawarea : c.doms.drawarea,
+        workarea : doms.workarea, drawarea : doms.drawarea,
         viewport : this._viewport, handlers : c.handlers.editor, group : this._group
       })
     }
@@ -974,316 +985,264 @@ var bit = (function() {
 
   }
 
-  var tls = (function() {
+  class Tools {
 
-    const modes = utils.fgTypes;
-    const scopes = bitgrid.scopes;
-    const aligns = bitgrid.aligns;
-    const orders = bitgrid.orders;
+    constructor(c) {
 
-    var context = {
-        handlers    : null,
-        selected    : null,
-        allowGrid   : false,
-        freezed     : true,
-        scope       : scopes.INNER,
-        align       : aligns.STANDARD,
-        order       : orders.TOPLEFT,
-        space       : 0,
-        gParam      : true
-    };
+      this._gridModes = [
+        utils.fgTypes.GRIDHEX,
+        utils.fgTypes.GRIDRECTANGLE,
+        utils.fgTypes.GRIDCIRCLE
+      ]
 
-    const disabler = new bittls.ContainerMask({
-      containerElement : $('tools'),
-      maskElement : document.querySelector('#tools .mask')
-    });
+      this._noPattern = [
+        utils.fgTypes.NONE,
+        utils.fgTypes.GRIDRECTANGLE,
+        utils.fgTypes.GRIDHEX,
+        utils.fgTypes.GRIDCIRCLE,
+        utils.fgTypes.POLYGON
+      ]
 
-    const gridModes = [
-      modes.GRIDHEX,
-      modes.GRIDRECTANGLE,
-      modes.GRIDCIRCLE
-    ];
+      this._handlers = c.handlers
+      this._gParam = true
+      this._scope = bitgrid.scopes.INNER
+      this._align = bitgrid.aligns.STANDARD
+      this._space = 0
+      this._order = bitgrid.orders.TOPLEFT
+      this._allowGrid = false
+      this._freezed = true
 
-    const noPattern = [
-      utils.fgTypes.NONE,
-      utils.fgTypes.GRIDRECTANGLE,
-      utils.fgTypes.GRIDHEX,
-      utils.fgTypes.GRIDCIRCLE,
-      utils.fgTypes.POLYGON
-    ];
+      this._disabler = new bittls.ContainerMask({
+        containerElement : $('tools'),
+        maskElement : document.querySelector('#tools .mask')
+      })
 
-    const drawMode = new bittls.TRadioToggles({
-      map : [
-        { element : $('hex-d'),           value : modes.HEXDTR },
-        { element : $('hex-r'),           value : modes.HEXRCT },
-        { element : $('rectangle'),       value : modes.RECTANGLE },
-        { element : $('square'),          value : modes.SQUARE },
-        { element : $('rhombus'),         value : modes.RHOMBUS },
-        { element : $('triangle-e'),      value : modes.TRIANGLEEQL },
-        { element : $('triangle-i'),      value : modes.TRIANGLEISC },
-        { element : $('triangle-r'),      value : modes.TRIANGLERCT },
-        { element : $('ellipse'),         value : modes.ELLIPSE },
-        { element : $('circle-d'),        value : modes.CIRCLEDTR },
-        { element : $('circle-c'),        value : modes.CIRCLECTR },
-        { element : $('polygon'),         value : modes.POLYGON },
-        { element : $('hex-grid'),        value : modes.GRIDHEX },
-        { element : $('rectangle-grid'),  value : modes.GRIDRECTANGLE },
-        { element : $('circle-grid'),     value : modes.GRIDCIRCLE }
-      ],
-      noneValue : modes.NONE,
-      initialValue : modes.NONE,
-      action : () => {
-        blurAreaProps();
+      this._drawMode = new bittls.TRadioToggles({
+        map : [
+          { element : $('hex-d'),           value : utils.fgTypes.HEXDTR },
+          { element : $('hex-r'),           value : utils.fgTypes.HEXRCT },
+          { element : $('rectangle'),       value : utils.fgTypes.RECTANGLE },
+          { element : $('square'),          value : utils.fgTypes.SQUARE },
+          { element : $('rhombus'),         value : utils.fgTypes.RHOMBUS },
+          { element : $('triangle-e'),      value : utils.fgTypes.TRIANGLEEQL },
+          { element : $('triangle-i'),      value : utils.fgTypes.TRIANGLEISC },
+          { element : $('triangle-r'),      value : utils.fgTypes.TRIANGLERCT },
+          { element : $('ellipse'),         value : utils.fgTypes.ELLIPSE },
+          { element : $('circle-d'),        value : utils.fgTypes.CIRCLEDTR },
+          { element : $('circle-c'),        value : utils.fgTypes.CIRCLECTR },
+          { element : $('polygon'),         value : utils.fgTypes.POLYGON },
+          { element : $('hex-grid'),        value : utils.fgTypes.GRIDHEX },
+          { element : $('rectangle-grid'),  value : utils.fgTypes.GRIDRECTANGLE },
+          { element : $('circle-grid'),     value : utils.fgTypes.GRIDCIRCLE }
+        ],
+        noneValue : utils.fgTypes.NONE,
+        initialValue : utils.fgTypes.NONE,
+        action : (() => { this._props.blur() }).bind(this)
+      })
+
+      this._gridPrms = {
+        gridScope : new bittls.TToggle({
+          map : [
+            { element : $('grid-scope-inner'),  value : bitgrid.scopes.INNER },
+            { element : $('grid-scope-outer'),  value : bitgrid.scopes.OUTER }
+          ],
+          initialValue : this._scope,
+          action : this._onGridScopeChange.bind(this)
+        }),
+        gridAlign : new bittls.TToggle({
+          map : [ 
+            { element : $('grid-algn-std'),     value : bitgrid.aligns.STANDARD },
+            { element : $('grid-algn-alt'),     value : bitgrid.aligns.ALT_HORIZONTAL },
+            { element : $('grid-algn-alt2'),    value : bitgrid.aligns.ALT_VERTICAL }
+          ],
+          initialValue : this._align,
+          action : this._onGridAlignChange.bind(this)
+        }),
+        gridSpace : new bittls.TNumber({
+          element : $('grid-space'),
+          initialValue : this._space,
+          action : this._onGridSpaceChange.bind(this)
+        }),
+        gridOrder : new bittls.TToggle({
+          map : [ 
+            { element : $('grid-order-tl'),     value : bitgrid.orders.TOPLEFT },
+            { element : $('grid-order-lt'),     value : bitgrid.orders.LEFTTOP },
+            { element : $('grid-order-lb'),     value : bitgrid.orders.LEFTBOTTOM },
+            { element : $('grid-order-bl'),     value : bitgrid.orders.BOTTOMLEFT },
+            { element : $('grid-order-br'),     value : bitgrid.orders.BOTTOMRIGHT },
+            { element : $('grid-order-rb'),     value : bitgrid.orders.RIGHTBOTTOM },
+            { element : $('grid-order-rt'),     value : bitgrid.orders.RIGHTTOP },
+            { element : $('grid-order-tr'),     value : bitgrid.orders.TOPRIGHT }
+          ],
+          initialValue : this._order,
+          action : this._onGridOrderChange.bind(this)
+        }),
+        showOrder : new bittls.TState({
+          element : $('show-order'), 
+          action : this._onShowOrder.bind(this)
+        }) 
       }
-    });
 
-    const isGridDrawModeSelected = () => (gridModes.find(e => (e === drawMode.value)));
-    const getDrawMode = () => drawMode.value;
-    const clearDrawMode = () => drawMode.value = modes.NONE;
-    const canGrid = obj => (noPattern.find(e => (e === obj.type))) ? false : true;
-    function enableGridMode(obj) {
-      if (!context.allowGrid && canGrid(obj)) {
-        drawMode.enable(gridModes);
-        context.allowGrid = true;
-      } else if (context.allowGrid && !canGrid(obj)) {
-        drawMode.disable(gridModes);
-        context.allowGrid = false;
+      this._props = new AreaProperties({
+        doms : {
+          href            : $('href-prop'),
+          alt             : $('alt-prop'),
+          title           : $('title-prop'),
+          id              : $('id-prop'),
+          btnPropsSave    : $('area-props-save'),
+          btnPropsRestore : $('area-props-restore')
+        },
+        handlers : {
+          onPropsSave     : c.handlers.onPropsSave,
+          onPropsRestore  : c.handlers.onPropsRestore
+        }
+      })
+
+      this._layoutBtns = {
+        resize      : new bittls.TButton({ element : $('resize'),       action : c.handlers.onResize }),
+        alignLeft   : new bittls.TButton({ element : $('align-left'),   action : c.handlers.onAlignLeft }),
+        alignTop    : new bittls.TButton({ element : $('align-top'),    action : c.handlers.onAlignTop }),
+        alignRight  : new bittls.TButton({ element : $('align-right'),  action : c.handlers.onAlignRight }),
+        alignBottom : new bittls.TButton({ element : $('align-bottom'), action : c.handlers.onAlignBottom }),
+        alignCenterHorizontally : new bittls.TButton({ element : $('align-center-h'), action : c.handlers.onAlignCenterHorizontally }),
+        alignCenterVertically   : new bittls.TButton({ element : $('align-center-v'), action : c.handlers.onAlignCenterVertically })
+      }
+
+      this.release()
+    }
+
+    get drawMode()  { return this._drawMode.value }
+    clearDrawMode() { this._drawMode.value = utils.fgTypes.NONE }
+    none()          { return (utils.fgTypes.NONE === this._drawMode.value) ? true : false }
+    isGridDrawModeSelected() { return (this._gridModes.find(e => (e === this._drawMode.value))) }
+
+    get gridScope() { return this._scope }
+    get gridAlign() { return this._align }
+    get gridSpace() { return this._space }
+    get gridOrder() { return this._order }
+
+    blurAreaProps()     { this._props.blur() }
+    resetAreaProps()    { this._props.reset() }
+    disableAreaProps()  { this._props.disable() }
+    displayAreaProps(e) { this._props.display(e) }
+    saveAreaProps(e,p)  { this._props.save(e,p) }
+    restoreAreaProps(e) { this._props.restore(e) }
+
+    reset() {
+      this._drawMode.disable(this._gridModes)
+      this._drawMode.value = utils.fgTypes.NONE
+      this._allowGrid = false
+      Object.values(this._gridPrms).forEach(e => e.reset())
+      this._gParam = true
+      this._space = 0
+      this._scope = this._gridPrms.gridScope.value
+      this._align = this._gridPrms.gridAlign.value
+      this._order = this._gridPrms.gridOrder.value
+      this._props.disable()
+      this.release()
+    }
+
+    freeze() {
+      if (this._freezed) return;
+      this._props.blur();
+      this._disabler.maskElement();
+      this._freezed = true;
+    }
+
+    release() {
+      if (!this._freezed) return;
+      this._props.blur();
+      this._disabler.unmaskElement();
+      this._freezed = false;
+    }
+
+    enableGridTools(obj) {
+      this._enableGridMode(obj)
+      this._updateGridParams(obj)
+      this._props.enable(obj)
+    }
+
+    disableGridTools() {
+      this._disableGridMode()
+      this._updateGridParams()
+      this._props.disable()
+    }
+
+    _setGridScope(v) { this._gridPrms.gridScope.value = v || this._scope }
+    _setGridAlign(v) { this._gridPrms.gridAlign.value = v || this._align }
+    _setGridSpace(v) { this._gridPrms.gridSpace.value = (v === 0) ? 0 : (v || this._space) }
+    _setGridOrder(v) { this._gridPrms.gridOrder.value = v || this._order }
+
+    _canGrid(obj) { return (this._noPattern.find(e => (e === obj.type))) ? false : true }
+    
+    _enableGridMode(obj) {
+      if (!this._allowGrid && this._canGrid(obj)) {
+        this._drawMode.enable(this._gridModes);
+        this._allowGrid = true;
+      } else if (this._allowGrid && !this._canGrid(obj)) {
+        this._drawMode.disable(this._gridModes);
+        this._allowGrid = false;
       }
     }
 
-    function disableGridMode() {
-      if (context.allowGrid) {
-        drawMode.disable(gridModes);
-        context.allowGrid = false;
+    _disableGridMode() {
+      if (this._allowGrid) {
+        this._drawMode.disable(this._gridModes);
+        this._allowGrid = false;
       }
     }
 
-    const gridScope = new bittls.TToggle({
-      map : [
-        { element : $('grid-scope-inner'),  value : scopes.INNER },
-        { element : $('grid-scope-outer'),  value : scopes.OUTER }
-      ],
-      initialValue : context.scope,
-      action : v => {
-        blurAreaProps();
-        if (context.gParam)
-          context.scope = v;
-        context.handlers.onGridScopeChange(v);
-      }
-    });
-    const setGridScope = v => gridScope.value = v || context.scope;
-    const getGridScope = () => context.scope;
-
-    const gridAlign = new bittls.TToggle({
-      map : [ 
-        { element : $('grid-algn-std'),     value : aligns.STANDARD },
-        { element : $('grid-algn-alt'),     value : aligns.ALT_HORIZONTAL },
-        { element : $('grid-algn-alt2'),    value : aligns.ALT_VERTICAL }
-      ],
-      initialValue : context.align,
-      action : v => {
-        blurAreaProps();
-        if (context.gParam)
-          context.align = v;
-        context.handlers.onGridAlignChange(v);
-      }
-    });
-    const setGridAlign = v => gridAlign.value = v || context.align;
-    const getGridAlign = () => context.align;
-
-    const gridSpace = new bittls.TNumber({
-      element : $('grid-space'),
-      initialValue : context.space,
-      action : v => {
-        blurAreaProps();
-        if (context.gParam)
-          context.space = v;
-        context.handlers.onGridSpaceChange(v);
-      }
-    });
-    const setGridSpace = v => gridSpace.value = (v === 0) ? 0 : (v || context.space);
-    const getGridSpace = () => context.space;
-
-    const gridOrder = new bittls.TToggle({
-      map : [ 
-        { element : $('grid-order-tl'),     value : orders.TOPLEFT },
-        { element : $('grid-order-lt'),     value : orders.LEFTTOP },
-        { element : $('grid-order-lb'),     value : orders.LEFTBOTTOM },
-        { element : $('grid-order-bl'),     value : orders.BOTTOMLEFT },
-        { element : $('grid-order-br'),     value : orders.BOTTOMRIGHT },
-        { element : $('grid-order-rb'),     value : orders.RIGHTBOTTOM },
-        { element : $('grid-order-rt'),     value : orders.RIGHTTOP },
-        { element : $('grid-order-tr'),     value : orders.TOPRIGHT }
-      ],
-      initialValue : context.order,
-      action : v => {
-        blurAreaProps();
-        if (context.gParam)
-          context.order = v;
-        context.handlers.onGridOrderChange(v);
-      }
-    });
-    const setGridOrder = v => gridOrder.value = v || context.order;
-    const getGridOrder = () => context.order;
-
-    const showOrder = new bittls.TState({
-      element : $('show-order'), 
-      action : v => {
-        blurAreaProps();
-        context.handlers.onShowOrder(v);
-      }
-    }); 
-
-    function gridParamsReset() {
-      gridScope.reset();
-      gridAlign.reset();
-      gridSpace.reset();
-      gridOrder.reset();
-      showOrder.reset();
-    }
-
-    function updateGridParams(obj) {
+   _updateGridParams(obj) {
       if (obj && obj.isGrid) {
-        context.gParam = false;
-        setGridScope(obj.gridScope);
-        setGridAlign(obj.gridAlign);
-        setGridSpace(obj.gridSpace);
-        setGridOrder(obj.gridOrder);
+        this._gParam = false
+        this._setGridScope(obj.gridScope)
+        this._setGridAlign(obj.gridAlign)
+        this._setGridSpace(obj.gridSpace)
+        this._setGridOrder(obj.gridOrder)
       } else {
-        context.gParam = true;
-        setGridScope();
-        setGridAlign();
-        setGridSpace();
-        setGridOrder();
+        this._gParam = true
+        this._setGridScope()
+        this._setGridAlign()
+        this._setGridSpace()
+        this._setGridOrder()
       }
     }
+    
+     _onGridScopeChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._scope = v
+       this._handlers.onGridScopeChange(v)
+     }
+    
+     _onGridAlignChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._align = v
+       this._handlers.onGridAlignChange(v)
+     }
+    
+     _onGridSpaceChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._space = v
+       this._handlers.onGridSpaceChange(v)
+     }
+    
+     _onGridOrderChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._order = v
+       this._handlers.onGridOrderChange(v)
+     }
+    
+     _onShowOrder(v) {
+       this._props.blur()
+       this._handlers.onShowOrder(v)
+     }
 
-    let props = null;
-    var blurAreaProps = () => props.blur()
-    var resetAreaProps = () => props.reset()
-    var disableAreaProps = () => props.disable()
-    var displayAreaProps = (e) => props.display(e)
-    var saveAreaProps = (e, p) => props.save(e, p)
-    var restoreAreaProps = (e) => props.restore(e)
-
-    const resize = new bittls.TButton({
-      element : $('resize'),
-      action : () => context.handlers.onResize()
-    });
-
-    const alignLeft = new bittls.TButton({
-      element : $('align-left'),
-      action : () => context.handlers.onAlignLeft()
-    });
-
-    const alignTop = new bittls.TButton({
-      element : $('align-top'),
-      action : () => context.handlers.onAlignTop()
-    });
-
-    const alignRight = new bittls.TButton({
-      element : $('align-right'),
-      action : () => context.handlers.onAlignRight()
-    });
-
-    const alignBottom = new bittls.TButton({
-      element : $('align-bottom'),
-      action : () => context.handlers.onAlignBottom()
-    });
-
-    const alignCenterHorizontally = new bittls.TButton({
-      element : $('align-center-h'),
-      action : () => context.handlers.onAlignCenterHorizontally()
-    });
-
-    const alignCenterVertically = new bittls.TButton({
-      element : $('align-center-v'),
-      action : () => context.handlers.onAlignCenterVertically()
-    });
-
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        props = new AreaProperties({
-          doms : {
-            href            : $('href-prop'),
-            alt             : $('alt-prop'),
-            title           : $('title-prop'),
-            id              : $('id-prop'),
-            btnPropsSave    : $('area-props-save'),
-            btnPropsRestore : $('area-props-restore')
-          },
-          handlers : {
-            onPropsSave     : context.handlers.onPropsSave,
-            onPropsRestore  : context.handlers.onPropsRestore
-          }
-        })
-        this.release();
-      },
-
-      reset : function() {
-        drawMode.disable(gridModes);
-        drawMode.value = modes.NONE;
-        context.allowGrid = false;
-        gridParamsReset();
-        context.gParam = true;
-        context.space = 0;
-        context.scope = gridScope.value;
-        context.align = gridAlign.value;
-        context.order = gridOrder.value;
-        props.disable();
-        this.release();
-      },
-
-      getDrawMode, clearDrawMode,
-      getGridScope,
-      getGridAlign,
-      getGridOrder,
-      getGridSpace,
-      
-      none : () => modes.NONE === drawMode.value ? true : false,
-
-      freeze : function() {
-        if (context.freezed) return;
-        props.blur();
-        disabler.maskElement();
-        context.freezed = true;
-      },
-
-      release : function() {
-        if (!context.freezed) return;
-        props.blur();
-        disabler.unmaskElement();
-        context.freezed = false;
-      },
-
-      isGridDrawModeSelected,
-
-      enableGridTools : function(obj) {
-        enableGridMode(obj);
-        updateGridParams(obj);
-        props.enable(obj);
-      },
-
-      disableGridTools() {
-        disableGridMode();
-        updateGridParams();
-        props.disable();
-      },
-
-      blurAreaProps,
-      resetAreaProps,
-      disableAreaProps,
-      saveAreaProps,
-      restoreAreaProps,
-      displayAreaProps,
-
-      modes, scopes, aligns, orders
-
-    };
-
-  })(); /* TOOLS PALAETTE MANAGEMENT */
+  }
+  let tls = null;
 
   /*
    * FOOTER DISPLAY MANAGEMENT
@@ -1291,8 +1250,11 @@ var bit = (function() {
 
   class Footer {
 
-    constructor(c) {
-      this._doms = c.doms
+    constructor() {
+      this._doms = {
+        info : $('selected-file'),
+        load : $('load-indicator')
+      }
     }
 
     _clear() {
@@ -1950,14 +1912,14 @@ var bit = (function() {
 
     constructor(c) {
       this._btns = Object.assign({}, {
-        newProject    : new bittls.TButton({ element : c.doms.newProjectBtn,    action : c.handlers.onNewProject }),
-        preview       : new bittls.TButton({ element : c.doms.previewBtn,       action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
-        saveProject   : new bittls.TButton({ element : c.doms.saveProjectBtn,   action : c.handlers.onSaveProject }),
-        loadProject   : new bittls.TButton({ element : c.doms.loadProjectBtn,   action : c.handlers.onLoadProject }),
-        cleanProjects : new bittls.TButton({ element : c.doms.cleanProjectsBtn, action : c.handlers.onCleanProjects }),
-        generate      : new bittls.TButton({ element : c.doms.generateBtn,      action : c.handlers.onGenerateCode }),
-        loadHTML      : new bittls.TButton({ element : c.doms.loadHTMLBtn,      action : c.handlers.onLoadHTML }),
-        help          : new bittls.TButton({ element : c.doms.helpBtn,          action : c.handlers.onHelp })
+        newProject    : new bittls.TButton({ element : $('new-project'),    action : c.handlers.onNewProject }),
+        preview       : new bittls.TButton({ element : $('preview'),        action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
+        saveProject   : new bittls.TButton({ element : $('save-project'),   action : c.handlers.onSaveProject }),
+        loadProject   : new bittls.TButton({ element : $('load-project'),   action : c.handlers.onLoadProject }),
+        cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
+        generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
+        loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
+        help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
       })
       this._btns.saveProject.disable()
       this._btns.preview.disable()
@@ -2445,7 +2407,7 @@ var bit = (function() {
       var _generator = null;
 
       function _create(parent, alt) {
-        let figGen = _factory[tls.getDrawMode()];
+        let figGen = _factory[tls.drawMode];
         if (!figGen) {
           console.log('ERROR - Drawing mode not handled');
           return null;
@@ -2454,12 +2416,12 @@ var bit = (function() {
       }
 
       function _createGrid(parent, bond, gridParent) {
-        let figGen = _gridFactory[tls.getDrawMode()];
+        let figGen = _gridFactory[tls.drawMode];
         if (!figGen) {
           console.log('ERROR - Grid drawing mode not handled');
           return null;
         }
-        return new figGen(parent, bond, gridParent, tls.getGridScope(), tls.getGridAlign(), tls.getGridSpace(), tls.getGridOrder());
+        return new figGen(parent, bond, gridParent, tls.gridScope, tls.gridAlign, tls.gridSpace, tls.gridOrder);
       }
 
       function prevent(e) {
@@ -2874,36 +2836,10 @@ var bit = (function() {
     htm.init(projects.handlers);
     help.init(projects.handlers);
     mnu = new Menu({
-      doms : {
-        newProjectBtn     : $('new-project'),
-        previewBtn        : $('preview'),
-        saveProjectBtn    : $('save-project'),
-        loadProjectBtn    : $('load-project'),
-        cleanProjectsBtn  : $('clean-projects'),
-        generateBtn       : $('generate'),
-        loadHTMLBtn       : $('load-html'),
-        helpBtn           : $('help')
-      },
       handlers : menu.handlers
     })
-    footer = new Footer({
-      doms : {
-        info : $('selected-file'),
-        load : $('load-indicator')
-      }
-    })
+    footer = new Footer()
     wks = new Workspace({
-      doms : {
-        wks       : $('wks-wrap'),
-        aside     : $('tools'),
-        footer    : $('footer'),
-        workarea  : $('workarea'),
-        container : $('container'),
-        image     : $('img-display'),
-        drawarea  : $('draw-area'),
-        gridarea  : $('grid-area'),
-        coords    : $('coordinates')
-      },
       handlers : {
         dragger : dragger.handlers,
         drawer : drawer.handlers,
@@ -2915,7 +2851,9 @@ var bit = (function() {
     })
     store = new Store({ workspace : wks })
     clipboard = new Clipboard({ workspace : wks, copyOffset : COPY_OFFSET })
-    tls.init(tooler.handlers);
+    tls = new Tools({
+      handlers : tooler.handlers
+    })
 
   })(); /* APPLICATION MANAGEMENT */
 
