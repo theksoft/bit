@@ -84,207 +84,189 @@ var bit = (function() {
    * DATA MODEL MANAGEMENT
    */
 
-  var mdl = (function() {
+  class Model {
 
-    var imgTypes = ['image/jpeg', 'image/gif', 'image/png'],
-        context = {
-          mode      : 'new',
-          modified  : false,
-          dataURL   : '',
-          filename  : '',
-          type      : '',
-          size      : 0,
-          name      : '',
-          alt       : '',
-          width     : 0,
-          height    : 0,
-          areas     : []
-        };
-    
-    function validateImgFile(f) {
-      for(var i = 0; i < imgTypes.length; i++) {
-        if(f.type === imgTypes[i]) {
-          return true;
-        }
-      }
-      return false;
+    constructor() {
+      this._modified = false
+      this._imgTypes = ['image/jpeg', 'image/gif', 'image/png']
+      this._file = { dataURL : '', filename : '', type : '', size : 0 }
+      this._info = { name: '', alt : '' }
+      this._image = { width : 0, height : 0 }
+      this._areas = []
     }
 
-    function reset() {
-      context.mode = 'new';
-      context.modified = false;
-      context.dataURL = context.filename = context.type = '';
-      context.size = 0;
-      context.name = context.alt = '';
-      context.width = context.height = 0;
-      context.areas.sort((a,b) => a.isGrid ? -1 : 1);
-      context.areas.forEach(e => e.remove());
-      context.areas.splice(0, context.areas.length);
-      return this;
+    reset() {
+      this._modified = false
+      this._file.dataURL = this._file.filename = this._file.type = ''
+      this._file.size = 0
+      this._info.name = this._info.alt = ''
+      this._image.width = this._image.height = 0
+      this._areas.sort((a,b) => a.isGrid ? -1 : 1)
+      this._areas.forEach(e => e.remove())
+      this._areas.splice(0, this._areas.length)
     }
 
-    function setFile(f) {
-      var reader = new FileReader();
-      if (validateImgFile(f)) {
-        reader.addEventListener('load', () => context.dataURL = reader.result, false);
-        reader.readAsDataURL(f);
-        context.filename = f.name;
-        context.type = f.type;
-        context.size = f.size;
-        return true;
-      }
-      return false;
+    get modified() {
+      return this._modified
     }
 
-    function getFile() {
-      return context.filename; 
+    set modified(v) {
+      this._modified = (v) ? true : false
     }
 
-    function setInfo(data) {
-      context.name = data.name;
-      context.alt = data.alt;
+    checkImgFile(f) {
+      return this._imgTypes.includes(f.type)
     }
 
-    function getInfo() {
-      return { name : context.name, alt : context.alt };
+    set file(f) {
+      if (!this.checkImgFile(f))
+        throw new Error('ERROR[Model] ' + f.type + ' Invalid image file type!')
+      var reader = new FileReader()
+      reader.addEventListener('load', () => this._file.dataURL = reader.result, false)
+      reader.readAsDataURL(f)
+      this._file.filename = f.name
+      this._file.type = f.type
+      this._file.size = f.size
     }
 
-    function getAreas() {
-      return context.areas.slice();
+    get filename() {
+      return this._file.filename; 
     }
 
-    function addArea(area) {
-      context.areas.push(area);
+    set info(data) {
+      this._info.name = data.name
+      this._info.alt = data.alt
     }
 
-    function addAreas(areas) {
-      areas.forEach(e => context.areas.push(e));
+    get info() {
+      return Object.assign({}, this._info)
     }
 
-    function removeArea(area) {
-      if(-1 != context.areas.indexOf(area)) {
+    get areas() {
+      return this._areas.slice()
+    }
+
+    forEachArea(f) {
+      return this._areas.forEach(f)
+    }
+
+    addArea(area) {
+      this._areas.push(area)
+    }
+
+    addAreas(areas) {
+      areas.forEach(e => this._areas.push(e))
+    }
+
+    removeArea(area) {
+      if(-1 != this._areas.indexOf(area)) {
         if (!area.isGrid && area.hasBonds()) {
           if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
-            return;
+            return
           }
-          let bonds = area.copyBonds();
+          let bonds = area.copyBonds()
           bonds.forEach(e => {
-            let j = context.areas.indexOf(e);
-            e.remove();
-            context.areas.splice(j, 1);
-          });
-          bonds.splice(0, bonds.length);
+            let j = this._areas.indexOf(e)
+            e.remove()
+            this._areas.splice(j, 1)
+          })
+          bonds.splice(0, bonds.length)
         }
-        let i = context.areas.indexOf(area);
-        area.remove();
-        context.areas.splice(i, 1);
+        let i = this._areas.indexOf(area)
+        area.remove()
+        this._areas.splice(i, 1)
       }
     }
 
-    function findArea(obj) {
-      return context.areas.find(function(e) {
-        return e.is(obj);
-      });
+    findArea(obj) {
+      return this._areas.find(e => e.is(obj))
     }
 
-    function freezeGridArea(grid, areas, specialize) {
+    freezeGridArea(grid, areas, specialize) {
       if (!grid.isGrid ||
           false === confirm("Freezing this element will automatically delete grid dependencies and generate independent elements.\nDo you still want to proceed to grid freeze ?")) {
-        return false;
+        return false
       }
-      let i = context.areas.indexOf(grid);
-      grid.freezeTo(areas, specialize);
-      grid.remove();
-      context.areas.splice(i, 1);
-      areas.forEach(e => context.areas.push(e));
+      let i = this._areas.indexOf(grid)
+      grid.freezeTo(areas, specialize)
+      grid.remove()
+      this._areas.splice(i, 1)
+      areas.forEach(e => this._areas.push(e))
       return true;
     }
 
-    function toStore(a2s) {
-      let rtn = {};
-      rtn.dataURL = context.dataURL;
-      rtn.name = context.name;
-      rtn.alt = context.alt;
-      rtn.filename = context.filename;
-      rtn.type = context.type;
-      rtn.size = context.size;
-      rtn.areas = [];
-      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-      context.areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)));
-      return rtn;
+    toStore(a2s) {
+      let rtn = {}
+      rtn.dataURL = this._file.dataURL
+      rtn.name = this._info.name
+      rtn.alt = this._info.alt
+      rtn.filename = this._file.filename
+      rtn.type = this._file.type
+      rtn.size = this._file.size
+      rtn.areas = []
+      this._areas.sort((a,b) => a.isGrid ? 1 : -1)
+      this._areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)))
+      return rtn
     }
     
-    function fromStore(project, s2a) {
-      context.modified = false;
-      context.dataURL = project.dataURL;
-      context.name = project.name;
-      context.alt = project.alt;
-      context.filename = project.filename;
-      context.type = project.type;
-      context.size = project.size;
-      context.areas = [];
-      project.areas.forEach((e,i) => context.areas.push(s2a(e, i, context.areas)));
+    fromStore(project, s2a) {
+      this._modified = false
+      this._file.dataURL = project.dataURL
+      this._info.name = project.name
+      this._info.alt = project.alt
+      this._file.filename = project.filename
+      this._file.type = project.type
+      this._file.size = project.size
+      this._areas = []
+      project.areas.forEach((e,i) => this._areas.push(s2a(e, i, this._areas)))
       return true;
     }
 
-    function toClipboard(selected, a2c) {
-      let rtn = {};
-      rtn.areas = [];
-      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-      context.areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i, a)));
-      rtn.selected = [];
-      selected.forEach((e) => rtn.selected.push(context.areas.indexOf(e)));
-      rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true);
-      return rtn;
+    toClipboard(selected, a2c) {
+      let rtn = {}
+      rtn.areas = []
+      this._areas.sort((a,b) => a.isGrid ? 1 : -1)
+      this._areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i, a)))
+      rtn.selected = []
+      selected.forEach((e) => rtn.selected.push(this._areas.indexOf(e)))
+      rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true)
+      return rtn
     }
 
-    function fromClipboard(c, c2a, deep) {
+    fromClipboard(c, c2a, deep) {
       let area, copied = [];
       if (c.basic || (!deep && !c.unsafe)) {
         c.selected.forEach(e => {
-          area = c2a(c.areas[e], e, context.areas);
-          copied.push(area);
-        });
+          area = c2a(c.areas[e], e, this._areas)
+          copied.push(area)
+        })
       } else {
         // Deep copy - include grid bonds if not originally selected
-        let insert, index, deep;
-        deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1);
-        insert = deep.findIndex(e => c.areas[e].isGrid);
+        let insert, index, deep
+        deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1)
+        insert = deep.findIndex(e => c.areas[e].isGrid)
         c.selected.forEach(e => {
-          area = c.areas[e];
+          area = c.areas[e]
           if (area.isGrid) {
-            index = deep.indexOf(area.bonds[0]);
+            index = deep.indexOf(area.bonds[0])
             if (-1 === index) {
-              deep.splice(insert, 0, area.bonds[0]);
-              index = insert++;
+              deep.splice(insert, 0, area.bonds[0])
+              index = insert++
             }
-            area.bonds[0] = index;
+            area.bonds[0] = index
           }
-        });
+        })
         deep.forEach((e,i) => {
-          c.areas[e].index = i;
-          area = c2a(c.areas[e], i, copied);
-          copied.push(area);
+          c.areas[e].index = i
+          area = c2a(c.areas[e], i, copied)
+          copied.push(area)
         });
       }
-      return copied;
+      return copied
     }
 
-    return {
-      setModified : () => context.modified = true,
-      setUnmodified : () => context.modified = false,
-      isModified : () => context.modified,
-      reset,
-      validateImgFile, setFile, getFile,
-      setInfo, getInfo,
-      getAreas, addArea, addAreas, removeArea, findArea,
-      forEachArea : f => context.areas.forEach(f),
-      freezeGridArea,
-      toStore, fromStore,
-      toClipboard, fromClipboard
-    };
-
-  })(); /* DATA MODEL MANAGEMENT */
+  }
+  let mdl = new Model(); 
 
   /*
    * STORE
@@ -566,13 +548,13 @@ var bit = (function() {
 
     _activate() {
       this._element.removeEventListener('click', this.onSelect)
-      document.removeEventListener('keydown', this.onKeyAction)
+      document.removeEventListener('keydown', this.onKeyAction, false)
       super._activate()
     }
 
     _inactivate() {
       this._element.addEventListener('click', this.onSelect)
-      document.addEventListener('keydown', this.onKeyAction)
+      document.addEventListener('keydown', this.onKeyAction, false)
       super._inactivate()
     }
 
@@ -580,7 +562,7 @@ var bit = (function() {
       if (!this._enabled) {
         super.enable()
         this._element.addEventListener('click', this.onSelect)
-        document.addEventListener('keydown', this.onKeyAction)
+        document.addEventListener('keydown', this.onKeyAction, false)
       }
     }
 
@@ -588,7 +570,7 @@ var bit = (function() {
       if (this._enabled) {
         super.disable()
         this._element.removeEventListener('click', this.onSelect)
-        document.removeEventListener('keydown', this.onKeyAction)
+        document.removeEventListener('keydown', this.onKeyAction, false)
       }
     }
 
@@ -1361,7 +1343,7 @@ var bit = (function() {
       content = '';
       store.list().forEach(e => {
         flag = '';
-        if (e === mdl.getInfo().name) {
+        if (e === mdl.info.name) {
           flag = ' disabled';
           canClearAll = false;
         }
@@ -1372,6 +1354,7 @@ var bit = (function() {
     }
 
     function close() {
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.projects);
       doms.list.innerHTML = '';
       context.handlers.onClose();
@@ -1417,10 +1400,10 @@ var bit = (function() {
         doms.closeBtn.addEventListener('click', onClose, false);
         doms.deleteBtn.addEventListener('click', onDelete, false);
         doms.clearBtn.addEventListener('click', onClear, false);
-        document.addEventListener('keydown', onKeyAction);
       },
 
       show : function() {
+        document.addEventListener('keydown', onKeyAction, false);
         context.canClear = fill();
         doms.clearBtn.disabled = !context.canClear;
         show(doms.projects);
@@ -1461,7 +1444,7 @@ var bit = (function() {
 
     function processFiles(files) {
       clear();
-      if (1 < files.length || 0 == files.length || !mdl.validateImgFile(files[0])) {
+      if (1 < files.length || 0 == files.length || !mdl.checkImgFile(files[0])) {
         error(doms.dropZone);
         doms.btnSet.disabled = true;
       } else {
@@ -1483,6 +1466,7 @@ var bit = (function() {
     }
 
     function close() {
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.creator);
       clear();
       context.handlers.onClose();
@@ -1530,6 +1514,7 @@ var bit = (function() {
         if (!context.handlers.onNewMap(data)) {
           console.log('ERROR - Invalid input management');
         }
+        document.removeEventListener('keydown', onKeyAction, false);
         hide(doms.creator);
         clear();
       } else {
@@ -1565,7 +1550,8 @@ var bit = (function() {
         doms.dropZone.addEventListener('drop', onDrop, false);
         doms.inImageFile.addEventListener('change', onImageFileChange, false);
         doms.inMapName.addEventListener('input', onNameInput, false);
-        document.addEventListener('keydown', onKeyAction);
+        doms.inMapName.addEventListener('keydown', e => e.stopPropagation(), false);
+        doms.inMapAlt.addEventListener('keydown', e => e.stopPropagation(), false);
         return this.reset();
       },
 
@@ -1579,6 +1565,7 @@ var bit = (function() {
 
       show : function() {
         show(doms.creator);
+        document.addEventListener('keydown', onKeyAction, false);
       }
 
     }
@@ -1635,6 +1622,7 @@ var bit = (function() {
     }
 
     function close() {
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.loader);
       clear();
       context.handlers.onClose();
@@ -1648,6 +1636,7 @@ var bit = (function() {
       let value;
       e.preventDefault();
       value = doms.list.options[doms.list.selectedIndex].value;
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.loader);
       clear();
       context.handlers.onLoadMap(value);
@@ -1672,11 +1661,11 @@ var bit = (function() {
         doms.btnLoad.addEventListener('click', onLoadClick, false);
         doms.btnCancel.addEventListener('click', onCancelClick, false);
         doms.list.addEventListener('input', onSelect, false);
-        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
       show : function() {
+        document.addEventListener('keydown', onKeyAction, false);
         reset();
         show(doms.loader);
       }
@@ -1706,6 +1695,7 @@ var bit = (function() {
     var show = (obj) => obj.style.display = 'block';
 
     function close() {
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.codeViewer);
       reset();
       context.handlers.onClose();
@@ -1753,11 +1743,11 @@ var bit = (function() {
         doms.btnSelect.addEventListener('click', onSelectClick, false);
         doms.btnClear.addEventListener('click', onClearClick, false);
         doms.btnClose.addEventListener('click', onCloseClick, false);
-        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
       show : function(s) {
+        document.addEventListener('keydown', onKeyAction, false);
         reset();
         doms.code.innerHTML = s;
         show(doms.codeViewer);
@@ -1799,6 +1789,7 @@ var bit = (function() {
     }
 
     function close() {
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.codeLoader);
       clear();
       context.handlers.onClose();
@@ -1810,6 +1801,7 @@ var bit = (function() {
 
     function onLoadClick(e) {
       e.preventDefault();
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.codeLoader);
       clear();
       context.handlers.onLoadCode(doms.code.value);
@@ -1841,10 +1833,11 @@ var bit = (function() {
         doms.btnCancel.addEventListener('click', onCancelClick, false);
         doms.btnClear.addEventListener('click', onClearClick, false);
         doms.code.addEventListener('input', onCodeInput, false);
-        document.addEventListener('keydown', onKeyAction);
+        doms.code.addEventListener('keydown', e => e.stopPropagation(), false);
       },
 
       show() {
+        document.addEventListener('keydown', onKeyAction, false);
         reset();
         show(doms.codeLoader);
       }
@@ -1871,6 +1864,7 @@ var bit = (function() {
     var show = (obj) => obj.style.display = 'block';
 
     function close() {
+      document.removeEventListener('keydown', onKeyAction, false);
       hide(doms.help);
       context.handlers.onClose();
     }
@@ -1892,11 +1886,11 @@ var bit = (function() {
       init(handlers) {
         context.handlers = handlers;
         doms.btnClose.addEventListener('click', onCloseClick, false);
-        document.addEventListener('keydown', onKeyAction);
         return this;
       },
 
       show : function() {
+        document.addEventListener('keydown', onKeyAction, false);
         show(doms.help);
       }
 
@@ -1926,8 +1920,8 @@ var bit = (function() {
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
       this.onKeyAction = this._onKeyAction.bind(this)
-      document.addEventListener('keydown', this.onKeyAction);
-      document.addEventListener('keydown', this.onCheckHelp.bind(this));
+      document.addEventListener('keydown', this.onKeyAction, false);
+      document.addEventListener('keydown', this.onCheckHelp.bind(this), false);
       return this.reset();
     }
 
@@ -1941,12 +1935,12 @@ var bit = (function() {
 
     release() {
       Object.values(this._btns).forEach(e => e.release())
-      document.addEventListener('keydown', this.onKeyAction);
+      document.addEventListener('keydown', this.onKeyAction, false);
     }
 
     freeze() {
       Object.values(this._btns).forEach(e => e.freeze())
-      document.removeEventListener('keydown', this.onKeyAction);
+      document.removeEventListener('keydown', this.onKeyAction, false);
     }
 
     _onKeyAction(e) {
@@ -2003,7 +1997,7 @@ var bit = (function() {
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
-      document.addEventListener('keydown', this.onKeyAction);
+      document.addEventListener('keydown', this.onKeyAction, false);
       return this;
     }
 
@@ -2029,13 +2023,13 @@ var bit = (function() {
     };
 
     var setModified = unsafe => {
-      mdl.setModified();
+      mdl.modified = true;
       mnu.canSave();
       if (unsafe) clipboard.setCopyUnsafe();
     };
 
     var setUnmodified = unsafe => {
-      mdl.setUnmodified();
+      mdl.modified = false;
       mnu.preventSave();
       if (unsafe) clipboard.setCopyUnsafe();
     };
@@ -2070,18 +2064,21 @@ var bit = (function() {
 
       function onNewMap(data) {
         let rtn = false;
-        if (mdl.setFile(data.file)) {
-          mdl.setInfo(data);
-          mnu.switchToEditMode();
-          footer.info(data.file);
-          wks.load(data.file);
-          setModified(true);
-          rtn = true;
-        } else {
-          footer.error(data.file);
+        try {
+          mdl.file = data.file
+          mdl.info = data
+          mnu.switchToEditMode()
+          footer.info(data.file)
+          wks.load(data.file)
+          setModified(true)
+          rtn = true
+        } catch (e) {
+          console.log(e.message)
+          footer.error(data.file)
+        } finally {
+          release()
+          return rtn
         }
-        release();
-        return rtn;
       }
 
       function onLoadMap(name) {
@@ -2138,7 +2135,7 @@ var bit = (function() {
       var _mapper = new bitmap.Mapper();
  
       function onNewProject() {
-        if (!mdl.isModified() || confirm('Discard all changes?')) {
+        if (!mdl.modified || confirm('Discard all changes?')) {
           footer.reset();
           wks.reset();
           tls.reset();
@@ -2155,7 +2152,7 @@ var bit = (function() {
           let c, i;
 					tls.freeze();
           [c, i] = wks.switchToPreview();
-          _mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
+          _mapper.displayPreview(c, i, mdl.areas, mdl.info);
         } else {
           wks.switchToEdit();
           _mapper.cancelPreview();
@@ -2164,7 +2161,7 @@ var bit = (function() {
       }
 
       function onLoadProject() {
-        if (!mdl.isModified() || confirm('Discard all changes?')) {
+        if (!mdl.modified || confirm('Discard all changes?')) {
           footer.reset();
           wks.reset();
           tls.reset();
@@ -2177,7 +2174,7 @@ var bit = (function() {
       }
 
       function onSaveProject() {
-        store.write(mdl.getInfo().name, mdl.toStore(store.a2s));
+        store.write(mdl.info.name, mdl.toStore(store.a2s));
         setUnmodified();
       }
 
@@ -2187,7 +2184,7 @@ var bit = (function() {
       }
 
       function onGenerateCode() {
-        code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
+        code.show(bitmap.Mapper.getHtmlString(mdl.filename, mdl.info, mdl.areas));
         freeze();
       }
 
