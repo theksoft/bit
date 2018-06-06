@@ -266,7 +266,7 @@ var bit = (function() {
     }
 
   }
-  let mdl = new Model(); 
+  let mdl = null; 
 
   /*
    * STORE
@@ -2826,6 +2826,7 @@ var bit = (function() {
 
     const COPY_OFFSET = 10;
 
+    mdl = new Model()
     prj.init(projects.handlers);
     ctr.init(projects.handlers);
     ldr.init(projects.handlers);
