@@ -650,6 +650,59 @@ var bittls = (function(){
 
   }
 
+  class DialogForm {
+
+    constructor(c) {
+      let e;
+      this._form = c.form
+      this._textRecipients = c.textRecipients || []
+      this._keyHandler = c.keyHandler || (() => {})
+      this.onKeyAction = this._onKeyAction.bind(this)
+      this._textRecipients.forEach(e => e.addEventListener('keydown', e => { if ('Escape' !== e.key) e.stopPropagation() }, false))
+      e = c.form.querySelector('.close');
+      if (e) e.addEventListener('click', this._onCloseClick.bind(this), false)
+      e = c.form.querySelector('.cancel');
+      if (e) e.addEventListener('click', this._onCancelClick.bind(this), false)
+    }
+
+    show() {
+      document.addEventListener('keydown', this.onKeyAction, false)
+      this._form.style.display = 'block'
+    }
+
+    close() {
+      document.removeEventListener('keydown', this.onKeyAction, false)
+      this._form.style.display = 'none'
+    }
+
+    _onCancel() {
+      this.close()
+    }
+
+    _onClose() {
+      this.close()
+    }
+
+    _onCancelClick(e) {
+      e.preventDefault()
+      this._onCancel()
+    }
+
+    _onCloseClick(e) {
+      e.preventDefault()
+      this._onClose()
+    }
+
+    _onKeyAction(e) {
+      if('Escape' === e.key) {
+        e.preventDefault()
+        this._onCancel()
+      } else
+        this._keyHandler(e)
+    }
+
+  }
+
   /*
    * EXPORTS
    */
@@ -659,7 +712,7 @@ var bittls = (function(){
     TNumber,
     MouseStateMachine, MouseStateMachineRadioGroup,
     MousePositionTracker, ContainerMask,
-    LocalProjectStore
+    LocalProjectStore, DialogForm
   }
 
 }()); // GUI definitions

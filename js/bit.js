@@ -93,6 +93,7 @@ var bit = (function() {
       this._info = { name: '', alt : '' }
       this._image = { width : 0, height : 0 }
       this._areas = []
+      this.checkImgFile = this._checkImgFile.bind(this)
     }
 
     reset() {
@@ -114,12 +115,12 @@ var bit = (function() {
       this._modified = (v) ? true : false
     }
 
-    checkImgFile(f) {
+    _checkImgFile(f) {
       return this._imgTypes.includes(f.type)
     }
 
     set file(f) {
-      if (!this.checkImgFile(f))
+      if (!this._checkImgFile(f))
         throw new Error('ERROR[Model] ' + f.type + ' Invalid image file type!')
       var reader = new FileReader()
       reader.addEventListener('load', () => this._file.dataURL = reader.result, false)
@@ -1320,583 +1321,438 @@ var bit = (function() {
    * MAP PROJECT MANAGER
    */
 
-  var prj = (function() {
+  class ProjectManagerDialog extends bittls.DialogForm {
 
-    var doms = {
-      projects  : $('project-manager'),
-      list      : document.querySelector('#project-manager .project-list'),
-      closeBtn  : document.querySelector('#project-manager .close'),
-      deleteBtn : document.querySelector('#project-manager .delete'),
-      clearBtn  : document.querySelector('#project-manager .clear')
-    },
-    context = {
-      handlers : null,
-      canClear : true
-    };
-    
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
+    constructor(c) {
+      super({ form : $('project-manager') })
+      this._model = c.model
+      this._store = c.store
+      this._handlers = c.handlers
+      this._canClear = true
+      this._doms = {
+        list      : document.querySelector('#project-manager .project-list'),
+        deleteBtn : document.querySelector('#project-manager .delete'),
+        clearBtn  : document.querySelector('#project-manager .clear')
+      }
+      this._doms.deleteBtn.addEventListener('click', this._onDelete.bind(this), false)
+      this._doms.clearBtn.addEventListener('click', this._onClear.bind(this), false)
+    }
 
-    function fill() {
-      let canClearAll, content, flag;
-      canClearAll = true;
-      content = '';
-      store.list().forEach(e => {
-        flag = '';
-        if (e === mdl.info.name) {
-          flag = ' disabled';
-          canClearAll = false;
+    _fill() {
+      let canClearAll, content, flag
+      canClearAll = true
+      content = ''
+      this._store.list().forEach(e => {
+        flag = ''
+        if (e === this._model.info.name) {
+          flag = ' disabled'
+          canClearAll = false
         }
-        content += '<option value="' + e + '"' + flag + '>' + e + '</option>';
+        content += '<option value="' + e + '"' + flag + '>' + e + '</option>'
       });
-      doms.list.innerHTML = content;
-      return canClearAll;
+      this._doms.list.innerHTML = content
+      return canClearAll
     }
 
-    function close() {
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.projects);
-      doms.list.innerHTML = '';
-      context.handlers.onClose();
+    _onClose() {
+      this._doms.list.innerHTML = ''
+      this._handlers.onClose()
+      super._onClose()
     }
 
-    function onClose(e) {
+    _onCancel() {
+      this._onClose()
+    }
+
+    _onDelete(e) {
+      let i, sel
+      e.preventDefault()
+      sel = []
+      for (i = 0; i < this._doms.list.options.length; i++) {
+        if (this._doms.list.options[i].selected)
+          sel.push(this._doms.list.options[i].value)
+      }
+      sel.forEach(e => this._store.remove(e))
+      this._fill()
+    }
+
+    _onClear(e) {
       e.preventDefault();
-      close();
-    }
-
-    function onDelete(e) {
-      let i, sel;
-      e.preventDefault();
-      sel = [];
-      for (i = 0; i < doms.list.options.length; i++) {
-        if (doms.list.options[i].selected) {
-          sel.push(doms.list.options[i].value);
-        }
-      }
-      sel.forEach(e => store.remove(e));
-      fill();
-    }
-
-    function onClear(e) {
-      e.preventDefault();
-      if (context.canClear) {
-        store.reset();
-        fill();
+      if (this._canClear) {
+        this._store.reset()
+        this._fill()
       }
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
+   show() {
+      this._canClear = this._fill()
+      this._doms.clearBtn.disabled = !this._canClear
+      super.show()
     }
 
-    return {
+  }
 
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.closeBtn.addEventListener('click', onClose, false);
-        doms.deleteBtn.addEventListener('click', onDelete, false);
-        doms.clearBtn.addEventListener('click', onClear, false);
-      },
-
-      show : function() {
-        document.addEventListener('keydown', onKeyAction, false);
-        context.canClear = fill();
-        doms.clearBtn.disabled = !context.canClear;
-        show(doms.projects);
-      }
-
-    };
-
-  })(); /* MAP PROJECT MANAGEMENT */
+  let prj = null;
 
   /*
    *  MAP PROJECT CREATOR
    */
 
-  var ctr = (function() {
+  class ProjectCreatorDialog extends bittls.DialogForm {
 
-    var doms = {
-      creator       : $('project-creator'),
-      btnSet        : document.querySelector('#project-creator .create'),
-      btnCancel     : document.querySelector('#project-creator .cancel'),
-      dropZone      : $('image-drop-zone'),
-      imagePreview  : document.querySelector('#project-creator .preview'),
-      inImageFile   : $('load-image-file'),
-      inMapName     : $('map-name'),
-      inMapAlt      : $('map-alt')
-    },
-    context = {
-      handlers : null,
-      file     : null,
-      filename : ''
-    };
+    constructor(c) {
+      super({
+        form : $('project-creator'),
+        textRecipients : [$('map-name'), $('map-alt')]
+      })
+      this._handlers = c.handlers
+      this._file = null
+      this._filename = ''
+      this._doms = {
+        btnSet        : document.querySelector('#project-creator .create'),
+        dropZone      : $('image-drop-zone'),
+        imagePreview  : document.querySelector('#project-creator .preview'),
+        inImageFile   : $('load-image-file'),
+        inMapName     : $('map-name'),
+        inMapAlt      : $('map-alt')
+      }
 
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function validate() {
-      return (doms.inMapName.value !== '' && context.filename !== '');
+      this._doms.btnSet.addEventListener('click', this._onSetClick.bind(this), false)
+      this._doms.dropZone.draggable = true
+      this._doms.dropZone.addEventListener('dragover', this._onDragEvent, false)
+      this._doms.dropZone.addEventListener('dragleave', this._onDragEvent, false)
+      this._doms.dropZone.addEventListener('drop', this._onDrop.bind(this), false)
+      this._doms.inImageFile.addEventListener('change', this._onImageFileChange.bind(this), false)
+      this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
+      this.reset()
     }
 
-    function processFiles(files) {
-      clear();
-      if (1 < files.length || 0 == files.length || !mdl.checkImgFile(files[0])) {
-        error(doms.dropZone);
-        doms.btnSet.disabled = true;
+    _clear() {
+      this._doms.imagePreview.style.display = 'none'
+      this._doms.imagePreview.src = ''
+      this._doms.dropZone.classList.remove('error')
+      this._doms.btnSet.disabled = true
+      this._file = null
+      this._filename = ''
+    }
+
+    _error(e) {
+      e.classList.add('error')
+    }
+
+    _validate() {
+      return (this._doms.inMapName.value !== '' && this._filename !== '')
+    }
+
+    _processFiles(files) {
+      this._clear()
+      if (1 < files.length || 0 == files.length || !this._handlers.checkFile(files[0])) {
+        this._error(this._doms.dropZone)
+        this._doms.btnSet.disabled = true
       } else {
-        context.file = files[0];
-        context.filename = window.URL.createObjectURL(context.file);
-        doms.imagePreview.src = context.filename;
-        show(doms.imagePreview);
-        doms.btnSet.disabled = !validate();
+        this._file = files[0]
+        this._filename = window.URL.createObjectURL(this._file)
+        this._doms.imagePreview.src = this._filename
+        this._doms.imagePreview.style.display = 'block'
+        this._doms.btnSet.disabled = !this._validate()
       }
     }
 
-    function clear() {
-      hide(doms.imagePreview);
-      doms.imagePreview.src = '';
-      doms.dropZone.classList.remove('error');
-      doms.btnSet.disabled = true;
-      context.file = null;
-      context.filename = '';
-    }
-
-    function close() {
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.creator);
-      clear();
-      context.handlers.onClose();
-    }
-
-    function error(obj) {
-      obj.classList.add('error');
-    }
-
-    function onDragOver(e) {
-      e.stopPropagation();
-      e.preventDefault();
+    _onDragEvent(e) {
+      e.stopPropagation()
+      e.preventDefault()
     }
     
-    function onDragLeave(e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    
-    function onDrop(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      processFiles(e.dataTransfer.files);
-      doms.inImageFile.value = '';
+    _onDrop(e) {
+      e.stopPropagation()
+      e.preventDefault()
+      this._processFiles(e.dataTransfer.files)
+      this._doms.inImageFile.value = ''
     }
 
-    function onImageFileChange(e) {
-      e.preventDefault();
-      processFiles(e.target.files);
+    _onImageFileChange(e) {
+      e.preventDefault()
+      this._processFiles(e.target.files)
     }
 
-    function onNameInput(e) {
-      doms.btnSet.disabled = !validate();
+    _onNameInput(e) {
+      this._doms.btnSet.disabled = !this._validate()
     }
 
-    function onSetClick(e) {
-      e.preventDefault();
-      if(validate()) {
+    _onCancel() {
+      this._clear()
+      this._handlers.onClose()
+      super._onCancel()
+    }
+
+    _onClose() {
+      this._onCancel()
+    }
+
+    _onSetClick(e) {
+      e.preventDefault()
+      if(this._validate()) {
         let data = {
-          filename  : context.filename,
-          file      : context.file,
-          name      : doms.inMapName.value,
-          alt       : doms.inMapAlt.value
-        };
-        if (!context.handlers.onNewMap(data)) {
-          console.log('ERROR - Invalid input management');
+          filename  : this._filename,
+          file      : this._file,
+          name      : this._doms.inMapName.value,
+          alt       : this._doms.inMapAlt.value
         }
-        document.removeEventListener('keydown', onKeyAction, false);
-        hide(doms.creator);
-        clear();
+        if (!this._handlers.onNewMap(data))
+          console.log('ERROR - Invalid input management')
+        this._onClose()
       } else {
-        if (doms.inMapName.value === '') {
-          error(doms.inMapName);
-        } else {
-          error(doms.dropZone);
-        }
+        if (this._doms.inMapName.value === '')
+          this._error(this._doms.inMapName)
+        else
+          this._error(this._doms.dropZone)
       }
     }
 
-    function onCancelClick(e) {
-      e.preventDefault();
-      close();
+    reset() {
+      this._clear()
+      this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
+      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
+      this._doms.inMapAlt.value = this._doms.inMapAlt.defaultValue = ''
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
-    }
+  }
 
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.btnSet.addEventListener('click', onSetClick, false);
-        doms.btnCancel.addEventListener('click', onCancelClick, false);
-        doms.dropZone.draggable = true;
-        doms.dropZone.addEventListener('dragover', onDragOver, false);
-        doms.dropZone.addEventListener('dragleave', onDragLeave, false);
-        doms.dropZone.addEventListener('drop', onDrop, false);
-        doms.inImageFile.addEventListener('change', onImageFileChange, false);
-        doms.inMapName.addEventListener('input', onNameInput, false);
-        doms.inMapName.addEventListener('keydown', e => e.stopPropagation(), false);
-        doms.inMapAlt.addEventListener('keydown', e => e.stopPropagation(), false);
-        return this.reset();
-      },
-
-      reset : function() {
-        clear();
-        doms.inImageFile.value = doms.inImageFile.defaultValue = '';
-        doms.inMapName.value = doms.inMapName.defaultValue = '';  
-        doms.inMapAlt.value = doms.inMapAlt.defaultValue = '';  
-        return this;
-      },
-
-      show : function() {
-        show(doms.creator);
-        document.addEventListener('keydown', onKeyAction, false);
-      }
-
-    }
-
-  })(); /* MAP PROJECT CREATOR */
+  let ctr = null;
 
   /*
    * MAP PROJECT LOADER 
    */
 
-  var ldr = (function() {
+  class ProjectLoaderDialog extends bittls.DialogForm {
 
-    var doms = {
-      loader        : $('project-loader'),
-      list          : document.querySelector('#project-loader .project-list'),
-      btnLoad       : document.querySelector('#project-loader .select'),
-      btnCancel     : document.querySelector('#project-loader .cancel'),
-      imagePreview  : document.querySelector('#project-loader .preview')
-    },
-    context = {
-      handlers : null
-    };
+    constructor(c) {
+      super({
+        form : $('project-loader')
+      })
+      this._handlers = c.handlers
+      this._store = c.store
+      this._doms = {
+        list          : document.querySelector('#project-loader .project-list'),
+        btnLoad       : document.querySelector('#project-loader .select'),
+        imagePreview  : document.querySelector('#project-loader .preview')
+      }
+      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false);
+      this._doms.list.addEventListener('input', this._onSelect.bind(this), false);
+    }
 
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function fill() {
+    _fill() {
       let content = '';
-      store.list().forEach(e => content += '<option value="' + e + '">' + e + '</option>' );
-      doms.list.innerHTML = content;
+      this._store.list().forEach(e => content += '<option value="' + e + '">' + e + '</option>' );
+      this._doms.list.innerHTML = content;
     }
 
-    function loadPreview() {
+    _loadPreview() {
       let project;
-      project = store.read(doms.list.options[doms.list.selectedIndex].value);
-      doms.imagePreview.src = project.dataURL;
+      project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value);
+      this._doms.imagePreview.src = project.dataURL;
     }
 
-    function clear() {
-      hide(doms.imagePreview);
-      doms.imagePreview.src = '';
-      doms.list.innerHTML = '';
-      doms.btnLoad.disabled = true;
+    _clear() {
+      this._doms.imagePreview.style.display = 'none'
+      this._doms.imagePreview.src = ''
+      this._doms.list.innerHTML = ''
+      this._doms.btnLoad.disabled = true
     }
 
-    function reset() {
-      clear();
-      fill();
-      if (doms.list.length > 0) {
-        doms.btnLoad.disabled = false;
-        loadPreview();
-        show(doms.imagePreview);
+    _reset() {
+      this._clear()
+      this._fill()
+      if (this._doms.list.length > 0) {
+        this._doms.btnLoad.disabled = false
+        this._loadPreview();
+        this._doms.imagePreview.style.display = 'block'
       }
     }
 
-    function close() {
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.loader);
-      clear();
-      context.handlers.onClose();
+    _onCancel() {
+      super._onCancel()
+      this._clear()
+      this._handlers.onClose()
     }
 
-    function onSelect(e) {
-      loadPreview();
+    _onClose() {
+      this._onCancel()
     }
 
-    function onLoadClick(e) {
+    _onSelect(e) {
+      this._loadPreview()
+    }
+
+    _onLoadClick(e) {
       let value;
       e.preventDefault();
-      value = doms.list.options[doms.list.selectedIndex].value;
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.loader);
-      clear();
-      context.handlers.onLoadMap(value);
+      value = this._doms.list.options[this._doms.list.selectedIndex].value;
+      super._onClose()
+      this._clear()
+      this._handlers.onLoadMap(value)
     }
 
-    function onCancelClick(e) {
-      e.preventDefault();
-      close();
+    show() {
+      this._reset()
+      super.show()
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
-    }
-
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.btnLoad.addEventListener('click', onLoadClick, false);
-        doms.btnCancel.addEventListener('click', onCancelClick, false);
-        doms.list.addEventListener('input', onSelect, false);
-        return this;
-      },
-
-      show : function() {
-        document.addEventListener('keydown', onKeyAction, false);
-        reset();
-        show(doms.loader);
-      }
-
-    };
-
-  })(); /* MAP PROJECT LOADER */
+  }
+  let ldr = null;
 
   /*
    * MAP CODE DISPLAY
    */
 
-  var code = (function() {
+  class CodeGeneratorDialog extends bittls.DialogForm {
 
-    var doms = {
-      codeViewer  : $('project-code'),
-      code        : $('code-result'),
-      btnSelect   : document.querySelector('#project-code .select'),
-      btnClear    : document.querySelector('#project-code .clear'),
-      btnClose    : document.querySelector('#project-code .close')
-    },
-    context = {
-      handlers : null
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function close() {
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.codeViewer);
-      reset();
-      context.handlers.onClose();
-    }
-
-    function onSelectClick(e) {
-      e.preventDefault();
-      utils.selectText(doms.code);
-    }
-
-    function onClearClick(e) {
-      e.preventDefault();
-      utils.unselect();
-    }
-
-    function onCloseClick(e) {
-      e.preventDefault();
-      close();
-    }
-
-    function onKeyAction(e) {
-      switch(e.key) {
-      case 'a':
-        if (utils.ctrlMetaKey(e)) {
-          e.preventDefault();
-          utils.selectText(doms.code);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        close();
-        break;
-      default:
+    constructor(c) {
+      super({
+        form : $('project-code'),
+        keyHandler : e => this._keyAction(e)
+      })
+      this._handlers = c.handlers
+      this._doms = {
+        code        : $('code-result'),
+        btnSelect   : document.querySelector('#project-code .select'),
+        btnClear    : document.querySelector('#project-code .clear')
       }
+      this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false);
+      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false);
     }
 
-    function reset() {
+    _reset() {
       code.innerHTML = '';
     }
 
-    return {
+    _onClose() {
+      super._onClose()
+      this._reset()
+      this._handlers.onClose()
+    }
 
-      init(handlers) {
-        context.handlers = handlers;
-        doms.btnSelect.addEventListener('click', onSelectClick, false);
-        doms.btnClear.addEventListener('click', onClearClick, false);
-        doms.btnClose.addEventListener('click', onCloseClick, false);
-        return this;
-      },
+    _onCancel() {
+      this._onClose()
+    }
 
-      show : function(s) {
-        document.addEventListener('keydown', onKeyAction, false);
-        reset();
-        doms.code.innerHTML = s;
-        show(doms.codeViewer);
+    _onSelectClick(e) {
+      e.preventDefault()
+      utils.selectText(this._doms.code)
+    }
+
+    _onClearClick(e) {
+      e.preventDefault()
+      utils.unselect()
+    }
+
+    _keyAction(e) {
+      if('a' === e.key && utils.ctrlMetaKey(e)) {
+        e.preventDefault()
+        utils.selectText(this._doms.code)
       }
+    }
 
-    };
+    show(s) {
+      this._reset()
+      this._doms.code.innerHTML = s
+      super.show()
+    }
 
-  })();
+  }
+  let code = null;
 
   /*
    * HTML CODE LOADER
    */
 
-  var htm = (function() {
+  class HtmlLoaderDialog extends bittls.DialogForm {
 
-    var doms = {
-      codeLoader : $('code-loader'),
-      btnLoad    : document.querySelector('#code-loader .select'),
-      btnClear   : document.querySelector('#code-loader .clear'),
-      btnCancel  : document.querySelector('#code-loader .cancel'),
-      code       : $('input-code')
-    },
-    context = {
-      handlers : null
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function clear() {
-      doms.btnLoad.disabled = true;
-    }
-
-    function reset() {
-      clear();
-      if (doms.code.value != '') {
-        doms.btnLoad.disabled = false;
+    constructor(c) {
+      super({
+        form : $('code-loader'),
+        textRecipients : [$('input-code')]
+      })
+      this._handlers = c.handlers
+      this._doms = {
+        btnLoad    : document.querySelector('#code-loader .select'),
+        btnClear   : document.querySelector('#code-loader .clear'),
+        code       : $('input-code')
       }
+      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
+      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
+      this._doms.code.addEventListener('input', this._onCodeInput.bind(this), false)
     }
 
-    function close() {
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.codeLoader);
-      clear();
-      context.handlers.onClose();
+    _clear() {
+      this._doms.btnLoad.disabled = true
     }
 
-    function onCodeInput(e) {
-      doms.btnLoad.disabled = (doms.code.value === '');
+    _reset() {
+      this._clear()
+      if (this._doms.code.value != '')
+        this._doms.btnLoad.disabled = false
     }
 
-    function onLoadClick(e) {
-      e.preventDefault();
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.codeLoader);
-      clear();
-      context.handlers.onLoadCode(doms.code.value);
+    _onClose() {
+      this._clear()
+      this._handlers.onClose()
+      super._onClose()
     }
 
-    function onClearClick(e) {
-      e.preventDefault();
-      doms.code.value = '';
-      doms.btnLoad.disabled = true;
+    _onCancel() {
+      this._onClose()
+    }
+ 
+    _onCodeInput(e) {
+      this._doms.btnLoad.disabled = (this._doms.code.value === '');
     }
 
-    function onCancelClick(e) {
-      e.preventDefault();
-      close();
+    _onLoadClick(e) {
+      e.preventDefault()
+      this._clear()
+      super._onClose()
+      this._handlers.onLoadCode(this._doms.code.value);
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
+    _onClearClick(e) {
+      e.preventDefault()
+      this._doms.code.value = ''
+      this._doms.btnLoad.disabled = true
     }
 
-    return {
+    show() {
+      this._reset()
+      super.show()
+    }
 
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.btnLoad.addEventListener('click', onLoadClick, false);
-        doms.btnCancel.addEventListener('click', onCancelClick, false);
-        doms.btnClear.addEventListener('click', onClearClick, false);
-        doms.code.addEventListener('input', onCodeInput, false);
-        doms.code.addEventListener('keydown', e => e.stopPropagation(), false);
-      },
-
-      show() {
-        document.addEventListener('keydown', onKeyAction, false);
-        reset();
-        show(doms.codeLoader);
-      }
-
-    };
-
-  })();
+  }
+  let htm = null;
 
   /*
-   * help DISPLAY
+   * HELP DISPLAY
    */
 
-  var help = (function() {
+  class HelpDialog extends bittls.DialogForm {
 
-    var doms = {
-      help        : $('help-display'),
-      btnClose    : document.querySelector('#help-display .close')
-    },
-    context = {
-      handlers : null
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function close() {
-      document.removeEventListener('keydown', onKeyAction, false);
-      hide(doms.help);
-      context.handlers.onClose();
+    constructor(c) {
+      super({
+        form : $('help-display')
+      })
+      this._handlers = c.handlers
     }
 
-    function onCloseClick(e) {
-      e.preventDefault();
-      close();
+    _onClose() {
+      this._handlers.onClose()
+      super._onClose()
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
+    _onCancel() {
+      this._onClose()
     }
 
-    return {
-
-      init(handlers) {
-        context.handlers = handlers;
-        doms.btnClose.addEventListener('click', onCloseClick, false);
-        return this;
-      },
-
-      show : function() {
-        document.addEventListener('keydown', onKeyAction, false);
-        show(doms.help);
-      }
-
-    };
-
-  })();
+  }
+  let help = null;
 
   /*
    * MENU MANAGEMENT
@@ -2827,15 +2683,8 @@ var bit = (function() {
     const COPY_OFFSET = 10;
 
     mdl = new Model()
-    prj.init(projects.handlers);
-    ctr.init(projects.handlers);
-    ldr.init(projects.handlers);
-    code.init(projects.handlers);
-    htm.init(projects.handlers);
-    help.init(projects.handlers);
-    mnu = new Menu({
-      handlers : menu.handlers
-    })
+    mnu = new Menu({ handlers : menu.handlers })
+    tls = new Tools({ handlers : tooler.handlers })
     footer = new Footer()
     wks = new Workspace({
       handlers : {
@@ -2849,9 +2698,19 @@ var bit = (function() {
     })
     store = new Store({ workspace : wks })
     clipboard = new Clipboard({ workspace : wks, copyOffset : COPY_OFFSET })
-    tls = new Tools({
-      handlers : tooler.handlers
+    prj = new ProjectManagerDialog({
+      model : mdl,
+      store : store,
+      handlers : projects.handlers
     })
+    ctr = new ProjectCreatorDialog({ handlers : Object.assign({ checkFile : mdl.checkImgFile }, projects.handlers) })
+    ldr = new ProjectLoaderDialog({
+      store : store,
+      handlers : projects.handlers
+    })
+    code = new CodeGeneratorDialog({ handlers : projects.handlers })
+    htm = new HtmlLoaderDialog({ handlers : projects.handlers })
+    help = new HelpDialog({ handlers : projects.handlers })
 
   })(); /* APPLICATION MANAGEMENT */
 
