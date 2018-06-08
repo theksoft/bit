@@ -203,7 +203,7 @@ Pressing `ESC`during selected areas move cancels the move operation and repositi
 #### Rotate
 
 Rotation can be done on a single selected area.
-If a group a areas is selected, rotation commands have no effect.
+If a group of areas is selected, rotation commands have no effect.
 
 - `CTRL`+`RIGHT` arrow : Rotate the area clockwise
 - `CTRL`+`LEFT` arrow : Rotate the area anti-clockwise
