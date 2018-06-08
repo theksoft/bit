@@ -704,20 +704,26 @@ form.modal textarea {
   bottom: 5px;
 }
 
-#project-code > .buttons > .select {
+#project-code > .buttons > .copy {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#project-code > .buttons > .clear {
+#project-code > .buttons > .select {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
 }
 
-#project-code > .buttons > .close {
+#project-code > .buttons > .clear {
   order: 3;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+#project-code > .buttons > .close {
+  order: 4;
   margin-left: 10px;
   margin-right: 10px;
 }
@@ -745,7 +751,7 @@ form.modal textarea {
   width: 97%;
   min-width: 97%;
   max-width: 97%;
-  min-height: 50px;
+  min-height: 150px;
   max-height: 500px;
   background-color: #222;
   color: #dcf;
