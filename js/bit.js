@@ -9,7 +9,8 @@
 var bit = (function() {
   'use strict';
 
-  function $(s) { return document.getElementById(s); }
+  const $ = s => document.getElementById(s)
+  const appName = 'BiT'
 
   var utils = (function() {
 
@@ -64,6 +65,15 @@ var bit = (function() {
       }
     }
 
+    function copyText(node) {
+      node.select()
+      document.execCommand('Copy')
+    }
+
+    function copySelectedText() {
+      document.execCommand('Copy')
+    }
+
     return {
 
       leftButton : e => (0 === e.button) ? true : false,
@@ -72,7 +82,7 @@ var bit = (function() {
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
-      selectText, unselect,
+      selectText, unselect, copyText, copySelectedText,
       fgTypes,
       clsActions
 
@@ -1604,10 +1614,12 @@ var bit = (function() {
       this._doms = {
         code        : $('code-result'),
         btnSelect   : document.querySelector('#project-code .select'),
-        btnClear    : document.querySelector('#project-code .clear')
+        btnClear    : document.querySelector('#project-code .clear'),
+        btnCopy     : document.querySelector('#project-code .copy')
       }
       this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false);
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false);
+      this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false);
     }
 
     _reset() {
@@ -1634,10 +1646,19 @@ var bit = (function() {
       utils.unselect()
     }
 
+    _onCopyClick(e) {
+      e.preventDefault()
+      utils.copySelectedText()
+    }
+
     _keyAction(e) {
       if('a' === e.key && utils.ctrlMetaKey(e)) {
         e.preventDefault()
         utils.selectText(this._doms.code)
+      }
+      if('c' === e.key && utils.ctrlMetaKey(e)) {
+        e.preventDefault()
+        utils.copySelectedText()
       }
     }
 
@@ -1751,15 +1772,18 @@ var bit = (function() {
         preview       : new bittls.TButton({ element : $('preview'),        action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
         saveProject   : new bittls.TButton({ element : $('save-project'),   action : c.handlers.onSaveProject }),
         loadProject   : new bittls.TButton({ element : $('load-project'),   action : c.handlers.onLoadProject }),
+        closeProject  : new bittls.TButton({ element : $('close-project'),  action : c.handlers.onCloseProject }),
         cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
         generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
         loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
         help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
       })
+      this._btns.closeProject.disable()
       this._btns.saveProject.disable()
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
+      this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
       document.addEventListener('keydown', this.onKeyAction, false);
       document.addEventListener('keydown', this.onCheckHelp.bind(this), false);
@@ -1791,37 +1815,43 @@ var bit = (function() {
           e.preventDefault()
           this._btns.newProject.tryAction()
         }
-        break;
+        break
       case 'l':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.loadProject.tryAction()
         }
-        break;
+        break
       case 's':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.saveProject.tryAction()
         }
-        break;
+        break
+      case 'x':
+        if (utils.ctrlMetaKey(e)) {
+          e.preventDefault()
+          this._btns.closeProject.tryAction()
+        }
+        break
       case 'p':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.preview.tryAction()
         }
-        break;
+        break
       case 'g':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.generate.tryAction()
         }
-        break;
+        break
       case 'Escape':
         if(this._btns.preview.element.classList.contains('selected')) {
           e.preventDefault()
           this._btns.preview.tryAction()
         }
-        break;
+        break
       default:
       }
     }
@@ -1833,20 +1863,24 @@ var bit = (function() {
     }
 
     reset() {
+      this._btns.closeProject.disable()
       this._btns.saveProject.disable()
       this._btns.preview.element.classList.remove('selected')
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
       document.addEventListener('keydown', this.onKeyAction, false);
+      this._title.innerHTML = appName
       return this;
     }
 
-    switchToEditMode() {
+    switchToEditMode(name) {
+      this._btns.closeProject.enable()
       this._btns.preview.enable()
       this._btns.preview.element.classList.remove('selected')
       this._btns.generate.enable()
       this._btns.loadHTML.enable()
+      this._title.innerHTML += ' ['+name+']'
       return this;
     }
 
@@ -1909,6 +1943,16 @@ var bit = (function() {
       this._app.setUnmodified()
     }
 
+    _onCloseProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._app.footer.reset()
+        this._app.workspace.reset()
+        this._app.tools.reset()
+        this._app.menu.reset()
+        this._app.model.reset()
+      }
+    }
+
     _onCleanProjects() {
       this._app.manager.show()
       this._app.freeze()
@@ -1935,6 +1979,7 @@ var bit = (function() {
         onPreview       : this._onPreview.bind(this),
         onLoadProject   : this._onLoadProject.bind(this),
         onSaveProject   : this._onSaveProject.bind(this),
+        onCloseProject  : this._onCloseProject.bind(this),
         onCleanProjects : this._onCleanProjects.bind(this),
         onGenerateCode  : this._onGenerateCode.bind(this),
         onLoadHTML      : this._onLoadHTML.bind(this),
@@ -1961,7 +2006,7 @@ var bit = (function() {
       try {
         this._app.model.file = data.file
         this._app.model.info = data
-        this._app.menu.switchToEditMode()
+        this._app.menu.switchToEditMode(data.name)
         this._app.footer.info(data.file)
         this._app.workspace.load(data.file)
         this._app.setModified(true)
@@ -1983,7 +2028,7 @@ var bit = (function() {
       this._app.workspace.loadEx(project);
       if(this._app.model.fromStore(project, this._app.store.s2a)) {
         this._app.aTooler.managePropsDisplay(this._app.model.areas)
-        this._app.menu.switchToEditMode()
+        this._app.menu.switchToEditMode(name)
         this._app.setUnmodified(true)
         rtn = true
       } else {
@@ -2390,7 +2435,7 @@ var bit = (function() {
     get first()         { return this._getSelected() }
     get list()          { return this._getSelectedList() }
     select(figure)      { return this._select(figure) }
-    selectSubset(area)  { return this._selectSubset(areas) }
+    selectSubset(areas) { return this._selectSubset(areas) }
     empty()             { return this._empty() }
     unselectAll()       { return this._areaUnselectAll() }
     

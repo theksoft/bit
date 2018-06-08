@@ -12,6 +12,7 @@ Projets are stored in local storage by the name of each map.
 - `New project` : Setup a new HTML map project [`CTRL`+`M`]
 - `Load project` : Load a stored HTML map project [`CTRL`+`L`]
 - `Save project` : Save HTML map project in local storage [`CTRL`+`S`]
+- `Close project` : Close current map project [`CTRL`+`X`]
 
 #### Project command
 
@@ -34,14 +35,14 @@ Drawing is controlled by tool pallette on the right side.
 
 Tool                              | Description
 --------------------------------- | ---
-![HEXD](./icons/hex_d.png)        | **Draw an hex from its diameter** <br> Click first to define the start of hex diameter and next click again to end the hex diameter.
+![HEXD](./icons/hex_d.png)        | **Draw an hex from its diameter** <br> Click first to define the start of hex diameter and next click again to end the hex diameter. 
 ![HEXR](./icons/hex_r.png)        | **Draw an hex from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the largest hex that can be inscribed in the rectangle.
 ![RECT](./icons/rectangle.png)    | **Draw a rectangle** <br> Click first to define first corner of the rectangle and next click again for the opposing corner.
 ![SQUR](./icons/square.png)       | **Draw a square** <br> Click first to define first corner of the square and next click again for the opposing corner.
 ![RHMB](./icons/rhombus.png)      | **Draw a rhombus from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the rhombus inscribed in the rectangle.
-![TRGE](./icons/triangle_e.png)   | **Draw an equilateral triangle from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the largest equilateral triangle that can be inscribed in the rectangle.
-![TRGI](./icons/triangle_i.png)   | **Draw an isosceles triangle from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the isosceles triangle inscribed in the rectangle.
-![TRGR](.//icons/triangle_r.png)  | **Draw a right-angled triangle from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is a right-angled triangle inscribed in the rectangle.
+![TRGE](./icons/triangle_e.png)   | **Draw an equilateral triangle from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the largest equilateral triangle that can be inscribed in the rectangle. <br> `ALT` key pressed on first click modfies the triangle orientation.
+![TRGI](./icons/triangle_i.png)   | **Draw an isosceles triangle from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the isosceles triangle inscribed in the rectangle. <br> `ALT` key pressed on first click modfies the triangle orientation.
+![TRGR](.//icons/triangle_r.png)  | **Draw a right-angled triangle from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is a right-angled triangle inscribed in the rectangle. <br> `ALT` key pressed on first click modfies the triangle orientation.
 ![ELLP](./icons/ellipse.png)      | **Draw an ellipse from a delimiting rectangle** <br> Click first to define first corner of the delimiting rectangle and next click again for the opposing corner. <br> Result is the ellipse inscribed in the rectangle.
 ![CRCD](./icons/circle_d.png)     | **Draw a circle from its diameter** <br> Click first to define the start of circle diameter and next click again to end the circle diameter.
 ![CRCC](./icons/circle_c.png)     | **Draw a circle from its center and radius** <br> Click first to define the circle center and next click again when the desired radius size is reached.
