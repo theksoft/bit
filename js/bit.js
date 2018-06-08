@@ -1656,6 +1656,10 @@ var bit = (function() {
         e.preventDefault()
         utils.selectText(this._doms.code)
       }
+      if('c' === e.key && utils.ctrlMetaKey(e)) {
+        e.preventDefault()
+        utils.copySelectedText()
+      }
     }
 
     show(s) {
