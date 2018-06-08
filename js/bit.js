@@ -1793,37 +1793,43 @@ var bit = (function() {
           e.preventDefault()
           this._btns.newProject.tryAction()
         }
-        break;
+        break
       case 'l':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.loadProject.tryAction()
         }
-        break;
+        break
       case 's':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.saveProject.tryAction()
         }
-        break;
+        break
+      case 'x':
+        if (utils.ctrlMetaKey(e)) {
+          e.preventDefault()
+          this._btns.closeProject.tryAction()
+        }
+        break
       case 'p':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.preview.tryAction()
         }
-        break;
+        break
       case 'g':
         if (utils.ctrlMetaKey(e)) {
           e.preventDefault()
           this._btns.generate.tryAction()
         }
-        break;
+        break
       case 'Escape':
         if(this._btns.preview.element.classList.contains('selected')) {
           e.preventDefault()
           this._btns.preview.tryAction()
         }
-        break;
+        break
       default:
       }
     }
