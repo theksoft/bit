@@ -1751,11 +1751,13 @@ var bit = (function() {
         preview       : new bittls.TButton({ element : $('preview'),        action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
         saveProject   : new bittls.TButton({ element : $('save-project'),   action : c.handlers.onSaveProject }),
         loadProject   : new bittls.TButton({ element : $('load-project'),   action : c.handlers.onLoadProject }),
+        closeProject  : new bittls.TButton({ element : $('close-project'),  action : c.handlers.onCloseProject }),
         cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
         generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
         loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
         help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
       })
+      this._btns.closeProject.disable()
       this._btns.saveProject.disable()
       this._btns.preview.disable()
       this._btns.generate.disable()
@@ -1833,6 +1835,7 @@ var bit = (function() {
     }
 
     reset() {
+      this._btns.closeProject.disable()
       this._btns.saveProject.disable()
       this._btns.preview.element.classList.remove('selected')
       this._btns.preview.disable()
@@ -1843,6 +1846,7 @@ var bit = (function() {
     }
 
     switchToEditMode() {
+      this._btns.closeProject.enable()
       this._btns.preview.enable()
       this._btns.preview.element.classList.remove('selected')
       this._btns.generate.enable()
@@ -1909,6 +1913,16 @@ var bit = (function() {
       this._app.setUnmodified()
     }
 
+    _onCloseProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._app.footer.reset()
+        this._app.workspace.reset()
+        this._app.tools.reset()
+        this._app.menu.reset()
+        this._app.model.reset()
+      }
+    }
+
     _onCleanProjects() {
       this._app.manager.show()
       this._app.freeze()
@@ -1935,6 +1949,7 @@ var bit = (function() {
         onPreview       : this._onPreview.bind(this),
         onLoadProject   : this._onLoadProject.bind(this),
         onSaveProject   : this._onSaveProject.bind(this),
+        onCloseProject  : this._onCloseProject.bind(this),
         onCleanProjects : this._onCleanProjects.bind(this),
         onGenerateCode  : this._onGenerateCode.bind(this),
         onLoadHTML      : this._onLoadHTML.bind(this),
