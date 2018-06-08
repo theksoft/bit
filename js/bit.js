@@ -84,3344 +84,2766 @@ var bit = (function() {
    * DATA MODEL MANAGEMENT
    */
 
-  var mdl = (function() {
+  class Model {
 
-    var imgTypes = ['image/jpeg', 'image/gif', 'image/png'],
-        context = {
-          mode      : 'new',
-          modified  : false,
-          dataURL   : '',
-          filename  : '',
-          type      : '',
-          size      : 0,
-          name      : '',
-          alt       : '',
-          width     : 0,
-          height    : 0,
-          areas     : []
-        };
-    
-    function validateImgFile(f) {
-      for(var i = 0; i < imgTypes.length; i++) {
-        if(f.type === imgTypes[i]) {
-          return true;
-        }
-      }
-      return false;
+    constructor() {
+      this._modified = false
+      this._imgTypes = ['image/jpeg', 'image/gif', 'image/png']
+      this._file = { dataURL : '', filename : '', type : '', size : 0 }
+      this._info = { name: '', alt : '' }
+      this._image = { width : 0, height : 0 }
+      this._areas = []
+      this.checkImgFile = this._checkImgFile.bind(this)
     }
 
-    function reset() {
-      context.mode = 'new';
-      context.modified = false;
-      context.dataURL = context.filename = context.type = '';
-      context.size = 0;
-      context.name = context.alt = '';
-      context.width = context.height = 0;
-      context.areas.sort((a,b) => a.isGrid ? -1 : 1);
-      context.areas.forEach(e => e.remove());
-      context.areas.splice(0, context.areas.length);
-      return this;
+    reset() {
+      this._modified = false
+      this._file.dataURL = this._file.filename = this._file.type = ''
+      this._file.size = 0
+      this._info.name = this._info.alt = ''
+      this._image.width = this._image.height = 0
+      this._areas.sort((a,b) => a.isGrid ? -1 : 1)
+      this._areas.forEach(e => e.remove())
+      this._areas.splice(0, this._areas.length)
     }
 
-    function setFile(f) {
-      var reader = new FileReader();
-      if (validateImgFile(f)) {
-        reader.addEventListener('load', () => context.dataURL = reader.result, false);
-        reader.readAsDataURL(f);
-        context.filename = f.name;
-        context.type = f.type;
-        context.size = f.size;
-        return true;
-      }
-      return false;
+    get modified() {
+      return this._modified
     }
 
-    function getFile() {
-      return context.filename; 
+    set modified(v) {
+      this._modified = (v) ? true : false
     }
 
-    function setInfo(data) {
-      context.name = data.name;
-      context.alt = data.alt;
+    _checkImgFile(f) {
+      return this._imgTypes.includes(f.type)
     }
 
-    function getInfo() {
-      return { name : context.name, alt : context.alt };
+    set file(f) {
+      if (!this._checkImgFile(f))
+        throw new Error('ERROR[Model] ' + f.type + ' Invalid image file type!')
+      var reader = new FileReader()
+      reader.addEventListener('load', () => this._file.dataURL = reader.result, false)
+      reader.readAsDataURL(f)
+      this._file.filename = f.name
+      this._file.type = f.type
+      this._file.size = f.size
     }
 
-    function getAreas() {
-      return context.areas.slice();
+    get filename() {
+      return this._file.filename; 
     }
 
-    function addArea(area) {
-      context.areas.push(area);
+    set info(data) {
+      this._info.name = data.name
+      this._info.alt = data.alt
     }
 
-    function addAreas(areas) {
-      areas.forEach(e => context.areas.push(e));
+    get info() {
+      return Object.assign({}, this._info)
     }
 
-    function removeArea(area) {
-      if(-1 != context.areas.indexOf(area)) {
+    get areas() {
+      return this._areas.slice()
+    }
+
+    forEachArea(f) {
+      return this._areas.forEach(f)
+    }
+
+    addArea(area) {
+      this._areas.push(area)
+    }
+
+    addAreas(areas) {
+      areas.forEach(e => this._areas.push(e))
+    }
+
+    removeArea(area) {
+      if(-1 != this._areas.indexOf(area)) {
         if (!area.isGrid && area.hasBonds()) {
           if (false == confirm("Deleting this element will automatically delete grid built from it.\nDo you still want to proceed to element deletion ?")) {
-            return;
+            return
           }
-          let bonds = area.copyBonds();
+          let bonds = area.copyBonds()
           bonds.forEach(e => {
-            let j = context.areas.indexOf(e);
-            e.remove();
-            context.areas.splice(j, 1);
-          });
-          bonds.splice(0, bonds.length);
+            let j = this._areas.indexOf(e)
+            e.remove()
+            this._areas.splice(j, 1)
+          })
+          bonds.splice(0, bonds.length)
         }
-        let i = context.areas.indexOf(area);
-        area.remove();
-        context.areas.splice(i, 1);
+        let i = this._areas.indexOf(area)
+        area.remove()
+        this._areas.splice(i, 1)
       }
     }
 
-    function findArea(obj) {
-      return context.areas.find(function(e) {
-        return e.is(obj);
-      });
+    findArea(obj) {
+      return this._areas.find(e => e.is(obj))
     }
 
-    function freezeGridArea(grid, areas, specialize) {
+    freezeGridArea(grid, areas, specialize) {
       if (!grid.isGrid ||
           false === confirm("Freezing this element will automatically delete grid dependencies and generate independent elements.\nDo you still want to proceed to grid freeze ?")) {
-        return false;
+        return false
       }
-      let i = context.areas.indexOf(grid);
-      grid.freezeTo(areas, specialize);
-      grid.remove();
-      context.areas.splice(i, 1);
-      areas.forEach(e => context.areas.push(e));
+      let i = this._areas.indexOf(grid)
+      grid.freezeTo(areas, specialize)
+      grid.remove()
+      this._areas.splice(i, 1)
+      areas.forEach(e => this._areas.push(e))
       return true;
     }
 
-    function toStore(a2s) {
-      let rtn = {};
-      rtn.dataURL = context.dataURL;
-      rtn.name = context.name;
-      rtn.alt = context.alt;
-      rtn.filename = context.filename;
-      rtn.type = context.type;
-      rtn.size = context.size;
-      rtn.areas = [];
-      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-      context.areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)));
-      return rtn;
+    toStore(a2s) {
+      let rtn = {}
+      rtn.dataURL = this._file.dataURL
+      rtn.name = this._info.name
+      rtn.alt = this._info.alt
+      rtn.filename = this._file.filename
+      rtn.type = this._file.type
+      rtn.size = this._file.size
+      rtn.areas = []
+      this._areas.sort((a,b) => a.isGrid ? 1 : -1)
+      this._areas.forEach((e,i,a) => rtn.areas.push(a2s(e, i, a)))
+      return rtn
     }
     
-    function fromStore(project, s2a) {
-      context.modified = false;
-      context.dataURL = project.dataURL;
-      context.name = project.name;
-      context.alt = project.alt;
-      context.filename = project.filename;
-      context.type = project.type;
-      context.size = project.size;
-      context.areas = [];
-      project.areas.forEach((e,i) => context.areas.push(s2a(e, i, context.areas)));
+    fromStore(project, s2a) {
+      this._modified = false
+      this._file.dataURL = project.dataURL
+      this._info.name = project.name
+      this._info.alt = project.alt
+      this._file.filename = project.filename
+      this._file.type = project.type
+      this._file.size = project.size
+      this._areas = []
+      project.areas.forEach((e,i) => this._areas.push(s2a(e, i, this._areas)))
       return true;
     }
 
-    function toClipboard(selected, a2c) {
-      let rtn = {};
-      rtn.areas = [];
-      context.areas.sort((a,b) => a.isGrid ? 1 : -1);
-      context.areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i, a)));
-      rtn.selected = [];
-      selected.forEach((e) => rtn.selected.push(context.areas.indexOf(e)));
-      rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true);
-      return rtn;
+    toClipboard(selected, a2c) {
+      let rtn = {}
+      rtn.areas = []
+      this._areas.sort((a,b) => a.isGrid ? 1 : -1)
+      this._areas.forEach((e,i,a) => rtn.areas.push(a2c(e, i, a)))
+      rtn.selected = []
+      selected.forEach((e) => rtn.selected.push(this._areas.indexOf(e)))
+      rtn.basic = selected.reduce((a,e) => a && !e.isGrid, true)
+      return rtn
     }
 
-    function fromClipboard(c, c2a, deep) {
+    fromClipboard(c, c2a, deep) {
       let area, copied = [];
       if (c.basic || (!deep && !c.unsafe)) {
         c.selected.forEach(e => {
-          area = c2a(c.areas[e], e, context.areas);
-          copied.push(area);
-        });
+          area = c2a(c.areas[e], e, this._areas)
+          copied.push(area)
+        })
       } else {
         // Deep copy - include grid bonds if not originally selected
-        let insert, index, deep;
-        deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1);
-        insert = deep.findIndex(e => c.areas[e].isGrid);
+        let insert, index, deep
+        deep = c.selected.slice().sort((a,b) => c.areas[a].isGrid ? 1 : -1)
+        insert = deep.findIndex(e => c.areas[e].isGrid)
         c.selected.forEach(e => {
-          area = c.areas[e];
+          area = c.areas[e]
           if (area.isGrid) {
-            index = deep.indexOf(area.bonds[0]);
+            index = deep.indexOf(area.bonds[0])
             if (-1 === index) {
-              deep.splice(insert, 0, area.bonds[0]);
-              index = insert++;
+              deep.splice(insert, 0, area.bonds[0])
+              index = insert++
             }
-            area.bonds[0] = index;
+            area.bonds[0] = index
           }
-        });
+        })
         deep.forEach((e,i) => {
-          c.areas[e].index = i;
-          area = c2a(c.areas[e], i, copied);
-          copied.push(area);
+          c.areas[e].index = i
+          area = c2a(c.areas[e], i, copied)
+          copied.push(area)
         });
       }
-      return copied;
+      return copied
     }
 
-    return {
-      setModified : () => context.modified = true,
-      setUnmodified : () => context.modified = false,
-      isModified : () => context.modified,
-      reset,
-      validateImgFile, setFile, getFile,
-      setInfo, getInfo,
-      getAreas, addArea, addAreas, removeArea, findArea,
-      forEachArea : f => context.areas.forEach(f),
-      freezeGridArea,
-      toStore, fromStore,
-      toClipboard, fromClipboard
-    };
-
-  })(); /* DATA MODEL MANAGEMENT */
+  }
 
   /*
    * STORE
    */
 
-  var store = (function() {
-
-    const storageKey = 'BiT';
-
-    function getStore() {
-      return JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+  class Store extends bittls.LocalProjectStore {
+    constructor(c) {
+      super('BiT')
+      this._workspace = c.workspace
+      this.a2s = this._a2s.bind(this)
+      this.s2a = this._s2a.bind(this)
     }
-
-    function setStore(s) {
-      window.localStorage.setItem(storageKey, JSON.stringify(s));      
+    _a2s(area, index, areas) {
+      return area.toRecord(index, areas)
     }
-
-    function write(name, value) {
-      let s = getStore();
-      s[name] = value;
-      setStore(s);
-    }
-
-    function read(name) {
-      return getStore()[name];
-    }
-
-    function remove(name) {
-      let s = getStore();
-      delete s[name];
-      setStore(s);
-    }
-
-    function list() {
-      return Object.keys(getStore());
-    }
-
-    function reset() {
-      window.localStorage.removeItem(storageKey);
-    }
-
-    function a2s(area, index, areas) {
-      return area.toRecord(index, areas);
-    }
-
-    function s2a(stored, index, areas) {
-      let area;
+    _s2a(stored, index, areas) {
+      let area
       if (index !== stored.index || index != areas.length) {
-        console.log('ERROR - Corrupted stored record with bad index');
-        return null;
+        console.log('ERROR - Corrupted stored record with bad index')
+        return null
       }
       area = (!stored.isGrid)
-          ? bitarea.createFromRecord(stored, wks.getParent())
-          : bitgrid.createFromRecord(stored, wks.getParent(), wks.getGridParent(), areas);
-      return area;
+          ? bitarea.createFromRecord(stored, this._workspace.getParent())
+          : bitgrid.createFromRecord(stored, this._workspace.getParent(), this._workspace.getGridParent(), areas)
+      return area
     }
-
-    return {
-      list,
-      read,
-      write,
-      remove,
-      reset,
-      a2s, s2a
-    }
-
-  })();
+  }
 
   /*
    * PSEUDO-CLIPBOARD MANAGEMENT 
    */
 
-  var clp = (function() {
+  class Clipboard {
 
-    var context = {
-        data  : null,
-        basic : true,
-        risky : false,
-        offset : 0
-    };
-
-    const COPY_OFFSET = 10;
-
-    function setClipboard(c) {
-      context.data = JSON.stringify(c);
-      context.basic = c.basic;
-      context.unsafe = false;
-      context.offset = 0;
-      c = null;
+    constructor(c) {
+      this._workspace = c.workspace
+      this._copyOffset = c.copyOffset
+      this._data = null
+      this._basic = true
+      this._unsafe = false
+      this._offset = 0
+      this.a2c = this._a2c.bind(this)
+      this.c2a = this._c2a.bind(this)
     }
 
-    function getClipboard() {
-      let c = JSON.parse(context.data || '{}');
-      c.unsafe = context.unsafe;
-      context.offset += COPY_OFFSET;
-      return c;
+    get offset() {
+      return this._offset
     }
 
-    function a2c(area, index, areas) {
-      return area.toRecord(index, areas);
+    set data(c) {
+      this._data = JSON.stringify(c)
+      this._basic = c.basic
+      this._unsafe = false
+      this._offset = 0
+      c = null
     }
 
-    function c2a(record, index, areas) {
-      let area;
+    get data() {
+      let c = JSON.parse(this._data || '{}')
+      c.unsafe = this._unsafe
+      this._offset += this._copyOffset
+      return c
+    }
+
+    isCopyUnsafe() {
+      return this._unsafe
+    }
+
+    setCopyUnsafe() {
+      if (!this._basic) this._unsafe = true
+    }
+
+    _a2c(area, index, areas) {
+      return area.toRecord(index, areas)
+    }
+
+    _c2a(record, index, areas) {
+      let area
       if (index !== record.index || index > areas.length) {
-        console.log('ERROR - Corrupted clipboard record with bad index');
-        return null;
+        console.log('ERROR - Corrupted clipboard record with bad index')
+        return null
       }
       area = (!record.isGrid)
-          ? bitarea.createFromRecord(record, wks.getParent())
-          : bitgrid.createFromRecord(record, wks.getParent(), wks.getGridParent(), areas);
-      return area;
+          ? bitarea.createFromRecord(record, this._workspace.getParent())
+          : bitgrid.createFromRecord(record, this._workspace.getParent(), this._workspace.getGridParent(), areas)
+      return area
     }
 
-    return {
-      setClipboard, getClipboard,
-      setCopyUnsafe : () => { if (!context.basic) context.unsafe = true; }, isCopyUnsafe : () => context.unsafe,
-      a2c, c2a, offset : () => context.offset
-    }
+  }
 
-  })();
-  
   /*
    * WORKAREA MANAGEMENT
    */
 
-  var wks = (function() {
-
-    var doms = {
-      wks       : $('wks-wrap'),
-      aside     : $('tools'),
-      footer    : $('footer'),
-      workarea  : $('workarea'),
-      container : $('container'),
-      image     : $('img-display'),
-      drawarea  : $('draw-area'),
-      gridarea  : $('grid-area')
-    };
-
-    const states = {
-        OPEN      : 'open',
-        READY     : 'ready',
-        DRAGGING  : 'dragging',
-        DRAWING   : 'drawing',
-        SELECTING : 'selecting',
-        SELECTED  : 'selected',
-        MOVING    : 'moving',
-        MOVED     : 'moved',
-        EDITING   : 'editing',
-        EDITED    : 'edited',
-        PREVIEW   : 'preview'
-      };
-
-    var context = {
-      state : states.OPEN,
-      offset : { x : 0, y : 0 },
-      iDrg : null, aDrw : null, aSel : null, aMov : null, aEdt : null
-    };
-
-    var addWel = (t, f) => doms.workarea.addEventListener(t, f, false);
-    var rmWel = (t, f) => doms.workarea.removeEventListener(t, f, false);
-    var ready = () => states.READY === context.state ? true : false;
-
-    // VIEWPORT COMPUTATION 
-    // Workarea elements size and coordinate offsets.
-
-    var viewport = (function() {
-
-      return {
-
-        setWorkingDims : function(w,h) {
-          doms.drawarea.setAttribute('width', w);
-          doms.drawarea.setAttribute('height', h);
-          doms.gridarea.setAttribute('width', w);
-          doms.gridarea.setAttribute('height', h);
-          doms.container.style.width = w + 'px';
-          doms.container.style.height = h + 'px';
-          return this;
-        },
-
-        setViewDims : function() {
-          let fc, ac, wc, width, height;
-          fc = doms.footer.getBoundingClientRect();
-          wc = doms.wks.getBoundingClientRect();
-          ac = doms.aside.getBoundingClientRect();
-          width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5);
-          height = Math.floor(fc.top - wc.top - 5);
-          doms.workarea.style.width = width + 'px';
-          doms.workarea.style.height = height + 'px';
-          return this;
-        },
-
-        resize : function() {
-          this.setViewDims()
-              .computeOffset();
-          return this;
-        },
-
-        computeOffset : function() {
-          var coords = doms.container.getBoundingClientRect();
-          context.offset.x = Math.round(coords.left + window.pageXOffset);
-          context.offset.y = Math.round(coords.top + window.pageYOffset);
-          return this;
-        },
-
-        computeCoords : function(x, y) {
-          return {
-            x : x - context.offset.x,
-            y : y - context.offset.y
-          };
-        },
-
-        isPointerInImage : function(x, y) {
-          var coords = this.computeCoords(x, y);
-          return (0 > coords.x || 0 > coords.y || doms.image.width < coords.x || doms.image.height < coords.y) ? false : true;
-        }
-
-      };
-
-    })(); // viewport
-
-    // COORDINATE TRACKER
-    // Images coordinates are set when moving within workarea.
-
-    var coordTracker = (function() {
-
-      var enabled = false;
-
-      function onWorkareaMove(e) {
-        console.log('state : ' + context.state);
-        e.preventDefault();
-        ftr.coords.set(viewport.computeCoords(e.pageX, e.pageY));
-      }
-
-      function onWorkareaLeave(e) {
-        e.preventDefault();
-        ftr.coords.clear();
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousemove', onWorkareaMove);
-          addWel('mouseleave', onWorkareaLeave);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          rmWel('mousemove', onWorkareaMove);
-          rmWel('mouseleave', onWorkareaLeave);
-          enabled = false;
-        }
-      };
-
-    })(); // coordTracker
-
-    // BACKGROUND IMAGE DRAGGER
-    // Dragging start with a mouse down on image and CTRL key
-    // Dragging is active as long as the pointer is in the workarea and button is down
-    // Dragging stop on mouse up or if a move w/o buttons down is caught
-    // Dragging move and top listeners are installed only if an image drag is started.
-
-    var imageDragger = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.workarea.classList.add(utils.clsActions.DRAGGING);
-        addWel('mouseup', onImageDragStop);
-        addWel('mousemove', onImageDragMove);
-        tls.freeze();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        context.state = states.DRAGGING;
-      } 
-
-      function exit() {
-        doms.workarea.classList.remove(utils.clsActions.DRAGGING);
-        rmWel('mouseup', onImageDragStop);
-        rmWel('mousemove', onImageDragMove);
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        tls.release();
-        context.state = states.READY;
-      }
-
-      function move(dx, dy) {
-        doms.workarea.scrollLeft -= dx;
-        doms.workarea.scrollTop  -= dy;
-      }
-
-      function onImageDragStart(e) {
-        e.preventDefault();
-        if (!ready() || context.iDrg.prevent(e)) return;
-        if (utils.leftButton(e) && utils.ctrlKey(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
-          enter();
-        }
-      }
-
-      function onImageDragStop(e) {
-        e.preventDefault();
-        exit();
-      }
-
-      function onImageDragMove(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e) || !utils.ctrlKey(e)) {
-          exit();
-        } else {
-          move(e.movementX, e.movementY);
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onImageDragStart);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.DRAGGING == context.state) {
-            exit();
-          }
-          rmWel('mousedown', onImageDragStart);
-          enabled = false;
-        }
-      };
-
-    })(); // imageDragger
-
-    // AREA DRAWER MANAGEMENT
-    // Drawing start with a click on image
-    // Additional click add points to some drawing e.g. polygon
-    // Drawing stop on further click if drawer asserts it
-    // Drawing is canceled on ESC key pressed
-
-    var areaDrawer = (function () {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.DRAWING);
-        imageDragger.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        rmWel('click', onDrawStart);
-        addWel('click', onDrawEnd);
-        addWel('mousemove', onDrawProgress);
-        document.addEventListener('keydown', onDrawCancel);
-        context.state = states.DRAWING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.DRAWING);
-        imageDragger.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        rmWel('click', onDrawEnd);
-        rmWel('mousemove', onDrawProgress);
-        addWel('click', onDrawStart);
-        document.removeEventListener('keydown', onDrawCancel);
-        context.state = states.READY;
-      }
-
-      function onDrawStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aDrw.prevent(e)) return;
-        if (utils.leftButton(e) && viewport.isPointerInImage(e.pageX, e.pageY)) {
-          if (context.aDrw.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY), e.altKey, doms.gridarea)) {
-            enter();
-          }
-        }
-      }
-
-      function onDrawProgress(e) {
-        e.preventDefault();
-        context.aDrw.onProgress(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY));
-      }
-
-      function onDrawEnd(e) {
-        e.preventDefault();
-        if (!utils.leftButton(e)) return;
-        if (context.aDrw.onEnd(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY))) {
-          exit();
-        }
-      }
-
-      function onDrawCancel(e) {
-        e.preventDefault();
-        if ('Escape' === e.key) {
-          context.aDrw.onCancel();
-          exit();
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('click', onDrawStart);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.DRAWING === context.state) {
-            context.aDrw.onCancel();
-            exit();
-          }
-          rmWel('click', onDrawStart);
-          enabled = false;
-        }
-      };
-
-    })(); // AREA DRAWER
-
-    // AREA SELECTOR
-    // Area selection is achieved by clicking on existing area.
-    // Simple click select the desired area unselecting others.
-    // Holding shift key while clicking on existing areas achieves multiple selection (toggle effect).
-    // ESC key unselect all selected areas.
-    // DELETE key suppress all selected areas.
-
-    var areaSelector = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.TRACKING);
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        rmWel('click', onSelect);
-        rmWel('mousedown', onTrackStart);
-        addWel('click', onTrackExit);
-        addWel('mouseup', onTrackEnd);
-        addWel('mousemove', onTrackProgress);
-        document.removeEventListener('keydown', onKeyAction);
-        context.state = states.SELECTING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.TRACKING);
-        rmWel('click', onTrackExit);
-        rmWel('mouseup', onTrackEnd);
-        rmWel('mousemove', onTrackProgress);
-        addWel('mousedown', onTrackStart);
-        addWel('click', onSelect);
-        document.addEventListener('keydown', onKeyAction);
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        context.state = states.READY;
-      }
-
-      function onSelect(e) {
-        e.preventDefault();
-        if (!ready() || context.aSel.preventSelect(e)) return;
-        context.aSel.onSelect(e.target, e.shiftKey);
-      }
-
-      function onTrackStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aSel.preventTracking(e)) return;
-        if (utils.leftButton(e)) {
-          context.aSel.onTrackStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY));
-          enter();
-        }
-      }
-
-      function onTrackProgress(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e)) {
-          if (states.SELECTED !== context.state) {
-            context.aSel.onTrackCancel();
-          }
-          exit();
-        } else if (states.SELECTING === context.state) {
-          context.aSel.onTrackProgress(viewport.computeCoords(e.pageX, e.pageY));
-        }
-      }
-
-      function onTrackEnd(e) {
-        e.preventDefault();
-        if (states.SELECTING === context.state) {
-          context.aSel.onTrackEnd();
-          context.state = states.SELECTED;
-        }
-      }
-
-      function onTrackExit(e) {
-        e.preventDefault();
-        context.aSel.onTrackExit();
-        exit();
-      }
-
-      function onKeyAction(e) {
-        e.preventDefault();
-        switch(e.key) {
-        case 'Escape':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aSel.onUnselectAll();
-          }
-          break;
-        case 'Delete':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aSel.onDeleteAll();
-          }
-          break;
-        case 'a':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onSelectAll();
-          }
-          break;
-        case 'F8':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onFreeze();
-          }
-          break;
-        case 'c':
-          if (ready() && utils.ctrlMetaKey(e)) {
-            context.aSel.onCopySelection();
-          }
-          break;
-        case 'v':
-        case 'V':
-          if (ready()) {
-            let deepCopy = utils.ctrlMetaShiftKey(e);
-            if (utils.ctrlMetaKey(e) || deepCopy)
-              context.aSel.onPasteSelection(deepCopy);
-          }
-          break;
-        default:
-        }
-      }
-
-      return {
-
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onTrackStart);
-          addWel('click', onSelect);
-          document.addEventListener('keydown', onKeyAction);
-          enabled = true;
-        },
-
-        disable : function() {
-          if (!enabled) return;
-          rmWel('mousedown', onTrackStart);
-          rmWel('click', onSelect);
-          document.removeEventListener('keydown', onKeyAction);
-          enabled = false;
-        }
-
-      };
-
-    })(); // AREA SELECTOR
-
-    // AREA MOVER
-    // Area moving starts by pressing mouse down on a selection of areas.
-    // Moves are constrained so that moved figures remains in SVG container.
-    // ESC key cancels selection move.
-
-    var areaMover = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.MOVING);
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        rmWel('mousedown', onMoveStart);
-        addWel('click', onMoveExit);
-        addWel('mouseup', onMoveEnd);
-        addWel('mousemove', onMoveProgress);
-        document.removeEventListener('keydown', onMoveStep);
-        document.addEventListener('keydown', onMoveCancel);
-        context.state = states.MOVING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.MOVING);
-        rmWel('click', onMoveExit);
-        rmWel('mouseup', onMoveEnd);
-        rmWel('mousemove', onMoveProgress);
-        document.removeEventListener('keydown', onMoveCancel);
-        addWel('mousedown', onMoveStart);
-        document.addEventListener('keydown', onMoveStep);
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        context.state = states.READY;
-      }
-
-      function onMoveStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aMov.prevent(e)) return;
-        if(utils.leftButton(e) && utils.noMetaKey(e)) {
-          context.aMov.onStart(doms.drawarea, viewport.computeCoords(e.pageX, e.pageY))
-          enter();
-        }
-      }
- 
-      function onMoveProgress(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e)) {
-          context.aMov.onCancel();
-          exit();
-        } else if (states.MOVING === context.state) {
-          context.aMov.onProgress(viewport.computeCoords(e.pageX, e.pageY));
-        }
-      }
-
-      function onMoveEnd(e) {
-        e.preventDefault();
-        if (states.MOVING === context.state) {
-          context.aMov.onEnd(viewport.computeCoords(e.pageX, e.pageY));
-          context.state = states.MOVED;
-        }
-      }
-
-      function onMoveExit(e) {
-        e.preventDefault();
-        context.aMov.onExit();
-        exit();
-      }
-
-      function onMoveCancel(e) {
-        e.preventDefault();
-        if ('Escape' === e.key) {
-          context.aMov.onCancel();
-          context.state = states.MOVED;
-        }
-      }
-
-      function onMoveStep(e) {
-        e.preventDefault();
-        switch(e.key) {
-        case 'ArrowLeft':
-          if (ready()) {
-            if (utils.noMetaKey(e)) {
-              context.aMov.onStep(doms.drawarea, -1, 0);
-            } else if (utils.ctrlKey(e)) {
-              context.aMov.onRotate(doms.drawarea, bitedit.directions.RACLK);
-            }
-          }
-          break;
-        case 'ArrowRight':
-          if (ready()) {
-            if (utils.noMetaKey(e)) {
-              context.aMov.onStep(doms.drawarea, 1, 0);
-            } else if (utils.ctrlKey(e)) {
-              context.aMov.onRotate(doms.drawarea, bitedit.directions.RCLK);
-            }
-          }
-          break;
-        case 'ArrowUp':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aMov.onStep(doms.drawarea, 0, -1);
-          }
-          break;
-        case 'ArrowDown':
-          if (ready() && utils.noMetaKey(e)) {
-            context.aMov.onStep(doms.drawarea, 0, 1);
-          }
-          break;
-        default:
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onMoveStart);
-          document.addEventListener('keydown', onMoveStep);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.MOVING === context.state) {
-            context.aMov.onCancel();
-          }
-          if (states.MOVING === context.state || states.MOVED === context.state) {
-            exit();
-          }
-          rmWel('mousedown', onMoveStart);
-          document.removeEventListener('keydown', onMoveStep);
-          enabled = false;
-        }
-      };
-
-    })(); // AREA MOVER
- 
-    // AREA EDITOR
-    // Area editing starts by pressing mouse down on grabber of a selected area.
-    // ESC key cancels selection editing.
-    // Resizing cannot invert some figure dimension e.g. rectangle width becoming negative.
-
-    var areaEditor = (function() {
-
-      var enabled = false;
-
-      function enter() {
-        doms.drawarea.classList.add(utils.clsActions.EDITING);
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaSelector.disable();
-        rmWel('mousedown', onEditStart);
-        addWel('click', onEditExit);
-        addWel('mouseup', onEditEnd);
-        addWel('mousemove', onEditProgress);
-        document.addEventListener('keydown', onEditCancel);
-        context.state = states.EDITING;
-      }
-
-      function exit() {
-        doms.drawarea.classList.remove(utils.clsActions.EDITING);
-        rmWel('click', onEditExit);
-        rmWel('mouseup', onEditEnd);
-        rmWel('mousemove', onEditProgress);
-        document.removeEventListener('keydown', onEditCancel);
-        addWel('mousedown', onEditStart);
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaMover.enable();
-        areaSelector.enable();
-        context.state = states.READY;
-      }
-
-      function onEditStart(e) {
-        e.preventDefault();
-        if (!ready() || context.aEdt.prevent(e)) return;
-        if(utils.leftButton(e) && utils.noMetaKey(e)) {
-          context.aEdt.onStart(doms.drawarea, e.target, viewport.computeCoords(e.pageX, e.pageY));
-          enter();
-        }
-      }
- 
-      function onEditProgress(e) {
-        e.preventDefault();
-        if (!utils.leftButtonHeld(e)) {
-          context.aEdt.onCancel();
-          exit();
-        } else if (states.EDITING === context.state) {
-          context.aEdt.onProgress(viewport.computeCoords(e.pageX, e.pageY));
-        }
-      }
-
-      function onEditEnd(e) {
-        e.preventDefault();
-        if (states.EDITING === context.state) {
-          context.aEdt.onEnd(viewport.computeCoords(e.pageX, e.pageY));
-          context.state = states.EDITED;
-        }
-      }
-
-      function onEditExit(e) {
-        e.preventDefault();
-        context.aEdt.onExit();
-        exit();
-      }
-
-      function onEditCancel(e) {
-        e.preventDefault();
-        if ('Escape' === e.key) {
-          context.aEdt.onCancel();
-          context.state = states.EDITED;
-        }
-      }
-
-      return {
-        enable : function() {
-          if (enabled) return;
-          addWel('mousedown', onEditStart);
-          enabled = true;
-        },
-        disable : function() {
-          if (!enabled) return;
-          if (states.EDITING === context.state) {
-            context.aEdt.onCancel();
-          }
-          if (states.EDITING === context.state || states.EDITED === context.state) {
-            exit();
-          }
-          rmWel('mousedown', onEditStart);
-          enabled = false;
-        }
-      };
-
-    })(); // AREA EDITOR
- 
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function onLoadImage() {
-      ftr.loading.hide();
-      ftr.infoUpdate(doms.image.naturalWidth, doms.image.naturalHeight);
-      show(doms.aside);
-      show(doms.workarea);
-      viewport.setWorkingDims(doms.image.width, doms.image.height)
-              .resize();
-      context.state = states.READY;
-      coordTracker.enable();
-      imageDragger.enable();
-      areaDrawer.enable();
-      areaMover.enable();
-      areaEditor.enable();
-      areaSelector.enable();
+  const states = {
+    OPEN      : 'open',
+    READY     : 'ready',
+    DRAGGING  : 'dragging',
+    DRAWING   : 'drawing',
+    SELECTING : 'selecting',
+    MOVING    : 'moving',
+    EDITING   : 'editing',
+    PREVIEW   : 'preview'
+  };
+
+  // VIEWPORT COMPUTATION 
+  // Workarea elements size and coordinate offsets.
+
+  class Viewport {
+
+    constructor(c) {
+      this._wks = c.wks
+      this._footer = c.footer
+      this._aside = c.aside
+      this._container = c.container
+      this._workarea = c.workarea
+      this._drawarea = c.drawarea
+      this._gridarea = c.gridarea
+      this._image = c.image
+      this._offset = new bitgeo.Point()
+      this.translateCoords = this.computeCoords.bind(this)
+      c.workarea.addEventListener('scroll', this.computeOffset.bind(this), false)
+      window.addEventListener('resize', this.resize.bind(this), false)
     }
 
-    return {
+    setWorkingDims(w,h) {
+      this._drawarea.setAttribute('width', w)
+      this._drawarea.setAttribute('height', h)
+      this._gridarea.setAttribute('width', w)
+      this._gridarea.setAttribute('height', h)
+      this._container.style.width = w + 'px'
+      this._container.style.height = h + 'px'
+      return this
+    }
 
-      init : function(iDrgHandlers, aDrwHandlers, aSelHandlers, aMovHandlers, aEdtHandlers) {
-        context.iDrg = iDrgHandlers;
-        context.aDrw = aDrwHandlers;
-        context.aSel = aSelHandlers;
-        context.aMov = aMovHandlers;
-        context.aEdt = aEdtHandlers;
-        addWel('scroll', function(e) { viewport.computeOffset(); }, false );
-        window.addEventListener('resize', function(e) { viewport.resize(); }, false);
-        return this;
-      },
+    setViewDims() {
+      let fc, ac, wc, width, height
+      fc = this._footer.getBoundingClientRect()
+      wc = this._wks.getBoundingClientRect()
+      ac = this._aside.getBoundingClientRect()
+      width = Math.floor(fc.right - (ac.right - ac.left) - wc.left - 5)
+      height = Math.floor(fc.top - wc.top - 5)
+      this._workarea.style.width = width + 'px'
+      this._workarea.style.height = height + 'px'
+      return this
+    }
 
-      reset : function() {
-        coordTracker.disable();
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        doms.image.src = '';
-        hide(doms.workarea);
-        hide(doms.aside);
-        show(doms.drawarea);
-        show(doms.gridarea);
-        context.state = states.OPEN;
-      },
+    resize() {
+      this.setViewDims()
+          .computeOffset()
+      return this
+    }
 
-      load : function(f) {
-        ftr.loading.show();
-        doms.image.onload = onLoadImage;
-        doms.image.src = window.URL.createObjectURL(f);
-        return this;
-      },
+    computeOffset() {
+      const coords = this._container.getBoundingClientRect()
+      this._offset.x = Math.round(coords.left + window.pageXOffset)
+      this._offset.y = Math.round(coords.top + window.pageYOffset)
+      return this
+    }
 
-      loadEx: function(p) {
-        ftr.loading.show();
-        doms.image.onload = onLoadImage;
-        doms.image.src = p.dataURL;
-        return this;
-      },
+    computeCoords(x,y) {
+      const p = new bitgeo.Point(x - this._offset.x, y - this._offset.y)
+      return p.coords
+    }
 
-      switchToPreview : function() {
-        hide(doms.drawarea);
-        hide(doms.gridarea);
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-        context.state = states.PREVIEW;
-        viewport.setWorkingDims(doms.image.width, doms.image.height)
-                .resize();
-        return [doms.container, doms.image];
-      },
+    isPointerInImage(x, y) {
+      const coords = this.computeCoords(x, y)
+      return (0 > coords.x || 0 > coords.y || this._image.width < coords.x || this._image.height < coords.y) ? false : true
+    }
 
-      switchToEdit : function() {
-        show(doms.drawarea);
-        show(doms.gridarea);
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-        context.state = states.READY;
-        viewport.setWorkingDims(doms.image.width, doms.image.height)
-                .resize();
-      },
-      
-      release : function() {
-        coordTracker.enable();
-        imageDragger.enable();
-        areaDrawer.enable();
-        areaMover.enable();
-        areaEditor.enable();
-        areaSelector.enable();
-      },
+  }
 
-      freeze : function() {
-        coordTracker.disable();
-        imageDragger.disable();
-        areaDrawer.disable();
-        areaMover.disable();
-        areaEditor.disable();
-        areaSelector.disable();
-      },
+  // BACKGROUND IMAGE DRAGGER
+  // Dragging start with a mouse down on image and CTRL key
+  // Dragging is active as long as the pointer is in the workarea and button is down
+  // Dragging stop on mouse up or if a move w/o buttons down is caught
+  // Dragging move and top listeners are installed only if an image drag is started.
+  
+  class ImageDragger extends bittls.MouseStateMachine {
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.ctrlKey(e) && this._viewport.isPointerInImage(e))
+        },
+        onStart : (p,e,w) => {
+          w.classList.add(utils.clsActions.DRAGGING)
+          this._handlers.onStart()
+          return true
+        },
+        onProgress : (p,e,w) => {
+          w.scrollLeft -= e.movementX
+          w.scrollTop  -= e.movementY
+        },
+        onExit : w => {
+          w.classList.remove(utils.clsActions.DRAGGING)
+          this._handlers.onExit()
+        }
+      }, { group : c.group, state : states.DRAGGING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+    }
+  }
+  
+  // AREA DRAWER MANAGEMENT
+  // Drawing start with a click on image
+  // Additional click add points to some drawing e.g. polygon
+  // Drawing stop on further click if drawer asserts it
+  // Drawing is canceled on ESC key pressed
 
-      getParent : () => doms.drawarea,
-      getGridParent : () => doms.gridarea,
-      getDims : () => { return { width: doms.image.width, height: doms.image.height } }
+  class AreaDrawer extends bittls.MouseStateMachine {
+    constructor(c) {
+      super({
+        startOnPress : false,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && this._viewport.isPointerInImage(e))
+        },
+        onStart : (p,e) => {
+          if (this._handlers.onStart(this._drawarea, p, e.altKey, this._gridarea)) {
+            this._drawarea.classList.add(utils.clsActions.DRAWING)
+            return true
+          }
+          return false
+        },
+        onProgress : p => this._handlers.onProgress(this._drawarea, p),
+        onEnd : p => this._handlers.onEnd(this._drawarea, p),
+        onExit : () => this._drawarea.classList.remove(utils.clsActions.DRAWING),
+        onCancel : () => this._handlers.onCancel()
+      }, { group : c.group, state : states.DRAWING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+      this._gridarea = c.gridarea
+    }
+  }
+  
+  // AREA SELECTOR
+  // Area selection is achieved by clicking on existing area.
+  // Simple click select the desired area unselecting others.
+  // Holding shift key while clicking on existing areas achieves multiple selection (toggle effect).
+  // ESC key unselect all selected areas.
+  // DELETE key suppress all selected areas.
+  
+  class AreaSelector extends bittls.MouseStateMachine {
 
-    };
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.preventTracking(e))
+        },
+        onStart : (p,e) => {
+          this._handlers.onTrackStart(this._drawarea, p)
+          this._drawarea.classList.add(utils.clsActions.TRACKING)
+          return true;
+        },
+        onProgress : p => this._handlers.onTrackProgress(p),
+        onEnd : () => this._handlers.onTrackEnd(),
+        onExit : () => {
+          this._handlers.onTrackExit()
+          this._drawarea.classList.remove(utils.clsActions.TRACKING)
+        },
+        onCancel : () => this._handlers.onTrackCancel()
+      }, { group : c.group, state : states.SELECTING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+      this.onSelect = this._onSelect.bind(this)
+      this.onKeyAction = this._onKeyAction.bind(this)
+    }
 
-  })(); /* WORKSPACE MANAGEMENT */
+    _activate() {
+      this._element.removeEventListener('click', this.onSelect)
+      document.removeEventListener('keydown', this.onKeyAction, false)
+      super._activate()
+    }
+
+    _inactivate() {
+      this._element.addEventListener('click', this.onSelect)
+      document.addEventListener('keydown', this.onKeyAction, false)
+      super._inactivate()
+    }
+
+    enable() {
+      if (!this._enabled) {
+        super.enable()
+        this._element.addEventListener('click', this.onSelect)
+        document.addEventListener('keydown', this.onKeyAction, false)
+      }
+    }
+
+    disable() {
+      if (this._enabled) {
+        super.disable()
+        this._element.removeEventListener('click', this.onSelect)
+        document.removeEventListener('keydown', this.onKeyAction, false)
+      }
+    }
+
+    _onSelect(e) {
+      e.preventDefault()
+      if (!this._g.group.ready() || this._handlers.preventSelect(e)) return
+      this._handlers.onSelect(e.target, e.shiftKey)
+    }
+
+    _onKeyAction(e) {
+      e.preventDefault()
+      switch(e.key) {
+      case 'Escape':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onUnselectAll()
+        break
+      case 'Delete':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onDeleteAll()
+        break
+      case 'a':
+        if (this._g.group.ready() && utils.ctrlMetaKey(e))
+          this._handlers.onSelectAll()
+        break
+      case 'F8':
+        if (this._g.group.ready() && utils.ctrlMetaKey(e))
+          this._handlers.onFreeze()
+        break
+      case 'c':
+        if (this._g.group.ready() && utils.ctrlMetaKey(e))
+          this._handlers.onCopySelection()
+        break
+      case 'v':
+      case 'V':
+        if (this._g.group.ready()) {
+          let deepCopy = utils.ctrlMetaShiftKey(e)
+          if (utils.ctrlMetaKey(e) || deepCopy)
+            this._handlers.onPasteSelection(deepCopy)
+        }
+        break
+      default:
+      }
+    }
+    
+  }
+
+  // AREA MOVER
+  // Area moving starts by pressing mouse down on a selection of areas.
+  // Moves are constrained so that moved figures remains in SVG container.
+  // ESC key cancels selection move.
+
+  class AreaMover extends bittls.MouseStateMachine {
+
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.noMetaKey(e))
+        },
+        onStart : (p,e) => {
+          this._handlers.onStart(this._drawarea, p)
+          this._drawarea.classList.add(utils.clsActions.MOVING)
+          return true;
+        },
+        onProgress : p => this._handlers.onProgress(p),
+        onEnd : p => this._handlers.onEnd(p),
+        onExit : () => {
+          this._handlers.onExit();
+          this._drawarea.classList.remove(utils.clsActions.MOVING)
+        },
+        onCancel : () => this._handlers.onCancel()
+      }, { group : c.group, state : states.MOVING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+      this.onMoveStep = this._onMoveStep.bind(this)
+    }
+
+    _activate() {
+      document.removeEventListener('keydown', this.onMoveStep)
+      super._activate()
+    }
+
+    _inactivate() {
+      document.addEventListener('keydown', this.onMoveStep)
+      super._inactivate()
+    }
+
+    enable() {
+      if (!this._enabled) {
+        super.enable()
+        document.addEventListener('keydown', this.onMoveStep)
+      }
+    }
+
+    disable() {
+      if (this._enabled) {
+        super.disable()
+        document.removeEventListener('keydown', this.onMoveStep)
+      }
+    }
+
+    _onMoveStep(e) {
+      e.preventDefault()
+      switch(e.key) {
+      case 'ArrowLeft':
+        if (this._g.group.ready()) {
+          if (utils.noMetaKey(e))
+            this._handlers.onStep(this._drawarea, -1, 0)
+          else if (utils.ctrlKey(e))
+            this._handlers.onRotate(this._drawarea, bitedit.directions.RACLK)
+        }
+        break
+      case 'ArrowRight':
+        if (this._g.group.ready()) {
+          if (utils.noMetaKey(e))
+            this._handlers.onStep(this._drawarea, 1, 0)
+          else if (utils.ctrlKey(e))
+            this._handlers.onRotate(this._drawarea, bitedit.directions.RCLK)
+        }
+        break
+      case 'ArrowUp':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onStep(this._drawarea, 0, -1)
+        break
+      case 'ArrowDown':
+        if (this._g.group.ready() && utils.noMetaKey(e))
+          this._handlers.onStep(this._drawarea, 0, 1)
+        break
+      default:
+      }
+    }
+    
+  }
+
+  // AREA EDITOR
+  // Area editing starts by pressing mouse down on grabber of a selected area.
+  // ESC key cancels selection editing.
+  // Resizing cannot invert some figure dimension e.g. rectangle width becoming negative.
+
+  class AreaEditor extends bittls.MouseStateMachine {
+    constructor(c) {
+      super({
+        startOnPress : true,
+        element : c.workarea,
+        translate : c.viewport.translateCoords,
+        trigger : e => {
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.noMetaKey(e))
+        },
+        onStart : (p,e) => {
+          this._handlers.onStart(this._drawarea, e.target, p);
+          this._drawarea.classList.add(utils.clsActions.EDITING);
+          return true;
+        },
+        onProgress : p => this._handlers.onProgress(p),
+        onEnd : p => this._handlers.onEnd(p),
+        onExit : () => {
+          this._handlers.onExit();
+          this._drawarea.classList.remove(utils.clsActions.EDITING);
+        },
+        onCancel : () => this._handlers.onCancel()
+      }, { group : c.group, state : states.EDITING })
+      this._handlers = c.handlers
+      this._viewport = c.viewport
+      this._drawarea = c.drawarea
+    }
+  }
+
+  // WORKSPACE FOR GRAPHIC OPERATIONS
+
+  class Workspace {
+
+    constructor(c) {
+      const doms = {
+        wks       : $('wks-wrap'),
+        aside     : $('tools'),
+        footer    : $('footer'),
+        workarea  : $('workarea'),
+        container : $('container'),
+        image     : $('img-display'),
+        drawarea  : $('draw-area'),
+        gridarea  : $('grid-area'),
+        coords    : $('coordinates')
+      }
+      this._doms = doms
+      this._ftr = c.ftr
+      this._group = new bittls.MouseStateMachineRadioGroup([], states.READY)
+      this._group.state = states.OPEN
+      this._viewport = new Viewport ({
+        wks : doms.wks, footer : doms.footer, aside : doms.aside, container : doms.container,
+        workarea : doms.workarea, drawarea : doms.drawarea, gridarea : doms.gridarea,
+        image : doms.image
+      })
+      this._coordTracker = new bittls.MousePositionTracker({
+        trackedElement: doms.workarea,
+        displayElement : doms.coords,
+        translate : this._viewport.translateCoords
+      })
+      this._imageDragger = new ImageDragger({
+        workarea : doms.workarea,
+        viewport : this._viewport, handlers : c.handlers.dragger, group : this._group
+      })
+      this._areaDrawer = new AreaDrawer({
+        workarea : doms.workarea, drawarea : doms.drawarea, gridarea : doms.gridarea,
+        viewport : this._viewport, handlers : c.handlers.drawer, group : this._group
+      })
+      this._areaSelector = new AreaSelector({
+        workarea : doms.workarea, drawarea : doms.drawarea,
+        viewport : this._viewport, handlers : c.handlers.selector, group : this._group
+      })
+      this._areaMover = new AreaMover({
+        workarea : doms.workarea, drawarea : doms.drawarea,
+        viewport : this._viewport, handlers : c.handlers.mover, group : this._group
+      })
+      this._areaEditor = new AreaEditor({
+        workarea : doms.workarea, drawarea : doms.drawarea,
+        viewport : this._viewport, handlers : c.handlers.editor, group : this._group
+      })
+    }
+
+    _hide(obj) { obj.style.display = 'none' }
+    _show(obj) { obj.style.display = 'block' }
+
+    _onLoadImage() {
+      this._ftr.loading.hide()
+      this._ftr.infoUpdate(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
+      this._show(this._doms.aside)
+      this._show(this._doms.workarea)
+      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                    .resize()
+      this._coordTracker.enable()
+      this._group.enable()
+    }
+
+    ready() {
+      return this._group.ready()
+    }
+
+    reset() {
+      this._coordTracker.disable()
+      this._group.disable()
+      this._group.state = states.OPEN
+      this._doms.image.src = ''
+      this._hide(this._doms.workarea)
+      this._hide(this._doms.aside)
+      this._show(this._doms.drawarea)
+      this._show(this._doms.gridarea)
+    }
+
+    load(f) {
+      this._ftr.loading.show()
+      this._doms.image.onload = this._onLoadImage.bind(this)
+      this._doms.image.src = window.URL.createObjectURL(f)
+      return this
+    }
+
+    loadEx(p) {
+      this._ftr.loading.show()
+      this._doms.image.onload = this._onLoadImage.bind(this)
+      this._doms.image.src = p.dataURL
+      return this
+    }
+
+    switchToPreview() {
+      this._hide(this._doms.drawarea)
+      this._hide(this._doms.gridarea)
+      this._group.disable()
+      this._group.state = states.PREVIEW
+      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                    .resize()
+      return { container : this._doms.container, image : this._doms.image }
+    }
+
+    switchToEdit() {
+      this._show(this._doms.drawarea)
+      this._show(this._doms.gridarea)
+      this._group.enable()
+      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                    .resize()
+    }
+    
+    release() {
+      this._coordTracker.enable()
+      this._group.enable()
+    }
+
+    freeze() {
+      this._coordTracker.disable()
+      this._group.disable()
+    }
+
+    getParent() {
+      return this._doms.drawarea
+    }
+
+    getGridParent() {
+      return this._doms.gridarea
+    }
+    
+    getDims() {
+      return { width : this._doms.image.width, height : this._doms.image.height }
+    }
+
+  }
 
   /*
    * TOOLS PALETTE MANAGEMENT 
    */
 
-  var tls = (function() {
+  class AreaProperties {
 
-    const modes = utils.fgTypes;
-    const scopes = bitgrid.scopes;
-    const aligns = bitgrid.aligns;
-    const orders = bitgrid.orders;
-    const properties = bitmap.properties;
+    constructor(c) {
+      this._inputs = [
+        { dom : c.doms.href,  prop  : bitmap.properties.HREF },
+        { dom : c.doms.alt,   prop  : bitmap.properties.ALT },
+        { dom : c.doms.title, prop  : bitmap.properties.TITLE },
+        { dom : c.doms.id,    prop  : bitmap.properties.ID }
+      ]
+      this._btns = {
+        save : { dom : c.doms.btnPropsSave, action : c.handlers.onPropsSave },
+        restore : { dom : c.doms.btnPropsRestore, action : c.handlers.onPropsRestore }
+      }
+      this._btns.save.dom.addEventListener('click', this._onSave.bind(this), false)
+      this._btns.restore.dom.addEventListener('click', this._onRestore.bind(this), false)
+      this._inputs.forEach(e => {
+        e.dom.addEventListener('input', this._onInput.bind(this), false)
+        e.dom.addEventListener('keydown', this._onKey.bind(this), false)
+      })
+    }
 
-    const btnsMode = [
-      { dom : $('hex-d'),             mode : modes.HEXDTR },
-      { dom : $('hex-r'),             mode : modes.HEXRCT },
-      { dom : $('rectangle'),         mode : modes.RECTANGLE },
-      { dom : $('square'),            mode : modes.SQUARE },
-      { dom : $('rhombus'),           mode : modes.RHOMBUS },
-      { dom : $('triangle-e'),        mode : modes.TRIANGLEEQL },
-      { dom : $('triangle-i'),        mode : modes.TRIANGLEISC },
-      { dom : $('triangle-r'),        mode : modes.TRIANGLERCT },
-      { dom : $('ellipse'),           mode : modes.ELLIPSE },
-      { dom : $('circle-d'),          mode : modes.CIRCLEDTR },
-      { dom : $('circle-c'),          mode : modes.CIRCLECTR },
-      { dom : $('polygon'),           mode : modes.POLYGON }
-    ];
+    blur() {
+      this._inputs.forEach(e => e.dom.blur())
+    }
 
-    const btnsGridMode = [
-      { dom : $('hex-grid'),          mode : modes.GRIDHEX },
-      { dom : $('rectangle-grid'),    mode : modes.GRIDRECTANGLE },
-      { dom : $('circle-grid'),       mode : modes.GRIDCIRCLE }
-    ];
+    reset() {
+      this._inputs.forEach(e => e.dom.defaultValue = e.dom.value = "...")
+    }
 
-    const btnsGridScope = [
-      { dom : $('grid-scope-inner'),  scope : scopes.INNER },
-      { dom : $('grid-scope-outer'),  scope : scopes.OUTER }
-    ];
+    display(obj) {
+      let props = obj.areaProperties
+      this._inputs.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "")
+    }
+
+    enable(obj) {
+      this._inputs.forEach(e => e.dom.disabled = false)
+      this.display(obj)
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = true
+    }
+
+    disable() {
+      this._inputs.forEach(e => {
+        e.dom.defaultValue = e.dom.value = "..."
+        e.dom.blur()
+        e.dom.disabled = true
+      })
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = true
+    }
+
+    save(obj, p) {
+      obj.areaProperties = p
+      this._inputs.forEach(e => e.dom.defaultValue = e.dom.value);
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = true;
+    }
+
+    restore(obj) {
+      this.display(obj);
+      this._btns.save.dom.disabled = this._btns.restore.domdisabled = true;
+    }
+
+    _onKey(e) {
+      e.stopPropagation()
+    }
+
+    _onInput(e) {
+      let d = this._inputs.reduce( (a,e) => a && (e.dom.defaultValue === e.dom.value), true)
+      this._btns.save.dom.disabled = this._btns.restore.dom.disabled = d;
+    }
+
+    _onSave(e) {
+      let p = {}
+      this._inputs.forEach(e => p[e.prop] = e.dom.value)
+      this._btns.save.action(p)
+      e.preventDefault()
+    }
+
+    _onRestore(e) {
+      this._btns.restore.action()
+      e.preventDefault()
+    }
+
+  }
+
+  class Tools {
+
+    constructor(c) {
+
+      this._gridModes = [
+        utils.fgTypes.GRIDHEX,
+        utils.fgTypes.GRIDRECTANGLE,
+        utils.fgTypes.GRIDCIRCLE
+      ]
+
+      this._noPattern = [
+        utils.fgTypes.NONE,
+        utils.fgTypes.GRIDRECTANGLE,
+        utils.fgTypes.GRIDHEX,
+        utils.fgTypes.GRIDCIRCLE,
+        utils.fgTypes.POLYGON
+      ]
+
+      this._handlers = c.handlers
+      this._gParam = true
+      this._scope = bitgrid.scopes.INNER
+      this._align = bitgrid.aligns.STANDARD
+      this._space = 0
+      this._order = bitgrid.orders.TOPLEFT
+      this._allowGrid = false
+      this._freezed = true
+
+      this._disabler = new bittls.ContainerMask({
+        containerElement : $('tools'),
+        maskElement : document.querySelector('#tools .mask')
+      })
+
+      this._drawMode = new bittls.TRadioToggles({
+        map : [
+          { element : $('hex-d'),           value : utils.fgTypes.HEXDTR },
+          { element : $('hex-r'),           value : utils.fgTypes.HEXRCT },
+          { element : $('rectangle'),       value : utils.fgTypes.RECTANGLE },
+          { element : $('square'),          value : utils.fgTypes.SQUARE },
+          { element : $('rhombus'),         value : utils.fgTypes.RHOMBUS },
+          { element : $('triangle-e'),      value : utils.fgTypes.TRIANGLEEQL },
+          { element : $('triangle-i'),      value : utils.fgTypes.TRIANGLEISC },
+          { element : $('triangle-r'),      value : utils.fgTypes.TRIANGLERCT },
+          { element : $('ellipse'),         value : utils.fgTypes.ELLIPSE },
+          { element : $('circle-d'),        value : utils.fgTypes.CIRCLEDTR },
+          { element : $('circle-c'),        value : utils.fgTypes.CIRCLECTR },
+          { element : $('polygon'),         value : utils.fgTypes.POLYGON },
+          { element : $('hex-grid'),        value : utils.fgTypes.GRIDHEX },
+          { element : $('rectangle-grid'),  value : utils.fgTypes.GRIDRECTANGLE },
+          { element : $('circle-grid'),     value : utils.fgTypes.GRIDCIRCLE }
+        ],
+        noneValue : utils.fgTypes.NONE,
+        initialValue : utils.fgTypes.NONE,
+        action : (() => { this._props.blur() }).bind(this)
+      })
+
+      this._gridPrms = {
+        gridScope : new bittls.TToggle({
+          map : [
+            { element : $('grid-scope-inner'),  value : bitgrid.scopes.INNER },
+            { element : $('grid-scope-outer'),  value : bitgrid.scopes.OUTER }
+          ],
+          initialValue : this._scope,
+          action : this._onGridScopeChange.bind(this)
+        }),
+        gridAlign : new bittls.TToggle({
+          map : [ 
+            { element : $('grid-algn-std'),     value : bitgrid.aligns.STANDARD },
+            { element : $('grid-algn-alt'),     value : bitgrid.aligns.ALT_HORIZONTAL },
+            { element : $('grid-algn-alt2'),    value : bitgrid.aligns.ALT_VERTICAL }
+          ],
+          initialValue : this._align,
+          action : this._onGridAlignChange.bind(this)
+        }),
+        gridSpace : new bittls.TNumber({
+          element : $('grid-space'),
+          initialValue : this._space,
+          action : this._onGridSpaceChange.bind(this)
+        }),
+        gridOrder : new bittls.TToggle({
+          map : [ 
+            { element : $('grid-order-tl'),     value : bitgrid.orders.TOPLEFT },
+            { element : $('grid-order-lt'),     value : bitgrid.orders.LEFTTOP },
+            { element : $('grid-order-lb'),     value : bitgrid.orders.LEFTBOTTOM },
+            { element : $('grid-order-bl'),     value : bitgrid.orders.BOTTOMLEFT },
+            { element : $('grid-order-br'),     value : bitgrid.orders.BOTTOMRIGHT },
+            { element : $('grid-order-rb'),     value : bitgrid.orders.RIGHTBOTTOM },
+            { element : $('grid-order-rt'),     value : bitgrid.orders.RIGHTTOP },
+            { element : $('grid-order-tr'),     value : bitgrid.orders.TOPRIGHT }
+          ],
+          initialValue : this._order,
+          action : this._onGridOrderChange.bind(this)
+        }),
+        showOrder : new bittls.TState({
+          element : $('show-order'), 
+          action : this._onShowOrder.bind(this)
+        }) 
+      }
+
+      this._props = new AreaProperties({
+        doms : {
+          href            : $('href-prop'),
+          alt             : $('alt-prop'),
+          title           : $('title-prop'),
+          id              : $('id-prop'),
+          btnPropsSave    : $('area-props-save'),
+          btnPropsRestore : $('area-props-restore')
+        },
+        handlers : {
+          onPropsSave     : c.handlers.onPropsSave,
+          onPropsRestore  : c.handlers.onPropsRestore
+        }
+      })
+
+      this._layoutBtns = {
+        resize      : new bittls.TButton({ element : $('resize'),       action : c.handlers.onResize }),
+        alignLeft   : new bittls.TButton({ element : $('align-left'),   action : c.handlers.onAlignLeft }),
+        alignTop    : new bittls.TButton({ element : $('align-top'),    action : c.handlers.onAlignTop }),
+        alignRight  : new bittls.TButton({ element : $('align-right'),  action : c.handlers.onAlignRight }),
+        alignBottom : new bittls.TButton({ element : $('align-bottom'), action : c.handlers.onAlignBottom }),
+        alignCenterHorizontally : new bittls.TButton({ element : $('align-center-h'), action : c.handlers.onAlignCenterHorizontally }),
+        alignCenterVertically   : new bittls.TButton({ element : $('align-center-v'), action : c.handlers.onAlignCenterVertically })
+      }
+
+      this.release()
+    }
+
+    get drawMode()  { return this._drawMode.value }
+    clearDrawMode() { this._drawMode.value = utils.fgTypes.NONE }
+    none()          { return (utils.fgTypes.NONE === this._drawMode.value) ? true : false }
+    isGridDrawModeSelected() { return (this._gridModes.find(e => (e === this._drawMode.value))) }
+
+    get gridScope() { return this._scope }
+    get gridAlign() { return this._align }
+    get gridSpace() { return this._space }
+    get gridOrder() { return this._order }
+
+    blurAreaProps()     { this._props.blur() }
+    resetAreaProps()    { this._props.reset() }
+    disableAreaProps()  { this._props.disable() }
+    displayAreaProps(e) { this._props.display(e) }
+    saveAreaProps(e,p)  { this._props.save(e,p) }
+    restoreAreaProps(e) { this._props.restore(e) }
+
+    reset() {
+      this._drawMode.disable(this._gridModes)
+      this._drawMode.value = utils.fgTypes.NONE
+      this._allowGrid = false
+      Object.values(this._gridPrms).forEach(e => e.reset())
+      this._gParam = true
+      this._space = 0
+      this._scope = this._gridPrms.gridScope.value
+      this._align = this._gridPrms.gridAlign.value
+      this._order = this._gridPrms.gridOrder.value
+      this._props.disable()
+      this.release()
+    }
+
+    freeze() {
+      if (this._freezed) return;
+      this._props.blur();
+      this._disabler.maskElement();
+      this._freezed = true;
+    }
+
+    release() {
+      if (!this._freezed) return;
+      this._props.blur();
+      this._disabler.unmaskElement();
+      this._freezed = false;
+    }
+
+    enableGridTools(obj) {
+      this._enableGridMode(obj)
+      this._updateGridParams(obj)
+      this._props.enable(obj)
+    }
+
+    disableGridTools() {
+      this._disableGridMode()
+      this._updateGridParams()
+      this._props.disable()
+    }
+
+    _setGridScope(v) { this._gridPrms.gridScope.value = v || this._scope }
+    _setGridAlign(v) { this._gridPrms.gridAlign.value = v || this._align }
+    _setGridSpace(v) { this._gridPrms.gridSpace.value = (v === 0) ? 0 : (v || this._space) }
+    _setGridOrder(v) { this._gridPrms.gridOrder.value = v || this._order }
+
+    _canGrid(obj) { return (this._noPattern.find(e => (e === obj.type))) ? false : true }
     
-    const btnsGridAlign = [
-      { dom : $('grid-algn-std'),     align : aligns.STANDARD },
-      { dom : $('grid-algn-alt'),     align : aligns.ALT_HORIZONTAL },
-      { dom : $('grid-algn-alt2'),    align : aligns.ALT_VERTICAL }
-    ];
-
-    const btnsOrder = [
-      { dom : $('grid-order-tl'),     order : orders.TOPLEFT },
-      { dom : $('grid-order-lt'),     order : orders.LEFTTOP },
-      { dom : $('grid-order-lb'),     order : orders.LEFTBOTTOM },
-      { dom : $('grid-order-bl'),     order : orders.BOTTOMLEFT },
-      { dom : $('grid-order-br'),     order : orders.BOTTOMRIGHT },
-      { dom : $('grid-order-rb'),     order : orders.RIGHTBOTTOM },
-      { dom : $('grid-order-rt'),     order : orders.RIGHTTOP },
-      { dom : $('grid-order-tr'),     order : orders.TOPRIGHT }
-    ];
-
-    const inForm = [
-      { dom : $('href-prop'),         prop  : properties.HREF },
-      { dom : $('alt-prop'),          prop  : properties.ALT },
-      { dom : $('title-prop'),        prop  : properties.TITLE },
-      { dom : $('id-prop'),           prop  : properties.ID }
-    ];
-
-    const doms = {
-      inGridSpace     : $('grid-space'),
-      btnShowOrder    : $('show-order'),
-      btnResize       : $('resize'),
-      btnAlignCH      : $('align-center-h'),
-      btnAlignCV      : $('align-center-v'),
-      btnAlignL       : $('align-left'),
-      btnAlignT       : $('align-top'),
-      btnAlignR       : $('align-right'),
-      btnAlignB       : $('align-bottom'),
-      btnPropsSave    : $('area-props-save'),
-      btnPropsRestore : $('area-props-restore'),
-      tools           : $('tools'),
-      mask            : document.querySelector('#tools .mask')
-    };
-
-    var context = {
-        handlers    : null,
-        selected    : null,
-        mode        : modes.NONE,
-        allowGrid   : false,
-        freezed     : true,
-        scope       : btnsGridScope[0].scope,
-        align       : btnsGridAlign[0].align,
-        order       : btnsOrder[0].order,
-        gParam      : true,
-        space       : 0,
-        showOrder   : false
-    };
-
-    function setDrawingMode() {
-      let m = btnsMode.find(e => (context.selected === e.dom)) ||
-              btnsGridMode.find(e => (context.selected === e.dom)) ;
-      context.mode = (m && m.mode) || modes.NONE;
-    }
-
-    function isGridDrawingModeSelected() {
-      return (-1 !== btnsGridMode.findIndex(e => (context.selected === e.dom)));
-    }
-
-    function select(obj) {
-      if (null != obj) {
-        obj.classList.add(bitedit.clsStatus.SELECTED);
-      }
-      context.selected = obj;
-    }
-
-    function unselect(obj) {
-      if (obj != null) {
-        obj.classList.remove(bitedit.clsStatus.SELECTED);
-      }
-      context.selected = null;
-    }
-
-    function toggleSelect(obj) {
-      var sel = (context.selected === obj) ? false : true;
-      unselect(context.selected);
-      if (sel) { select(obj); }
-    }
-
-    function toggleState(objFrom, objTo) {
-      objFrom.style.display = 'none';
-      objTo.style.display = 'inline';
-    }
-
-    function toggleTableState(table, target, action) {
-      let i, next;
-      i = table.findIndex(e => (e.dom === target));
-      if (i !== -1) {
-        action = action || (() => {});
-        next = table[(i+1) % table.length];
-        toggleState(target, next.dom);
-        action(next);
+    _enableGridMode(obj) {
+      if (!this._allowGrid && this._canGrid(obj)) {
+        this._drawMode.enable(this._gridModes);
+        this._allowGrid = true;
+      } else if (this._allowGrid && !this._canGrid(obj)) {
+        this._drawMode.disable(this._gridModes);
+        this._allowGrid = false;
       }
     }
 
-    function onDrawModeSelect(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleSelect(evt.target);
-      setDrawingMode();
-    }
-
-    function onDrawGridModeSelect(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      if(context.allowGrid) {
-        toggleSelect(evt.target);
-        setDrawingMode();
+    _disableGridMode() {
+      if (this._allowGrid) {
+        this._drawMode.disable(this._gridModes);
+        this._allowGrid = false;
       }
     }
 
-    function clearDrawMode() {
-      toggleSelect(null);
-      setDrawingMode();
-    }
-
-    function canGrid(obj) {
-      let rtn = true;
-      switch(obj.type) {
-      case utils.fgTypes.NONE:
-      case utils.fgTypes.GRIDRECTANGLE:
-      case utils.fgTypes.GRIDHEX:
-      case utils.fgTypes.GRIDCIRCLE:
-      case utils.fgTypes.POLYGON:
-        rtn = false;
-        break;
-      default:
-      }
-      return rtn;
-    }
-
-    function gridEnable() {
-      btnsGridMode.forEach(e => e.dom.classList.remove(bitedit.clsStatus.DISABLED));
-    }
-
-    function gridDisable() {
-      btnsGridMode.forEach(e => e.dom.classList.add(bitedit.clsStatus.DISABLED));
-    }
-
-    function enableGridMode(obj) {
-      if (!context.allowGrid && canGrid(obj)) {
-        gridEnable();
-        context.allowGrid = true;
-      } else if (context.allowGrid && !canGrid(obj)) {
-        if (isGridDrawingModeSelected()) {
-          toggleSelect(null);
-          context.mode = modes.NONE;
-        }
-        gridDisable();
-        context.allowGrid = false;
-      }
-    }
-
-    function disableGridMode() {
-      if (context.allowGrid) {
-        if (isGridDrawingModeSelected()) {
-          toggleSelect(null);
-          context.mode = modes.NONE;
-        }
-        gridDisable();
-        context.allowGrid = false;
-      }
-    }
-
-    function onGridScopeChange(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleTableState(btnsGridScope, evt.target, e => {
-        if (context.gParam)
-          context.scope = e.scope;
-        context.handlers.onGridScopeChange(e.scope);
-      });
-    }
-
-    function setGridScope(value) {
-      let v = value || context.scope;
-      btnsGridScope.forEach(e => {
-        if (e.dom.style.display !== 'none' && v !== e.scope)
-          e.dom.style.display = 'none';
-        if (v === e.scope)
-          e.dom.style.display = 'inline';
-      });
-    }
-
-    var getGridScope = () => context.scope;
-
-    function onGridAlignChange(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleTableState(btnsGridAlign, evt.target, e => {
-        if (context.gParam)
-          context.align = e.align;
-        context.handlers.onGridAlignChange(e.align);
-      });
-    }
-
-    function setGridAlign(value) {
-      let v = value || context.align;
-      btnsGridAlign.forEach(e => {
-        if (e.dom.style.display !== 'none' && v !== e.align)
-          e.dom.style.display = 'none';
-        if (v === e.align)
-          e.dom.style.display = 'inline';
-      });
-    }
-
-    var getGridAlign = () => context.align;
-
-    function onGridSpaceChange(e) {
-      blurAreaProps();
-      let v, d;
-      d = parseInt(doms.inGridSpace.defaultValue);
-      v = getGridSpace();
-      if (d !== v) {
-        doms.inGridSpace.defaultValue = v.toString();
-        if (context.gParam) {
-          context.space = v;
-        }
-        context.handlers.onGridSpaceChange(v);
-      }
-    }
-
-    var setGridSpace = (v) => { 
-      doms.inGridSpace.value = doms.inGridSpace.defaultValue = (v === 0) ? "0" : (v || context.space).toString();
-    }
-    var getGridSpace = () => parseInt(doms.inGridSpace.value);
-
-    function onGridOrderChange(evt) {
-      blurAreaProps();
-      evt.preventDefault();
-      toggleTableState(btnsOrder, evt.target, e => {
-        if (context.gParam)
-          context.order = e.order;
-        context.handlers.onGridOrderChange(e.order);
-      });
-    }
-
-    function setGridOrder(value) {
-      let v = value || context.order;
-      btnsOrder.forEach(e => {
-        if (e.dom.style.display !== 'none' && v !== e.order)
-          e.dom.style.display = 'none';
-        if (v === e.order)
-          e.dom.style.display = 'inline';
-      });
-    }
-
-    var getGridOrder = () => context.order;
-
-    function gridParamsReset() {
-      toggleState(btnsGridScope[1].dom, btnsGridScope[0].dom);
-      toggleState((btnsGridAlign[2].align === context.align) ? btnsGridAlign[2].dom : btnsGridAlign[1].dom, btnsGridAlign[0].dom);
-      doms.inGridSpace.defaultValue = "0";
-      doms.inGridSpace.value = "0";
-      context.showOrder = false;
-      setGridOrder(btnsOrder[0].order);
-    }
-
-    function onShowOrder(e) {
-      blurAreaProps();
-      if(!context.showOrder) {
-        doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
-        doms.btnShowOrder.addEventListener('mouseup', onHideOrder, false);
-        doms.btnShowOrder.addEventListener('mouseleave', onHideOrder, false);
-        context.handlers.onShowOrder(true);
-        context.showOrder = true;
-      }
-    }
-
-    function onHideOrder(e) {
-      blurAreaProps();
-      if(context.showOrder) {
-        doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
-        doms.btnShowOrder.removeEventListener('mouseup', onHideOrder, false);
-        doms.btnShowOrder.removeEventListener('mouseleave', onHideOrder, false);
-        context.handlers.onShowOrder(false);
-        context.showOrder = false;
-      }
-    }
-
-    function updateGridParams(obj) {
+   _updateGridParams(obj) {
       if (obj && obj.isGrid) {
-        context.gParam = false;
-        setGridScope(obj.gridScope);
-        setGridAlign(obj.gridAlign);
-        setGridSpace(obj.gridSpace);
-        setGridOrder(obj.gridOrder);
+        this._gParam = false
+        this._setGridScope(obj.gridScope)
+        this._setGridAlign(obj.gridAlign)
+        this._setGridSpace(obj.gridSpace)
+        this._setGridOrder(obj.gridOrder)
       } else {
-        context.gParam = true;
-        setGridScope();
-        setGridAlign();
-        setGridSpace();
-        setGridOrder();
+        this._gParam = true
+        this._setGridScope()
+        this._setGridAlign()
+        this._setGridSpace()
+        this._setGridOrder()
       }
     }
+    
+     _onGridScopeChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._scope = v
+       this._handlers.onGridScopeChange(v)
+     }
+    
+     _onGridAlignChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._align = v
+       this._handlers.onGridAlignChange(v)
+     }
+    
+     _onGridSpaceChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._space = v
+       this._handlers.onGridSpaceChange(v)
+     }
+    
+     _onGridOrderChange(v) {
+       this._props.blur()
+       if (this._gParam)
+         this._order = v
+       this._handlers.onGridOrderChange(v)
+     }
+    
+     _onShowOrder(v) {
+       this._props.blur()
+       this._handlers.onShowOrder(v)
+     }
 
-    var blurAreaProps = () => inForm.forEach(e => e.dom.blur());
-    var onPropsKey = (e) => e.stopPropagation();
-    var resetAreaProps = () => inForm.forEach(e => e.dom.defaultValue = e.dom.value = "...");
-
-    function displayAreaProps(obj) {
-      let props = obj.areaProperties;
-      inForm.forEach(e => e.dom.defaultValue = e.dom.value = props[e.prop] || "");
-    }
-
-    function enableAreaProps(obj) {
-      inForm.forEach(e => e.dom.disabled = false);
-      displayAreaProps(obj);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function disableAreaProps() {
-      inForm.forEach(e => {
-        e.dom.defaultValue = e.dom.value = "...";
-        e.dom.blur();
-        e.dom.disabled = true;
-      });
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function onPropsInput(e) {
-      let d = inForm.reduce( (a,e) => a && (e.dom.defaultValue === e.dom.value), true);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = d;
-    }
-
-    function onPropsSave(e) {
-      let p = {};
-      inForm.forEach(e => p[e.prop] = e.dom.value);
-      context.handlers.onPropsSave(p);
-      e.preventDefault();
-    }
-
-    function onPropsRestore(e) {
-      context.handlers.onPropsRestore();
-      e.preventDefault();
-    }
-
-    function saveAreaProps(obj, p) {
-      obj.areaProperties = p;
-      inForm.forEach(e => e.dom.defaultValue = e.dom.value);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function restoreAreaProps(obj) {
-      displayAreaProps(obj);
-      doms.btnPropsSave.disabled = doms.btnPropsRestore.disabled = true;
-    }
-
-    function onResize(e) {
-      context.handlers.onResize();
-      e.preventDefault();
-    }
-
-    function onAlignLeft(e) {
-      context.handlers.onAlignLeft();
-      e.preventDefault();
-    }
-
-    function onAlignTop(e) {
-      context.handlers.onAlignTop();
-      e.preventDefault();
-    }
-
-    function onAlignRight(e) {
-      context.handlers.onAlignRight();
-      e.preventDefault();
-    }
-
-    function onAlignBottom(e) {
-      context.handlers.onAlignBottom();
-      e.preventDefault();
-    }
-
-    function onAlignCenterHorizontally(e) {
-      context.handlers.onAlignCenterHorizontally();
-      e.preventDefault();
-    }
-
-    function onAlignCenterVertically(e) {
-      context.handlers.onAlignCenterVertically();
-      e.preventDefault();
-    }
-
-    function displayMask() {
-      let r;
-      doms.mask.style.display = 'block';
-      r = doms.tools.getBoundingClientRect();
-      doms.mask.style.width = r.width + 'px';
-      doms.mask.style.height = r.height + 'px';
-      doms.mask.style.left = r.left + 'px';
-      doms.mask.style.top = r.top+1 + 'px';
-    }
-
-    function hideMask() {
-      doms.mask.style.display = 'none';
-    }
-
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        this.release();
-      },
-
-      reset : function() {
-        toggleSelect(null);
-        gridDisable();
-        context.mode = modes.NONE;
-        context.allowGrid = false;
-        gridParamsReset();
-        context.gParam = true;
-        context.scope = btnsGridScope[0].scope;
-        context.align = btnsGridAlign[0].align;
-        context.space = 0;
-        context.order = btnsOrder[0].order;
-        disableAreaProps();
-        this.release();
-      },
-
-      getDrawingMode : () => context.mode, clearDrawMode,
-      getGridScope,
-      getGridAlign,
-      getGridOrder,
-      getGridSpace,
-      
-      none : () => modes.NONE === context.mode ? true : false,
-
-      freeze : function() {
-        if (context.freezed) return;
-        btnsMode.forEach(e => e.dom.removeEventListener('click', onDrawModeSelect, false));
-        btnsGridMode.forEach(e => e.dom.removeEventListener('click', onDrawGridModeSelect, false));
-        btnsGridScope.forEach(e => e.dom.removeEventListener('click', onGridScopeChange, false));
-        btnsGridAlign.forEach(e => e.dom.removeEventListener('click', onGridAlignChange, false));
-        doms.inGridSpace.removeEventListener('click', onGridSpaceChange, false);
-        doms.btnShowOrder.removeEventListener('mousedown', onShowOrder, false);
-        btnsOrder.forEach(e => e.dom.removeEventListener('click', onGridOrderChange, false));
-        doms.btnPropsSave.removeEventListener('click', onPropsSave, false);
-        doms.btnPropsRestore.removeEventListener('click', onPropsRestore, false);
-        inForm.forEach(e => {
-          e.dom.removeEventListener('keydown', onPropsKey, false);
-          e.dom.removeEventListener('input', onPropsInput, false)
-          e.dom.blur();
-        });
-        doms.btnResize.removeEventListener('click', onResize, false);
-        doms.btnAlignL.removeEventListener('click', onAlignLeft, false);
-        doms.btnAlignT.removeEventListener('click', onAlignTop, false);
-        doms.btnAlignR.removeEventListener('click', onAlignRight, false);
-        doms.btnAlignB.removeEventListener('click', onAlignBottom, false);
-        doms.btnAlignCH.removeEventListener('click', onAlignCenterHorizontally, false);
-        doms.btnAlignCV.removeEventListener('click', onAlignCenterVertically, false);
-        displayMask();
-        context.freezed = true;
-      },
-
-      release : function() {
-        if (!context.freezed) return;
-        btnsMode.forEach(e => e.dom.addEventListener('click', onDrawModeSelect, false));
-        btnsGridMode.forEach(e => e.dom.addEventListener('click', onDrawGridModeSelect, false));
-        btnsGridScope.forEach(e => e.dom.addEventListener('click', onGridScopeChange, false));
-        btnsGridAlign.forEach(e => e.dom.addEventListener('click', onGridAlignChange, false));
-        doms.inGridSpace.addEventListener('click', onGridSpaceChange, false);
-        doms.btnShowOrder.addEventListener('mousedown', onShowOrder, false);
-        btnsOrder.forEach(e => e.dom.addEventListener('click', onGridOrderChange, false));
-        doms.btnPropsSave.addEventListener('click', onPropsSave, false);
-        doms.btnPropsRestore.addEventListener('click', onPropsRestore, false);
-        inForm.forEach(e => {
-          e.dom.addEventListener('input', onPropsInput, false)
-          e.dom.addEventListener('keydown', onPropsKey, false)
-        });
-        doms.btnResize.addEventListener('click', onResize, false);
-        doms.btnAlignL.addEventListener('click', onAlignLeft, false);
-        doms.btnAlignT.addEventListener('click', onAlignTop, false);
-        doms.btnAlignR.addEventListener('click', onAlignRight, false);
-        doms.btnAlignB.addEventListener('click', onAlignBottom, false);
-        doms.btnAlignCH.addEventListener('click', onAlignCenterHorizontally, false);
-        doms.btnAlignCV.addEventListener('click', onAlignCenterVertically, false);
-        hideMask();
-        context.freezed = false;
-      },
-
-      isGridDrawingModeSelected,
-
-      enableGridTools : function(obj) {
-        enableGridMode(obj);
-        updateGridParams(obj);
-        enableAreaProps(obj);
-      },
-
-      disableGridTools() {
-        disableGridMode();
-        updateGridParams();
-        disableAreaProps();
-      },
-
-      blurAreaProps,
-      resetAreaProps,
-      disableAreaProps,
-      saveAreaProps,
-      restoreAreaProps,
-      displayAreaProps,
-
-      modes, scopes, aligns, orders
-
-    };
-
-  })(); /* TOOLS PALAETTE MANAGEMENT */
+  }
 
   /*
    * FOOTER DISPLAY MANAGEMENT
    */
 
-  var ftr = (function() {
+  class Footer {
 
-    var doms = {
-      info : $('selected-file'),
-      cursor : $('coordinates'),
-      load : $('load-indicator')
-    };
-
-    var coords = (function() {
-      return {
-        set : (ci) => doms.cursor.innerHTML = 'x: ' + ci.x + ', ' + 'y: ' + ci.y,
-        clear : () => doms.cursor.innerHTML = ''
-      };
-    })();
-
-    var loading = (function() {
-      return {
-        show : () => doms.load.style.display = 'inline',
-        hide : () => doms.load.style.display = 'none'
-      };
-    })();
-
-    function clear() {
-      while(doms.info.firstChild) {
-        doms.info.removeChild(doms.info.firstChild);
+    constructor() {
+      this._doms = {
+        info : $('selected-file'),
+        load : $('load-indicator')
       }
-      doms.info.classList.remove('error');
-      return this;
     }
 
-    return {
+    _clear() {
+      while(this._doms.info.firstChild) {
+        this._doms.info.removeChild(this._doms.info.firstChild)
+      }
+      this._doms.info.classList.remove('error')
+      return this
+    }
 
-      reset : function() {
-        clear();
-        var info = document.createElement('p');
-        info.textContent = 'No image file selected';
-        doms.info.appendChild(info);
-        return this;
-      },
+    reset() {
+      this._clear()
+      let info = document.createElement('p')
+      info.textContent = 'No image file selected'
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      error : function(f) {
-        clear();
-        var info = document.createElement('p');
-        info.textContent = 'No image file selected - ' + ((f == null) ? 'Too many files selected' : ( 'Selected file is not an image file: ' + f.name ));
-        doms.info.classList.add('error');
-        doms.info.appendChild(info);
-        return this;
-      },
+    error(f) {
+      this._clear();
+      let info = document.createElement('p')
+      info.textContent = 'No image file selected - ' + ((f == null) ? 'Too many files selected' : ( 'Selected file is not an image file: ' + f.name ))
+      this._doms.info.classList.add('error')
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      info : function(f) {
-        clear();
-        var output = [];
-        output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
-            f.size, ' bytes, last modified: ',
-            f.lastModified ? (new Date(f.lastModified)).toLocaleDateString() : 'n/a');      
-        var info = document.createElement('p');
-        info.innerHTML = output.join(''); 
-        var image = document.createElement('img');
-        image.src = window.URL.createObjectURL(f);
-        doms.info.appendChild(image);
-        doms.info.appendChild(info);
-        return this;
-      },
+    info(f) {
+      this._clear()
+      let output = []
+      output.push('<strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+          f.size, ' bytes, last modified: ',
+          f.lastModified ? (new Date(f.lastModified)).toLocaleDateString() : 'n/a')
+      let info = document.createElement('p')
+      info.innerHTML = output.join('')
+      let image = document.createElement('img')
+      image.src = window.URL.createObjectURL(f)
+      this._doms.info.appendChild(image)
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      errorEx : function(p) {
-        clear();
-        var info = document.createElement('p');
-        info.textContent = 'Project "' + p.name + '" / Image "' + p.filename + '" - Corrupted record!';
-        doms.info.classList.add('error');
-        doms.info.appendChild(info);
-        return this;
-      },
+    errorEx(p) {
+      this._clear()
+      let info = document.createElement('p')
+      info.textContent = 'Project "' + p.name + '" / Image "' + p.filename + '" - Corrupted record!'
+      this._doms.info.classList.add('error')
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      infoEx : function(p) {
-        clear();
-        var output = [];
-        output.push('<strong>', escape(p.filename), '</strong> (', p.type || 'n/a', ') - ',
-            p.size, ' bytes, last modified: n/a');      
-        var info = document.createElement('p');
-        info.innerHTML = output.join(''); 
-        var image = document.createElement('img');
-        image.src = p.dataURL;
-        doms.info.appendChild(image);
-        doms.info.appendChild(info);
-        return this;
-      },
+    infoEx(p) {
+      this._clear()
+      let output = []
+      output.push('<strong>', escape(p.filename), '</strong> (', p.type || 'n/a', ') - ',
+          p.size, ' bytes, last modified: n/a')
+      let info = document.createElement('p')
+      info.innerHTML = output.join('')
+      let image = document.createElement('img')
+      image.src = p.dataURL
+      this._doms.info.appendChild(image)
+      this._doms.info.appendChild(info)
+      return this
+    }
 
-      infoUpdate(width, height) {
-        doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px';
-      },
+    infoUpdate(width, height) {
+      this._doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px'
+    }
 
-      coords,
-      loading
+    get loading() {
+      return {
+        show : () => this._doms.load.style.display = 'inline',
+        hide : () => this._doms.load.style.display = 'none'
+      };
+    }
 
-    };
-
-  })(); /* FOOTER DISPLAY MANAGEMENT */
+  }
 
   /*
    * MAP PROJECT MANAGER
    */
 
-  var prj = (function() {
+  class ProjectManagerDialog extends bittls.DialogForm {
 
-    var doms = {
-      projects  : $('project-manager'),
-      list      : document.querySelector('#project-manager .project-list'),
-      closeBtn  : document.querySelector('#project-manager .close'),
-      deleteBtn : document.querySelector('#project-manager .delete'),
-      clearBtn  : document.querySelector('#project-manager .clear')
-    },
-    context = {
-      handlers : null,
-      canClear : true
-    };
-    
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
+    constructor(c) {
+      super({ form : $('project-manager') })
+      this._model = c.model
+      this._store = c.store
+      this._handlers = c.handlers
+      this._canClear = true
+      this._doms = {
+        list      : document.querySelector('#project-manager .project-list'),
+        deleteBtn : document.querySelector('#project-manager .delete'),
+        clearBtn  : document.querySelector('#project-manager .clear')
+      }
+      this._doms.deleteBtn.addEventListener('click', this._onDelete.bind(this), false)
+      this._doms.clearBtn.addEventListener('click', this._onClear.bind(this), false)
+    }
 
-    function fill() {
-      let canClearAll, content, flag;
-      canClearAll = true;
-      content = '';
-      store.list().forEach(e => {
-        flag = '';
-        if (e === mdl.getInfo().name) {
-          flag = ' disabled';
-          canClearAll = false;
+    _fill() {
+      let canClearAll, content, flag
+      canClearAll = true
+      content = ''
+      this._store.list.forEach(e => {
+        flag = ''
+        if (e === this._model.info.name) {
+          flag = ' disabled'
+          canClearAll = false
         }
-        content += '<option value="' + e + '"' + flag + '>' + e + '</option>';
+        content += '<option value="' + e + '"' + flag + '>' + e + '</option>'
       });
-      doms.list.innerHTML = content;
-      return canClearAll;
+      this._doms.list.innerHTML = content
+      return canClearAll
     }
 
-    function close() {
-      hide(doms.projects);
-      doms.list.innerHTML = '';
-      context.handlers.onClose();
+    _onClose() {
+      this._doms.list.innerHTML = ''
+      this._handlers.onClose()
+      super._onClose()
     }
 
-    function onClose(e) {
+    _onCancel() {
+      this._onClose()
+    }
+
+    _onDelete(e) {
+      let i, sel
+      e.preventDefault()
+      sel = []
+      for (i = 0; i < this._doms.list.options.length; i++) {
+        if (this._doms.list.options[i].selected)
+          sel.push(this._doms.list.options[i].value)
+      }
+      sel.forEach(e => this._store.remove(e))
+      this._fill()
+    }
+
+    _onClear(e) {
       e.preventDefault();
-      close();
-    }
-
-    function onDelete(e) {
-      let i, sel;
-      e.preventDefault();
-      sel = [];
-      for (i = 0; i < doms.list.options.length; i++) {
-        if (doms.list.options[i].selected) {
-          sel.push(doms.list.options[i].value);
-        }
-      }
-      sel.forEach(e => store.remove(e));
-      fill();
-    }
-
-    function onClear(e) {
-      e.preventDefault();
-      if (context.canClear) {
-        store.reset();
-        fill();
+      if (this._canClear) {
+        this._store.reset()
+        this._fill()
       }
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
+   show() {
+      this._canClear = this._fill()
+      this._doms.clearBtn.disabled = !this._canClear
+      super.show()
     }
 
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.closeBtn.addEventListener('click', onClose, false);
-        doms.deleteBtn.addEventListener('click', onDelete, false);
-        doms.clearBtn.addEventListener('click', onClear, false);
-        document.addEventListener('keydown', onKeyAction);
-      },
-
-      show : function() {
-        context.canClear = fill();
-        doms.clearBtn.disabled = !context.canClear;
-        show(doms.projects);
-      }
-
-    };
-
-  })(); /* MAP PROJECT MANAGEMENT */
+  }
 
   /*
    *  MAP PROJECT CREATOR
    */
 
-  var ctr = (function() {
+  class ProjectCreatorDialog extends bittls.DialogForm {
 
-    var doms = {
-      creator       : $('project-creator'),
-      btnSet        : document.querySelector('#project-creator .create'),
-      btnCancel     : document.querySelector('#project-creator .cancel'),
-      dropZone      : $('image-drop-zone'),
-      imagePreview  : document.querySelector('#project-creator .preview'),
-      inImageFile   : $('load-image-file'),
-      inMapName     : $('map-name'),
-      inMapAlt      : $('map-alt')
-    },
-    context = {
-      handlers : null,
-      file     : null,
-      filename : ''
-    };
+    constructor(c) {
+      super({
+        form : $('project-creator'),
+        textRecipients : [$('map-name'), $('map-alt')]
+      })
+      this._handlers = c.handlers
+      this._file = null
+      this._filename = ''
+      this._doms = {
+        btnSet        : document.querySelector('#project-creator .create'),
+        dropZone      : $('image-drop-zone'),
+        imagePreview  : document.querySelector('#project-creator .preview'),
+        inImageFile   : $('load-image-file'),
+        inMapName     : $('map-name'),
+        inMapAlt      : $('map-alt')
+      }
 
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function validate() {
-      return (doms.inMapName.value !== '' && context.filename !== '');
+      this._doms.btnSet.addEventListener('click', this._onSetClick.bind(this), false)
+      this._doms.dropZone.draggable = true
+      this._doms.dropZone.addEventListener('dragover', this._onDragEvent, false)
+      this._doms.dropZone.addEventListener('dragleave', this._onDragEvent, false)
+      this._doms.dropZone.addEventListener('drop', this._onDrop.bind(this), false)
+      this._doms.inImageFile.addEventListener('change', this._onImageFileChange.bind(this), false)
+      this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
+      this.reset()
     }
 
-    function processFiles(files) {
-      clear();
-      if (1 < files.length || 0 == files.length || !mdl.validateImgFile(files[0])) {
-        error(doms.dropZone);
-        doms.btnSet.disabled = true;
+    _clear() {
+      this._doms.imagePreview.style.display = 'none'
+      this._doms.imagePreview.src = ''
+      this._doms.dropZone.classList.remove('error')
+      this._doms.btnSet.disabled = true
+      this._file = null
+      this._filename = ''
+    }
+
+    _error(e) {
+      e.classList.add('error')
+    }
+
+    _validate() {
+      return (this._doms.inMapName.value !== '' && this._filename !== '')
+    }
+
+    _processFiles(files) {
+      this._clear()
+      if (1 < files.length || 0 == files.length || !this._handlers.checkFile(files[0])) {
+        this._error(this._doms.dropZone)
+        this._doms.btnSet.disabled = true
       } else {
-        context.file = files[0];
-        context.filename = window.URL.createObjectURL(context.file);
-        doms.imagePreview.src = context.filename;
-        show(doms.imagePreview);
-        doms.btnSet.disabled = !validate();
+        this._file = files[0]
+        this._filename = window.URL.createObjectURL(this._file)
+        this._doms.imagePreview.src = this._filename
+        this._doms.imagePreview.style.display = 'block'
+        this._doms.btnSet.disabled = !this._validate()
       }
     }
 
-    function clear() {
-      hide(doms.imagePreview);
-      doms.imagePreview.src = '';
-      doms.dropZone.classList.remove('error');
-      doms.btnSet.disabled = true;
-      context.file = null;
-      context.filename = '';
-    }
-
-    function close() {
-      hide(doms.creator);
-      clear();
-      context.handlers.onClose();
-    }
-
-    function error(obj) {
-      obj.classList.add('error');
-    }
-
-    function onDragOver(e) {
-      e.stopPropagation();
-      e.preventDefault();
+    _onDragEvent(e) {
+      e.stopPropagation()
+      e.preventDefault()
     }
     
-    function onDragLeave(e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-    
-    function onDrop(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      processFiles(e.dataTransfer.files);
-      doms.inImageFile.value = '';
+    _onDrop(e) {
+      e.stopPropagation()
+      e.preventDefault()
+      this._processFiles(e.dataTransfer.files)
+      this._doms.inImageFile.value = ''
     }
 
-    function onImageFileChange(e) {
-      e.preventDefault();
-      processFiles(e.target.files);
+    _onImageFileChange(e) {
+      e.preventDefault()
+      this._processFiles(e.target.files)
     }
 
-    function onNameInput(e) {
-      doms.btnSet.disabled = !validate();
+    _onNameInput(e) {
+      this._doms.btnSet.disabled = !this._validate()
     }
 
-    function onSetClick(e) {
-      e.preventDefault();
-      if(validate()) {
+    _onCancel() {
+      this._clear()
+      this._handlers.onClose()
+      super._onCancel()
+    }
+
+    _onClose() {
+      this._onCancel()
+    }
+
+    _onSetClick(e) {
+      e.preventDefault()
+      if(this._validate()) {
         let data = {
-          filename  : context.filename,
-          file      : context.file,
-          name      : doms.inMapName.value,
-          alt       : doms.inMapAlt.value
-        };
-        if (!context.handlers.onNewMap(data)) {
-          console.log('ERROR - Invalid input management');
+          filename  : this._filename,
+          file      : this._file,
+          name      : this._doms.inMapName.value,
+          alt       : this._doms.inMapAlt.value
         }
-        hide(doms.creator);
-        clear();
+        if (!this._handlers.onNewMap(data))
+          console.log('ERROR - Invalid input management')
+        this._onClose()
       } else {
-        if (doms.inMapName.value === '') {
-          error(doms.inMapName);
-        } else {
-          error(doms.dropZone);
-        }
+        if (this._doms.inMapName.value === '')
+          this._error(this._doms.inMapName)
+        else
+          this._error(this._doms.dropZone)
       }
     }
 
-    function onCancelClick(e) {
-      e.preventDefault();
-      close();
+    reset() {
+      this._clear()
+      this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
+      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
+      this._doms.inMapAlt.value = this._doms.inMapAlt.defaultValue = ''
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
-    }
-
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.btnSet.addEventListener('click', onSetClick, false);
-        doms.btnCancel.addEventListener('click', onCancelClick, false);
-        doms.dropZone.draggable = true;
-        doms.dropZone.addEventListener('dragover', onDragOver, false);
-        doms.dropZone.addEventListener('dragleave', onDragLeave, false);
-        doms.dropZone.addEventListener('drop', onDrop, false);
-        doms.inImageFile.addEventListener('change', onImageFileChange, false);
-        doms.inMapName.addEventListener('input', onNameInput, false);
-        document.addEventListener('keydown', onKeyAction);
-        return this.reset();
-      },
-
-      reset : function() {
-        clear();
-        doms.inImageFile.value = doms.inImageFile.defaultValue = '';
-        doms.inMapName.value = doms.inMapName.defaultValue = '';  
-        doms.inMapAlt.value = doms.inMapAlt.defaultValue = '';  
-        return this;
-      },
-
-      show : function() {
-        show(doms.creator);
-      }
-
-    }
-
-  })(); /* MAP PROJECT CREATOR */
+  }
 
   /*
    * MAP PROJECT LOADER 
    */
 
-  var ldr = (function() {
+  class ProjectLoaderDialog extends bittls.DialogForm {
 
-    var doms = {
-      loader        : $('project-loader'),
-      list          : document.querySelector('#project-loader .project-list'),
-      btnLoad       : document.querySelector('#project-loader .select'),
-      btnCancel     : document.querySelector('#project-loader .cancel'),
-      imagePreview  : document.querySelector('#project-loader .preview')
-    },
-    context = {
-      handlers : null
-    };
+    constructor(c) {
+      super({
+        form : $('project-loader')
+      })
+      this._handlers = c.handlers
+      this._store = c.store
+      this._doms = {
+        list          : document.querySelector('#project-loader .project-list'),
+        btnLoad       : document.querySelector('#project-loader .select'),
+        imagePreview  : document.querySelector('#project-loader .preview')
+      }
+      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false);
+      this._doms.list.addEventListener('input', this._onSelect.bind(this), false);
+    }
 
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function fill() {
+    _fill() {
       let content = '';
-      store.list().forEach(e => content += '<option value="' + e + '">' + e + '</option>' );
-      doms.list.innerHTML = content;
+      this._store.list.forEach(e => content += '<option value="' + e + '">' + e + '</option>' );
+      this._doms.list.innerHTML = content;
     }
 
-    function loadPreview() {
+    _loadPreview() {
       let project;
-      project = store.read(doms.list.options[doms.list.selectedIndex].value);
-      doms.imagePreview.src = project.dataURL;
+      project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value);
+      this._doms.imagePreview.src = project.dataURL;
     }
 
-    function clear() {
-      hide(doms.imagePreview);
-      doms.imagePreview.src = '';
-      doms.list.innerHTML = '';
-      doms.btnLoad.disabled = true;
+    _clear() {
+      this._doms.imagePreview.style.display = 'none'
+      this._doms.imagePreview.src = ''
+      this._doms.list.innerHTML = ''
+      this._doms.btnLoad.disabled = true
     }
 
-    function reset() {
-      clear();
-      fill();
-      if (doms.list.length > 0) {
-        doms.btnLoad.disabled = false;
-        loadPreview();
-        show(doms.imagePreview);
+    _reset() {
+      this._clear()
+      this._fill()
+      if (this._doms.list.length > 0) {
+        this._doms.btnLoad.disabled = false
+        this._loadPreview();
+        this._doms.imagePreview.style.display = 'block'
       }
     }
 
-    function close() {
-      hide(doms.loader);
-      clear();
-      context.handlers.onClose();
+    _onCancel() {
+      super._onCancel()
+      this._clear()
+      this._handlers.onClose()
     }
 
-    function onSelect(e) {
-      loadPreview();
+    _onClose() {
+      this._onCancel()
     }
 
-    function onLoadClick(e) {
+    _onSelect(e) {
+      this._loadPreview()
+    }
+
+    _onLoadClick(e) {
       let value;
       e.preventDefault();
-      value = doms.list.options[doms.list.selectedIndex].value;
-      hide(doms.loader);
-      clear();
-      context.handlers.onLoadMap(value);
+      value = this._doms.list.options[this._doms.list.selectedIndex].value;
+      super._onClose()
+      this._clear()
+      this._handlers.onLoadMap(value)
     }
 
-    function onCancelClick(e) {
-      e.preventDefault();
-      close();
+    show() {
+      this._reset()
+      super.show()
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
-    }
-
-    return {
-
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.btnLoad.addEventListener('click', onLoadClick, false);
-        doms.btnCancel.addEventListener('click', onCancelClick, false);
-        doms.list.addEventListener('input', onSelect, false);
-        document.addEventListener('keydown', onKeyAction);
-        return this;
-      },
-
-      show : function() {
-        reset();
-        show(doms.loader);
-      }
-
-    };
-
-  })(); /* MAP PROJECT LOADER */
+  }
 
   /*
    * MAP CODE DISPLAY
    */
 
-  var code = (function() {
+  class CodeGeneratorDialog extends bittls.DialogForm {
 
-    var doms = {
-      codeViewer  : $('project-code'),
-      code        : $('code-result'),
-      btnSelect   : document.querySelector('#project-code .select'),
-      btnClear    : document.querySelector('#project-code .clear'),
-      btnClose    : document.querySelector('#project-code .close')
-    },
-    context = {
-      handlers : null
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function close() {
-      hide(doms.codeViewer);
-      reset();
-      context.handlers.onClose();
+    constructor(c) {
+      super({
+        form : $('project-code'),
+        keyHandler : e => this._keyAction(e)
+      })
+      this._handlers = c.handlers
+      this._doms = {
+        code        : $('code-result'),
+        btnSelect   : document.querySelector('#project-code .select'),
+        btnClear    : document.querySelector('#project-code .clear')
+      }
+      this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false);
+      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false);
     }
 
-    function onSelectClick(e) {
-      e.preventDefault();
-      utils.selectText(doms.code);
+    _reset() {
+      this._doms.code.innerHTML = '';
     }
 
-    function onClearClick(e) {
-      e.preventDefault();
-      utils.unselect();
+    _onClose() {
+      super._onClose()
+      this._reset()
+      this._handlers.onClose()
     }
 
-    function onCloseClick(e) {
-      e.preventDefault();
-      close();
+    _onCancel() {
+      this._onClose()
     }
 
-    function onKeyAction(e) {
-      switch(e.key) {
-      case 'a':
-        if (utils.ctrlMetaKey(e)) {
-          e.preventDefault();
-          utils.selectText(doms.code);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        close();
-        break;
-      default:
+    _onSelectClick(e) {
+      e.preventDefault()
+      utils.selectText(this._doms.code)
+    }
+
+    _onClearClick(e) {
+      e.preventDefault()
+      utils.unselect()
+    }
+
+    _keyAction(e) {
+      if('a' === e.key && utils.ctrlMetaKey(e)) {
+        e.preventDefault()
+        utils.selectText(this._doms.code)
       }
     }
 
-    function reset() {
-      code.innerHTML = '';
+    show(s) {
+      this._reset()
+      this._doms.code.innerHTML = s
+      super.show()
     }
 
-    return {
-
-      init(handlers) {
-        context.handlers = handlers;
-        doms.btnSelect.addEventListener('click', onSelectClick, false);
-        doms.btnClear.addEventListener('click', onClearClick, false);
-        doms.btnClose.addEventListener('click', onCloseClick, false);
-        document.addEventListener('keydown', onKeyAction);
-        return this;
-      },
-
-      show : function(s) {
-        reset();
-        doms.code.innerHTML = s;
-        show(doms.codeViewer);
-      }
-
-    };
-
-  })();
+  }
 
   /*
    * HTML CODE LOADER
    */
 
-  var htm = (function() {
+  class HtmlLoaderDialog extends bittls.DialogForm {
 
-    var doms = {
-      codeLoader : $('code-loader'),
-      btnLoad    : document.querySelector('#code-loader .select'),
-      btnClear   : document.querySelector('#code-loader .clear'),
-      btnCancel  : document.querySelector('#code-loader .cancel'),
-      code       : $('input-code')
-    },
-    context = {
-      handlers : null
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function clear() {
-      doms.btnLoad.disabled = true;
-    }
-
-    function reset() {
-      clear();
-      if (doms.code.value != '') {
-        doms.btnLoad.disabled = false;
+    constructor(c) {
+      super({
+        form : $('code-loader'),
+        textRecipients : [$('input-code')]
+      })
+      this._handlers = c.handlers
+      this._doms = {
+        btnLoad    : document.querySelector('#code-loader .select'),
+        btnClear   : document.querySelector('#code-loader .clear'),
+        code       : $('input-code')
       }
+      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
+      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
+      this._doms.code.addEventListener('input', this._onCodeInput.bind(this), false)
     }
 
-    function close() {
-      hide(doms.codeLoader);
-      clear();
-      context.handlers.onClose();
+    _clear() {
+      this._doms.btnLoad.disabled = true
     }
 
-    function onCodeInput(e) {
-      doms.btnLoad.disabled = (doms.code.value === '');
+    _reset() {
+      this._clear()
+      if (this._doms.code.value != '')
+        this._doms.btnLoad.disabled = false
     }
 
-    function onLoadClick(e) {
-      e.preventDefault();
-      hide(doms.codeLoader);
-      clear();
-      context.handlers.onLoadCode(doms.code.value);
+    _onClose() {
+      this._clear()
+      this._handlers.onClose()
+      super._onClose()
     }
 
-    function onClearClick(e) {
-      e.preventDefault();
-      doms.code.value = '';
-      doms.btnLoad.disabled = true;
+    _onCancel() {
+      this._onClose()
+    }
+ 
+    _onCodeInput(e) {
+      this._doms.btnLoad.disabled = (this._doms.code.value === '');
     }
 
-    function onCancelClick(e) {
-      e.preventDefault();
-      close();
+    _onLoadClick(e) {
+      e.preventDefault()
+      this._clear()
+      super._onClose()
+      this._handlers.onLoadCode(this._doms.code.value);
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
+    _onClearClick(e) {
+      e.preventDefault()
+      this._doms.code.value = ''
+      this._doms.btnLoad.disabled = true
     }
 
-    return {
+    show() {
+      this._reset()
+      super.show()
+    }
 
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.btnLoad.addEventListener('click', onLoadClick, false);
-        doms.btnCancel.addEventListener('click', onCancelClick, false);
-        doms.btnClear.addEventListener('click', onClearClick, false);
-        doms.code.addEventListener('input', onCodeInput, false);
-        document.addEventListener('keydown', onKeyAction);
-      },
-
-      show() {
-        reset();
-        show(doms.codeLoader);
-      }
-
-    };
-
-  })();
+  }
 
   /*
-   * help DISPLAY
+   * HELP DISPLAY
    */
 
-  var help = (function() {
+  class HelpDialog extends bittls.DialogForm {
 
-    var doms = {
-      help        : $('help-display'),
-      btnClose    : document.querySelector('#help-display .close')
-    },
-    context = {
-      handlers : null
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'block';
-
-    function close() {
-      hide(doms.help);
-      context.handlers.onClose();
+    constructor(c) {
+      super({
+        form : $('help-display')
+      })
+      this._handlers = c.handlers
     }
 
-    function onCloseClick(e) {
-      e.preventDefault();
-      close();
+    _onClose() {
+      this._handlers.onClose()
+      super._onClose()
     }
 
-    function onKeyAction(e) {
-      if('Escape' === e.key) {
-        e.preventDefault();
-        close();
-      }
+    _onCancel() {
+      this._onClose()
     }
 
-    return {
-
-      init(handlers) {
-        context.handlers = handlers;
-        doms.btnClose.addEventListener('click', onCloseClick, false);
-        document.addEventListener('keydown', onKeyAction);
-        return this;
-      },
-
-      show : function() {
-        show(doms.help);
-      }
-
-    };
-
-  })();
+  }
 
   /*
    * MENU MANAGEMENT
    */
 
-  var mnu = (function() {
+  class Menu {
 
-    var doms = {
-      newProjectBtn     : $('new-project'),
-      previewBtn        : $('preview'),
-      saveProjectBtn    : $('save-project'),
-      loadProjectBtn    : $('load-project'),
-      cleanProjectsBtn  : $('clean-projects'),
-      generateBtn       : $('generate'),
-      loadHTMLBtn       : $('load-html'),
-      helpBtn           : $('help')
-    },
-    context = {
-      handlers : null,
-      enabled : true
-    };
-
-    var hide = (obj) => obj.style.display = 'none';
-    var show = (obj) => obj.style.display = 'inline';
-
-    function onNewProjectBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onNewProject();
+    constructor(c) {
+      this._btns = Object.assign({}, {
+        newProject    : new bittls.TButton({ element : $('new-project'),    action : c.handlers.onNewProject }),
+        preview       : new bittls.TButton({ element : $('preview'),        action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
+        saveProject   : new bittls.TButton({ element : $('save-project'),   action : c.handlers.onSaveProject }),
+        loadProject   : new bittls.TButton({ element : $('load-project'),   action : c.handlers.onLoadProject }),
+        cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
+        generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
+        loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
+        help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
+      })
+      this._btns.saveProject.disable()
+      this._btns.preview.disable()
+      this._btns.generate.disable()
+      this._btns.loadHTML.disable()
+      this.onKeyAction = this._onKeyAction.bind(this)
+      document.addEventListener('keydown', this.onKeyAction, false);
+      document.addEventListener('keydown', this.onCheckHelp.bind(this), false);
+      return this.reset();
     }
 
-    function onPreviewBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled && !doms.previewBtn.classList.contains('disabled'))
-        context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+    canSave() {
+      this._btns.saveProject.enable()
+    }
+    
+    preventSave() {
+      this._btns.saveProject.disable()
     }
 
-    function onSaveProjectBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onSaveProject();
+    release() {
+      Object.values(this._btns).forEach(e => e.release())
+      document.addEventListener('keydown', this.onKeyAction, false);
     }
 
-    function onLoadProjectBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onLoadProject();
+    freeze() {
+      Object.values(this._btns).forEach(e => e.freeze())
+      document.removeEventListener('keydown', this.onKeyAction, false);
     }
 
-    function onCleanProjectsBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onCleanProjects();
-    }
-
-    function onGenerateBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled && !doms.generateBtn.classList.contains('disabled'))
-        context.handlers.onGenerateCode();
-    }
-
-    function onLoadHTMLBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled && !doms.loadHTMLBtn.classList.contains('disabled'))
-        context.handlers.onLoadHTML();
-    }
-
-    function onHelpBtnClick(e) {
-      e.preventDefault();
-      if (context.enabled)
-        context.handlers.onHelp();
-    }
-
-    let canSave = () => doms.saveProjectBtn.classList.remove('disabled');
-    let preventSave = () => doms.saveProjectBtn.classList.add('disabled');
-    let release = () => {
-      context.enabled = true;
-      document.addEventListener('keydown', onKeyAction);
-    }
-    let freeze = () => {
-      context.enabled = false;
-      document.removeEventListener('keydown', onKeyAction);
-    }
-
-    function onKeyAction(e) {
+    _onKeyAction(e) {
       switch(e.key) {
       case 'm':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled)
-            e.preventDefault();
-            context.handlers.onNewProject();
+          e.preventDefault()
+          this._btns.newProject.tryAction()
         }
         break;
       case 'l':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled)
-            e.preventDefault();
-            context.handlers.onLoadProject();
+          e.preventDefault()
+          this._btns.loadProject.tryAction()
         }
         break;
       case 's':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled && !doms.saveProjectBtn.classList.contains('disabled')) {
-            e.preventDefault();
-            context.handlers.onSaveProject();
-          }
+          e.preventDefault()
+          this._btns.saveProject.tryAction()
         }
         break;
       case 'p':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled && !doms.previewBtn.classList.contains('disabled')) {
-            e.preventDefault();
-            context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
-          }
+          e.preventDefault()
+          this._btns.preview.tryAction()
         }
         break;
       case 'g':
         if (utils.ctrlMetaKey(e)) {
-          if (context.enabled && !doms.generateBtn.classList.contains('disabled')) {
-            e.preventDefault();
-            context.handlers.onGenerateCode();
-          }
+          e.preventDefault()
+          this._btns.generate.tryAction()
         }
         break;
       case 'Escape':
-        if (context.enabled && !doms.previewBtn.classList.contains('disabled') && doms.previewBtn.classList.contains('selected')) {
-          e.preventDefault();
-          context.handlers.onPreview(doms.previewBtn.classList.toggle('selected'));
+        if(this._btns.preview.element.classList.contains('selected')) {
+          e.preventDefault()
+          this._btns.preview.tryAction()
         }
         break;
       default:
       }
     }
 
-    function onCheckHelp(e) {
-      if ('F1' === e.key) {
-        e.preventDefault();
-        if (context.enabled)
-          context.handlers.onHelp();
-      }
+    onCheckHelp(e) {
+      e.preventDefault()
+      if ('F1' === e.key)
+        this._btns.help.tryAction()
     }
 
-    return {
+    reset() {
+      this._btns.saveProject.disable()
+      this._btns.preview.element.classList.remove('selected')
+      this._btns.preview.disable()
+      this._btns.generate.disable()
+      this._btns.loadHTML.disable()
+      document.addEventListener('keydown', this.onKeyAction, false);
+      return this;
+    }
 
-      init : function(handlers) {
-        context.handlers = handlers;
-        doms.newProjectBtn.addEventListener('click', onNewProjectBtnClick, false);
-        doms.previewBtn.addEventListener('click', onPreviewBtnClick, false);
-        doms.saveProjectBtn.addEventListener('click', onSaveProjectBtnClick, false);
-        doms.loadProjectBtn.addEventListener('click', onLoadProjectBtnClick, false);
-        doms.cleanProjectsBtn.addEventListener('click', onCleanProjectsBtnClick, false);
-        doms.generateBtn.addEventListener('click', onGenerateBtnClick, false);
-        doms.loadHTMLBtn.addEventListener('click', onLoadHTMLBtnClick, false);
-        doms.helpBtn.addEventListener('click', onHelpBtnClick, false);
-        doms.saveProjectBtn.classList.add('disabled');
-        doms.previewBtn.classList.add('disabled');
-        doms.generateBtn.classList.add('disabled');
-        doms.loadHTMLBtn.classList.add('disabled');
-        document.addEventListener('keydown', onKeyAction);
-        document.addEventListener('keydown', onCheckHelp);
-        return this.reset();
-      },
+    switchToEditMode() {
+      this._btns.preview.enable()
+      this._btns.preview.element.classList.remove('selected')
+      this._btns.generate.enable()
+      this._btns.loadHTML.enable()
+      return this;
+    }
 
-      reset : function() {
-        doms.saveProjectBtn.classList.add('disabled');
-        doms.previewBtn.classList.remove('selected');
-        doms.previewBtn.classList.add('disabled');
-        doms.generateBtn.classList.add('disabled');
-        doms.loadHTMLBtn.classList.add('disabled');
-        document.addEventListener('keydown', onKeyAction);
-        return this;
-      },
-
-      switchToEditMode : function() {
-        doms.previewBtn.classList.remove('disabled');
-        doms.previewBtn.classList.remove('selected');
-        doms.generateBtn.classList.remove('disabled');
-        doms.loadHTMLBtn.classList.remove('disabled');
-        return this;
-      },
-
-      canSave, preventSave,
-      freeze, release
-
-    };
-
-  })(); /* MENU MANAGEMENT */
+  }
 
   /*
    * APPLICATION
    */
 
-  var app = (function() {
+  // APPLICATION - MENU HANDLERS
 
-    var doms = {
-      fileDropZone : $('file-drop-zone')
-    };
+  class AppMenuHandlers {
 
-    var setModified = unsafe => {
-      mdl.setModified();
-      mnu.canSave();
-      if (unsafe) clp.setCopyUnsafe();
-    };
-
-    var setUnmodified = unsafe => {
-      mdl.setUnmodified();
-      mnu.preventSave();
-      if (unsafe) clp.setCopyUnsafe();
-    };
-
-    function freeze() {
-      wks.freeze();
-      tls.freeze();
-      mnu.freeze();
+    constructor(app) {
+      this._app = app
+      this._mapper = new bitmap.Mapper()
     }
 
-    function release() {
-      wks.release();
-      tls.release();
-      mnu.release();
-    }
-
-    function onAreaEnter(e) {
-      if (selector.getCount() === 0) {
-        tls.displayAreaProps(this);
+    _onNewProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._app.footer.reset()
+        this._app.workspace.reset()
+        this._app.tools.reset()
+        this._app.menu.reset()
+        this._app.model.reset()
+        this._app.creator.reset()
+        this._app.creator.show()
+        this._app.freeze()
       }
     }
 
-    function onAreaLeave(e) {
-      if (selector.getCount() === 0) {
-        tls.resetAreaProps();
+    _onPreview(activated) {
+      if (activated) {
+        let t
+        this._app.tools.freeze()
+        t = this._app.workspace.switchToPreview()
+        this._mapper.displayPreview(t.container, t.image, this._app.model.areas, this._app.model.info)
+      } else {
+        this._app.workspace.switchToEdit()
+        this._mapper.cancelPreview()
+        this._app.tools.release()
       }
     }
 
-    var projects = (function() {
-
-      var onClose = () => release();
-
-      function onNewMap(data) {
-        let rtn = false;
-        if (mdl.setFile(data.file)) {
-          mdl.setInfo(data);
-          mnu.switchToEditMode();
-          ftr.info(data.file);
-          wks.load(data.file);
-          setModified(true);
-          rtn = true;
-        } else {
-          ftr.error(data.file);
-        }
-        release();
-        return rtn;
+    _onLoadProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._app.footer.reset()
+        this._app.workspace.reset()
+        this._app.tools.reset()
+        this._app.menu.reset()
+        this._app.model.reset()
+        this._app.creator.reset()
+        this._app.opener.show()
+        this._app.freeze()
       }
+    }
 
-      function onLoadMap(name) {
-        let rtn, project;
-        rtn = false;
-        project = store.read(name);
-        ftr.infoEx(project);
-        wks.loadEx(project);
-        if(mdl.fromStore(project, store.s2a)) {
-          mdl.forEachArea(e => {
-            e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
-            e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
-          });
-          mnu.switchToEditMode();
-          setUnmodified(true);
-          rtn = true;
-        } else {
-          ftr.errorEx(project);
-        }
-        release();
-        return rtn;
-      }
+    _onSaveProject() {
+      this._app.store.write(this._app.model.info.name, this._app.model.toStore(this._app.store.a2s))
+      this._app.setUnmodified()
+    }
 
-      function onLoadCode(code) {
-        let areas, rtn;
-        areas = [];
-        rtn = false;
-        if (code) {
-          bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, wks.getParent())));
-          if (areas.length > 0) {
-            mdl.addAreas(areas);
-            areas.forEach(e => {
-              e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
-              e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
-            });
-            setModified(true);
-            selector.unselectAll();
-            selector.selectSubset(areas);
-            rtn = true;
-          }
-        }
-        release();
-        return rtn;
-      }
+    _onCleanProjects() {
+      this._app.manager.show()
+      this._app.freeze()
+    }
 
+    _onGenerateCode() {
+      this._app.generator.show(bitmap.Mapper.getHtmlString(this._app.model.filename, this._app.model.info, this._app.model.areas));
+      this._app.freeze()
+    }
+
+    _onLoadHTML() {
+      this._app.loader.show()
+      this._app.freeze()
+    }
+
+    _onHelp() {
+      this._app.helper.show()
+      this._app.freeze()
+    }
+
+    get handlers() {
       return {
-        handlers : { onClose, onNewMap, onLoadMap, onLoadCode }
-      };
+        onNewProject    : this._onNewProject.bind(this),
+        onPreview       : this._onPreview.bind(this),
+        onLoadProject   : this._onLoadProject.bind(this),
+        onSaveProject   : this._onSaveProject.bind(this),
+        onCleanProjects : this._onCleanProjects.bind(this),
+        onGenerateCode  : this._onGenerateCode.bind(this),
+        onLoadHTML      : this._onLoadHTML.bind(this),
+        onHelp          : this._onHelp.bind(this)
+      }
+    }
 
-    })();
+  }
 
-    var menu = (function() {
+  // APPLICATION - PROJECTS HANDLERS
 
-      var _mapper = new bitmap.Mapper();
- 
-      function onNewProject() {
-        if (!mdl.isModified() || confirm('Discard all changes?')) {
-          ftr.reset();
-          wks.reset();
-          tls.reset();
-          mnu.reset();
-          mdl.reset();
-          ctr.reset();
-          ctr.show();
-          freeze();
+  class AppProjectHandlers {
+
+    constructor(app) {
+      this._app = app
+    }
+
+    _onClose() {
+      this._app.release()
+    }
+
+    _onNewMap(data) {
+      let rtn = false
+      try {
+        this._app.model.file = data.file
+        this._app.model.info = data
+        this._app.menu.switchToEditMode()
+        this._app.footer.info(data.file)
+        this._app.workspace.load(data.file)
+        this._app.setModified(true)
+        rtn = true
+      } catch (e) {
+        console.log(e.message)
+        this._app.footer.error(data.file)
+      } finally {
+        this._app.release()
+        return rtn
+      }
+    }
+
+    _onLoadMap(name) {
+      let rtn, project;
+      rtn = false;
+      project = this._app.store.read(name);
+      this._app.footer.infoEx(project);
+      this._app.workspace.loadEx(project);
+      if(this._app.model.fromStore(project, this._app.store.s2a)) {
+        this._app.aTooler.managePropsDisplay(this._app.model.areas)
+        this._app.menu.switchToEditMode()
+        this._app.setUnmodified(true)
+        rtn = true
+      } else {
+        this._app.footer.errorEx(project)
+      }
+      this._app.release()
+      return rtn
+    }
+
+    _onLoadCode(code) {
+      let areas, rtn
+      areas = []
+      rtn = false
+      if (code) {
+        bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, this._app.workspace.getParent())))
+        if (areas.length > 0) {
+          this._app.model.addAreas(areas)
+          this._app.aTooler.managePropsDisplay(this._app.model.areas)
+          this._app.setModified(true)
+          this._app.aSelector.unselectAll()
+          this._app.aSelector.selectSubset(areas)
+          rtn = true
         }
       }
+      this._app.release()
+      return rtn
+    }
 
-      function onPreview(activated) {
-        if (activated) {
-          let c, i;
-					tls.freeze();
-          [c, i] = wks.switchToPreview();
-          _mapper.displayPreview(c, i, mdl.getAreas(), mdl.getInfo());
-        } else {
-          wks.switchToEdit();
-          _mapper.cancelPreview();
-					tls.release();
-        }
-      }
-
-      function onLoadProject() {
-        if (!mdl.isModified() || confirm('Discard all changes?')) {
-          ftr.reset();
-          wks.reset();
-          tls.reset();
-          mnu.reset();
-          mdl.reset();
-          ctr.reset();
-          ldr.show();
-          freeze();
-        }
-      }
-
-      function onSaveProject() {
-        store.write(mdl.getInfo().name, mdl.toStore(store.a2s));
-        setUnmodified();
-      }
-
-      function onCleanProjects() {
-        prj.show();
-        freeze();
-      }
-
-      function onGenerateCode() {
-        code.show(bitmap.Mapper.getHtmlString(mdl.getFile(), mdl.getInfo(), mdl.getAreas()));
-        freeze();
-      }
-
-      function onLoadHTML() {
-        htm.show();
-        freeze();
-      }
-
-      function onHelp() {
-        help.show();
-        freeze();
-      }
-
+    get handlers() {
       return {
-        handlers : {
-          onNewProject, onPreview, onLoadProject, onSaveProject, onCleanProjects,
-          onGenerateCode, onLoadHTML, onHelp
-        }
-      };
-
-    })();
-
-    var dragger = (function() {
-
-      function prevent(e) {
-        if (!tls.none()) return true;
-        if (mdl.findArea(e.target)) return true;
-        return false;
+        onClose     : this._onClose.bind(this),
+        onNewMap    : this._onNewMap.bind(this),
+        onLoadMap   : this._onLoadMap.bind(this),
+        onLoadCode  : this._onLoadCode.bind(this)
       }
+    }
 
+  }
+
+  // APPLICATION - WORKSPACE HANDLERS
+
+  class AppDragHandlers {
+
+    constructor(app) {
+      this._app = app
+    }
+
+    _prevent(e) {
+      if (!this._app.tools.none()) return true
+      if (this._app.model.findArea(e.target)) return true
+      return false
+    }
+
+    _onStart(e) {
+      this._app.tools.freeze()
+    }
+
+    _onExit(e) {
+      this._app.tools.release()
+    }
+
+    get handlers() {
       return {
-        handlers : { prevent }
-      };
-
-    })();
-
-    var tooler = (function() {
-
-      var _order = new bitedit.Order(),
-          _sizer = new bitedit.Sizer(),
-          _aligner = new bitedit.Aligner();
-
-      function onGridScopeChange(v) {
-        if (selector.getCount() === 1) {
-          let area = selector.first().figure;
-          if (area.isGrid) {
-            area.gridScope = v;
-            setModified();
-          }
-        }
+        prevent : this._prevent.bind(this),
+        onStart : this._onStart.bind(this),
+        onExit  : this._onExit.bind(this)
       }
+    }
 
-      function onGridAlignChange(v) {
-        if (selector.getCount() === 1) {
-          let area = selector.first().figure;
-          if (area.isGrid) {
-            area.gridAlign = v;
-            setModified();
-          }
-        }
+  }
+
+  class AppDrawHandlers {
+
+    constructor(app) {
+      this._app = app
+      this._factory = {
+        'rectangle'     : bitgen.Rectangle,
+        'square'        : bitgen.Square,
+        'rhombus'       : bitgen.Rhombus,
+        'circleCtr'     : bitgen.Circle,
+        'circleDtr'     : bitgen.CircleEx,
+        'ellipse'       : bitgen.Ellipse,
+        'triangleIsc'   : bitgen.IsoscelesTriangle,
+        'triangleEql'   : bitgen.EquilateralTriangle,
+        'triangleRct'   : bitgen.RectangleTriangle,
+        'hexRct'        : bitgen.Hex,
+        'hexDtr'        : bitgen.HexEx,
+        'polygon'       : bitgen.Polygon
       }
-
-      function onGridSpaceChange(v) {
-        if (selector.getCount() === 1) {
-          let area = selector.first().figure;
-          if (area.isGrid) {
-            area.gridSpace = v;
-            setModified();
-          }
-        }
-      }
-
-      function onShowOrder(bShow) {
-        if (bShow) {
-          let list, fig;
-          if (selector.getCount() === 1) {
-            fig = selector.first().figure;
-            list = (fig.isGrid) ? [fig] : fig.copyBonds();
-            list.forEach(g => _order.display(g.areas));
-          }
-        } else {
-          _order.hide();
-        }
-      }
-
-      function onGridOrderChange(v) {
-        if (selector.getCount() === 1) {
-          let area = selector.first().figure;
-          if (area.isGrid) {
-            area.gridOrder = v;
-            setModified();
-          }
-        }
-      }
-
-      function onPropsSave(p) {
-        tls.saveAreaProps(selector.first().figure, p);
-        setModified();
-      }
-
-      var onPropsRestore = () => tls.restoreAreaProps(selector.first().figure);
-
-      function onResize() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          if (!_sizer.checkBoundaries(selector.list(), r.width, r.height, d.width, d.height))
-            alert('Resizing selected elements makes at least one of them outside of image boudaries!');
-          else
-            _sizer.resize(selector.list(), r.width, r.height);
-        }
-      }
-
-      function onAlignCenterHorizontally() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          let cy = Math.round(r.y + r.height/2);
-          if (!_aligner.checkVerticalBoundaries(selector.list(), cy, d.height))
-            alert('Aligning horizontally selected elements makes at least one of them outside of image boudaries!');
-          else
-            _aligner.alignHorizontally(selector.list(), cy);
-        }
-      }
-
-      function onAlignCenterVertically() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          let cx = Math.round(r.x + r.width/2);
-          if (!_aligner.checkHorizontalBoundaries(selector.list(), cx, d.width))
-            alert('Aligning vertically selected elements makes at least one of them outside of image boudaries!');
-          else
-            _aligner.alignVertically(selector.list(), cx);
-        }
-      }
-
-      function onAlignLeft() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          if (!_aligner.checkRightBoundaries(selector.list(), r.x, d.width))
-            alert('Aligning on left side selected elements makes at least one of them outside of image boudaries!');
-          else
-            _aligner.alignLeft(selector.list(), r.x);
-        }
-      }
-
-      function onAlignTop() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          if (!_aligner.checkBottomBoundaries(selector.list(), r.y, d.height))
-            alert('Aligning on top side selected elements makes at least one of them outside of image boudaries!');
-          else
-            _aligner.alignTop(selector.list(), r.y);
-        }
-      }
-
-      function onAlignRight() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          if (!_aligner.checkLeftBoundaries(selector.list(), r.x + r.width))
-            alert('Aligning on right side selected elements makes at least one of them outside of image boudaries!');
-          else
-            _aligner.alignRight(selector.list(), r.x + r.width);
-        }
-      }
-
-      function onAlignBottom() {
-        if (1 < selector.getCount()) {
-          let d = wks.getDims();
-          let r = selector.first().figure.rect;
-          if (!_aligner.checkTopBoundaries(selector.list(), r.y + r.height))
-            alert('Aligning on bottom side selected elements makes at least one of them outside of image boudaries!');
-          else
-            _aligner.alignBottom(selector.list(), r.y + r.height);
-        }
-      }
-
-      return {
-        handlers : {
-          onGridScopeChange, onGridAlignChange, onGridSpaceChange,
-          onShowOrder, onGridOrderChange,
-          onPropsSave, onPropsRestore,
-          onResize, onAlignCenterHorizontally, onAlignCenterVertically,
-          onAlignLeft, onAlignTop, onAlignRight, onAlignBottom
-        }
-      };
-
-    })();
-
-    var drawer = (function() {
-
-      const _factory = {
-        'rectangle'   : bitgen.Rectangle,
-        'square'      : bitgen.Square,
-        'rhombus'     : bitgen.Rhombus,
-        'circleCtr'   : bitgen.Circle,
-        'circleDtr'   : bitgen.CircleEx,
-        'ellipse'     : bitgen.Ellipse,
-        'triangleIsc' : bitgen.IsoscelesTriangle,
-        'triangleEql' : bitgen.EquilateralTriangle,
-        'triangleRct' : bitgen.RectangleTriangle,
-        'hexRct'      : bitgen.Hex,
-        'hexDtr'      : bitgen.HexEx,
-        'polygon'     : bitgen.Polygon
-      };
-
-      const _gridFactory = {
+      this._gridFactory = {
         'gridRectangle' : bitgen.GridRectangle,
         'gridCircle'    : bitgen.GridCircle,
         'gridHex'       : bitgen.GridHex
-      };
-
-      var _generator = null;
-
-      function _create(parent, alt) {
-        let figGen = _factory[tls.getDrawingMode()];
-        if (!figGen) {
-          console.log('ERROR - Drawing mode not handled');
-          return null;
-         }
-        return new figGen(parent, false, alt);
       }
+      this._generator   = null
+    }
 
-      function _createGrid(parent, bond, gridParent) {
-        let figGen = _gridFactory[tls.getDrawingMode()];
-        if (!figGen) {
-          console.log('ERROR - Grid drawing mode not handled');
-          return null;
-        }
-        return new figGen(parent, bond, gridParent, tls.getGridScope(), tls.getGridAlign(), tls.getGridSpace(), tls.getGridOrder());
+    _create(parent, alt) {
+      const figGen = this._factory[this._app.tools.drawMode]
+      if (!figGen) {
+        console.log('ERROR - Drawing mode not handled')
+        return null
       }
-
-      function prevent(e) {
-        if (e.ctrlKey || e.shiftKey) return true;
-        if (tls.none()) return true;
-        if (mdl.findArea(e.target)) return true;
-        return false;
+      return new figGen(parent, false, alt)
+    }
+  
+    _createGrid(parent, bond, gridParent) {
+      let figGen = this._gridFactory[this._app.tools.drawMode]
+      if (!figGen) {
+        console.log('ERROR - Grid drawing mode not handled')
+        return null
       }
-
-      function onStart(parent, pt, alt, gridParent) {
-        let bondElt = (tls.isGridDrawingModeSelected()) ? selector.first().figure : null;
-        selector.empty();
-        _generator = (null === bondElt)
-                    ? _create(parent, alt)
-                    : _createGrid(parent, bondElt, gridParent);
-        if (null == _generator) {
-          alert('Unable to draw selected area!');
-          tls.disableGridTools();
-          return false;
-        }
-        tls.freeze();
-        tls.disableAreaProps();
-        _generator.start(pt);
-        return true;
+      return new figGen(
+        parent, bond, gridParent,
+        this._app.tools.gridScope, this._app.tools.gridAlign, this._app.tools.gridSpace, this._app.tools.gridOrder
+      )
+    }
+  
+    _prevent(e) {
+      if (e.ctrlKey || e.shiftKey) return true
+      if (this._app.tools.none()) return true
+      if (this._app.model.findArea(e.target)) return true
+      return false
+    }
+  
+    _onStart(parent, pt, alt, gridParent) {
+      let bondElt = (this._app.tools.isGridDrawModeSelected()) ? this._app.aSelector.first.figure : null
+      this._app.aSelector.empty()
+      this._generator = (null === bondElt)
+                        ? this._create(parent, alt)
+                        : this._createGrid(parent, bondElt, gridParent)
+      if (null == this._generator) {
+        alert('Unable to draw selected area!')
+        this._app.tools.disableGridTools()
+        return false
       }
-
-      function onProgress(parent, pt) {
-        let width = parent.getAttribute('width');
-        let height = parent.getAttribute('height');
-        _generator.progress(pt, width, height);
+      this._app.tools.freeze()
+      this._app.tools.disableAreaProps()
+      this._generator.start(pt)
+      return true
+    }
+  
+    _onProgress(parent, pt) {
+      const width = parent.getAttribute('width'),
+            height = parent.getAttribute('height')
+      this._generator.progress(pt, width, height)
+    }
+  
+    _onEnd(parent, pt) {
+      let complete = true
+      const width = parent.getAttribute('width'),
+            height = parent.getAttribute('height')
+      switch(this._generator.end(pt, width, height)) {
+      case 'done':
+        let fig = this._generator.figure
+        this._app.model.addArea(fig)
+        this._app.setModified(true)
+        this._app.aSelector.select(fig)
+        this._app.tools.release()
+        this._app.aTooler.managePropsDisplay([fig])
+        this._generator = null
+        break
+      case 'error':
+        alert('Invalid area dimensions!')
+        this._app.tools.release()
+        break;
+      case 'continue':
+      default:
+        complete = false
       }
+      return complete
+    }
+  
+    _onCancel() {
+      this._generator.cancel()
+      this._generator = null
+      this._app.tools.release()
+      this._app.tools.disableGridTools()
+    }
 
-      function onEnd(parent, pt) {
-        let complete = true;
-        let width = parent.getAttribute('width');
-        let height = parent.getAttribute('height');
-        switch(_generator.end(pt, width, height)) {
-        case 'done':
-          let fig = _generator.figure;
-          mdl.addArea(fig);
-          setModified(true);
-          selector.select(fig);
-          tls.release();
-          fig.dom.addEventListener('mouseover', onAreaEnter.bind(fig), false);
-          fig.dom.addEventListener('mouseleave', onAreaLeave.bind(fig), false);
-          _generator = null;
-          break;
-        case 'error':
-          alert('Invalid area dimensions!');
-          tls.release();
-          break;
-        case 'continue':
-        default:
-          complete = false;
-        }
-        return complete;
-      }
-
-      function onCancel() {
-        _generator.cancel();
-        _generator = null;
-        tls.release();
-        tls.disableGridTools();
-      }
-
+    get handlers() {
       return {
-        handlers : { prevent, onStart, onProgress, onEnd, onCancel }
-      };
-
-    })();
-
-    var selector = (function() {
-
-      var _tracker = null,
-          _selected = new bitedit.MultiSelector();
-
-      function _updateGridTools() {
-        tls.blurAreaProps();
-        if (_selected.length === 1) {
-          tls.enableGridTools(_selected.get(0).figure);
-        } else {
-          tls.disableGridTools();
-        }
-      }
-
-      function isAreaSelected(area) {
-        return _selected.has(mdl.findArea(area));
-      }
-
-      function _areaSelect(area) {
-        tls.blurAreaProps();
-        _selected.set(mdl.findArea(area));
-        _selected.get(0).highlight();
-        tls.enableGridTools(_selected.get(0).figure);
-      }
-
-      function _areaMultiSelect(area) {
-        if (_selected.length > 0)
-          _selected.get(0).trivialize();
-        _selected.toggle(mdl.findArea(area));
-        if (_selected.length > 0)
-          _selected.get(0).highlight();
-        _updateGridTools();
-      }
-
-      function _computeSelection(coords) {
-        mdl.forEachArea(function(e) {
-          if (e.within(coords)) {
-            if (!_selected.has(e)) {
-              _selected.toggle(e);
-            }
-          } else if (_selected.has(e)) {
-            _selected.toggle(e);
-          }
-        });
-        _updateGridTools();
-      }
-
-      function _areaSelectAll() {
-        if (_selected.length > 0)
-          _selected.get(0).trivialize();
-        _selected.empty();
-        mdl.forEachArea(e => _selected.add(e));
-        if (_selected.length > 0)
-          _selected.get(0).highlight();
-        _updateGridTools();
-      }
-
-      function _areaUnselectAll() {
-        let rtn = _selected.length;
-        if (_selected.length > 0)
-          _selected.get(0).trivialize();
-        _selected.empty();
-        tls.disableGridTools();
-        return rtn;
-      }
-
-      var getSelectedCount  = () => _selected.length,
-          getSelected       = () => _selected.get(0),
-          getSelectedList   = () => _selected.slice(),
-          empty             = () => _selected.empty(),
-          unselectAll       = _areaUnselectAll;
-
-      function select(figure) {
-        _selected.set(figure);
-        _selected.get(0).highlight();
-        tls.enableGridTools(figure);
-      }
-
-      function selectSubset(figures) {
-        figures.forEach(e => _selected.add(e));
-        if (_selected.length > 0)
-          _selected.get(0).highlight();
-        _updateGridTools();
-      }
-
-      function preventSelect(e) {
-        if (e.ctrlKey || e.metaKey || e.altKey) return true;
-        if (!mdl.findArea(e.target)) return true;
-        if (isAreaSelected(e.target) && !e.shiftKey) return true; // is a move
-        return false;
-      }
-
-      function onSelect(target, shiftKey) {
-        if (!shiftKey) {
-          _areaSelect(target);
-        } else {
-          _areaMultiSelect(target);
-        }
-      }
-
-      function onSelectAll() {
-        _areaSelectAll();
-      }
-
-      function onUnselectAll() {
-        if (!_areaUnselectAll())
-          tls.clearDrawMode();
-      }
-
-      function preventTracking(e) {
-        if (!tls.none()) return true;
-        if (!utils.noMetaKey(e)) return true;
-        if (mdl.findArea(e.target)) return true;
-        if (bitedit.isGrip(e.target)) return true;
-        return false;
-      }
-
-      function onTrackStart(parent, pt, unselect) {
-        _areaUnselectAll();
-        _tracker = new bitgen.Tracker(parent);
-        _tracker.start(pt);
-        tls.freeze();
-      }
-
-      function onTrackProgress(pt) {
-        _tracker.progress(pt);
-        _computeSelection(_tracker.coords);
-      }
-
-      function onTrackEnd() {
-        _tracker.cancel();
-        _tracker = null;
-        if (_selected.length > 0)
-          _selected.get(0).highlight();
-      }
-      
-      function onTrackExit() {
-        if (_selected.length > 0)
-          _selected.get(0).highlight();
-        tls.release();
-      }
-
-      function onTrackCancel() {
-        _tracker.cancel();
-        _tracker = null;
-        tls.release();
-      }
-
-      function onDeleteAll() {
-        _selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
-        _selected.forEach(e => mdl.removeArea(e.figure));
-        _selected.empty();
-        tls.disableGridTools();
-        setModified(true);
-      }
-
-      function onFreeze() {
-        if (_selected.length === 1) {
-          let newSel = [];
-          if (mdl.freezeGridArea(_selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
-            _selected.get(0).trivialize();
-            _selected.empty();
-            newSel.forEach(e => _selected.add(e));
-            if (_selected.length > 0)
-              _selected.get(0).highlight();
-            _updateGridTools();
-            newSel = null;
-            setModified(true);
-          }
-        }
-      }
-
-      function onCopy() {
-        if (_selected.length < 1) return;
-        clp.setClipboard(mdl.toClipboard(_selected.reduce((a,e) => { a.push(e.figure); return a; }, []), clp.a2c));
-      }
-
-      function onPaste(forceDeepCopy) {
-        let areas;
-        if (clp.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
-          return;
-        areas = mdl.fromClipboard(clp.getClipboard(), clp.c2a, forceDeepCopy);
-        if (areas.length > 0) {
-          mdl.addAreas(areas);
-          areas.forEach(e => {
-            e.dom.addEventListener('mouseover', onAreaEnter.bind(e), false);
-            e.dom.addEventListener('mouseleave', onAreaLeave.bind(e), false);
-          });
-          setModified();
-          selector.unselectAll();
-          selector.selectSubset(areas);
-          mover.handlers.onStep(wks.getParent(), clp.offset(), clp.offset());
-        }
-        setModified();
-      }
-
-      return {
-        isAreaSelected,
-        getCount : getSelectedCount, first : getSelected, list : getSelectedList,
-        select, selectSubset, empty, unselectAll,
-        handlers : {
-          preventSelect, onSelect, onSelectAll, onUnselectAll,
-          preventTracking, onTrackStart, onTrackProgress, onTrackEnd, onTrackExit, onTrackCancel,
-          onDeleteAll, onFreeze, onCopySelection : onCopy, onPasteSelection : onPaste
-        }
-      };
-
-    })();
-
-    var mover = (function() {
-
-      var _mover = new bitedit.Mover();
-
-      function prevent(e) {
-        if (!mdl.findArea(e.target)) return true;
-        if (!selector.isAreaSelected(e.target)) return true;
-        return false;
-      }
-
-      function onStart(parent, pt) {
-        let width = parent.getAttribute('width');
-        let height = parent.getAttribute('height');
-        let selected = selector.list();
-        selected.sort((a,b) => a.figure.isGrid ? -1 : 1);
-        _mover.start(selected, pt, width, height);
-        tls.freeze();
-      }
-
-      function onProgress(pt) {
-        _mover.progress(pt)
-      }
-
-      function onEnd(pt) {
-        _mover.end(pt);
-        setModified();
-      }
-
-      function onExit(e) {
-        tls.release()
-      }
-
-      function onCancel() {
-        _mover.cancel();
-        tls.release();
-      }
-
-      function onStep(parent, dx, dy) {
-        let width = parent.getAttribute('width');
-        let height = parent.getAttribute('height');
-        _mover.step(selector.list(), dx, dy, width, height);
-        setModified();
-      }
-
-      function onRotate(parent, direction) {
-        if (1 < selector.getCount()) {
-          alert('Rotation is supported for a single selected area!');
-          return;
-        }
-        let width = parent.getAttribute('width');
-        let height = parent.getAttribute('height');
-        if (!selector.first().rotate(direction, width, height)) {
-          alert('ERROR - Rotation possibly makes area go beyond limits!');
-        } else {
-          setModified();
-        }
-      }
-
-      return {
-        handlers : {
-          prevent, onStart, onProgress, onEnd, onExit, onCancel,
-          onStep, onRotate
-        }
-      };
-
-    })();
-
-    var editor = (function() {
-
-      var _editor = new bitedit.Editor();
-
-      function prevent(e) {
-        if (0 === selector.getCount()) return true;
-        if (!selector.first().isEditable(e.target)) return true;
-        return false;
-      }
-
-      function onStart(parent, target, pt) {
-        let width = parent.getAttribute('width');
-        let height = parent.getAttribute('height');
-        _editor.start(selector.first(), target, pt, width, height);
-        tls.freeze();
-      }
-
-      function onProgress(pt) {
-        _editor.progress(pt)
-      }
-
-      function onEnd(pt) {
-        _editor.end(pt);
-        setModified();
-      }
-
-      function onExit(e) {
-        tls.release()
-      }
-
-      function onCancel() {
-        _editor.cancel();
-        tls.release();
-      }
-
-      return {
-        handlers : { prevent, onStart, onProgress, onEnd, onExit, onCancel }
-      };
-
-    })();
-
-    function preventWindowDrop(e) {
-      if (e.target.id != doms.fileDropZone) {
-        e.preventDefault();
-        e.dataTransfer.effectAllowed = "none";
-        e.dataTransfer.dropEffect = "none";
+        prevent     : this._prevent.bind(this),
+        onStart     : this._onStart.bind(this),
+        onProgress  : this._onProgress.bind(this),
+        onEnd       : this._onEnd.bind(this),
+        onCancel    : this._onCancel.bind(this)
       }
     }
 
-    window.addEventListener("dragenter", preventWindowDrop);
-    window.addEventListener("dragover", preventWindowDrop);
-    window.addEventListener("drop", preventWindowDrop);
+  }
 
-    prj.init(projects.handlers);
-    ctr.init(projects.handlers);
-    ldr.init(projects.handlers);
-    code.init(projects.handlers);
-    htm.init(projects.handlers);
-    help.init(projects.handlers);
-    mnu.init(menu.handlers);
-    wks.init(dragger.handlers, drawer.handlers, selector.handlers, mover.handlers, editor.handlers);
-    tls.init(tooler.handlers);
+  class AppSelectHandlers {
 
-  })(); /* APPLICATION MANAGEMENT */
+    constructor(app) {
+      this._app = app
+      this._selected = new bitedit.MultiSelector()
+      this._tracker = null
+    }
+
+    _updateGridTools() {
+      this._app.tools.blurAreaProps()
+      if (this._selected.length === 1) {
+        this._app.tools.enableGridTools(this._selected.get(0).figure)
+      } else {
+        this._app.tools.disableGridTools()
+      }
+    }
+
+    isAreaSelected(area) {
+      return this._selected.has(this._app.model.findArea(area))
+    }
+
+    _areaSelect(area) {
+      this._app.tools.blurAreaProps()
+      this._selected.set(this._app.model.findArea(area))
+      this._selected.get(0).highlight()
+      this._app.tools.enableGridTools(this._selected.get(0).figure)
+    }
+
+    _areaMultiSelect(area) {
+      if (this._selected.length > 0)
+        this._selected.get(0).trivialize()
+      this._selected.toggle(this._app.model.findArea(area))
+      if (this._selected.length > 0)
+        this._selected.get(0).highlight()
+      this._updateGridTools()
+    }
+
+    _computeSelection(coords) {
+      this._app.model.forEachArea(e => {
+        if (e.within(coords)) {
+          if (!this._selected.has(e)) {
+            this._selected.toggle(e)
+          }
+        } else if (this._selected.has(e)) {
+          this._selected.toggle(e)
+        }
+      })
+      this._updateGridTools()
+    }
+
+    _areaSelectAll() {
+      if (this._selected.length > 0)
+        this._selected.get(0).trivialize()
+      this._selected.empty()
+      this._app.model.forEachArea(e => this._selected.add(e))
+      if (this._selected.length > 0)
+        this._selected.get(0).highlight()
+      this._updateGridTools()
+    }
+
+    _areaUnselectAll() {
+      let rtn = this._selected.length
+      if (this._selected.length > 0)
+        this._selected.get(0).trivialize()
+      this._selected.empty()
+      this._app.tools.disableGridTools()
+      return rtn
+    }
+
+    _getSelectedCount() {
+      return this._selected.length
+    }
+
+    _getSelected() {
+      return this._selected.get(0)
+    }
+
+    _getSelectedList() {
+      return this._selected.slice()
+    }
+
+    _empty() {
+      return this._selected.empty()
+    }
+
+    _select(figure) {
+      this._selected.set(figure)
+      this._selected.get(0).highlight()
+      this._app.tools.enableGridTools(figure)
+    }
+
+    _selectSubset(figures) {
+      figures.forEach(e => this._selected.add(e))
+      if (this._selected.length > 0)
+        this._selected.get(0).highlight()
+      this._updateGridTools()
+    }
+
+    _preventSelect(e) {
+      if (e.ctrlKey || e.metaKey || e.altKey) return true
+      if (!this._app.model.findArea(e.target)) return true
+      if (this.isAreaSelected(e.target) && !e.shiftKey) return true // is a move
+      return false
+    }
+
+    _onSelect(target, shiftKey) {
+      if (!shiftKey)
+        this._areaSelect(target)
+      else
+        this._areaMultiSelect(target)
+    }
+
+    _onSelectAll() {
+      this._areaSelectAll()
+    }
+
+    _onUnselectAll() {
+      if (!this._areaUnselectAll())
+        this._app.tools.clearDrawMode()
+    }
+
+    _preventTracking(e) {
+      if (!this._app.tools.none()) return true
+      if (!utils.noMetaKey(e)) return true
+      if (this._app.model.findArea(e.target)) return true
+      if (bitedit.isGrip(e.target)) return true
+      return false
+    }
+
+    _onTrackStart(parent, pt, unselect) {
+      this._areaUnselectAll()
+      this._tracker = new bitgen.Tracker(parent)
+      this._tracker.start(pt)
+      this._app.tools.freeze()
+    }
+
+    _onTrackProgress(pt) {
+      this._tracker.progress(pt)
+      this._computeSelection(this._tracker.coords)
+    }
+
+    _onTrackEnd() {
+      if (null != this._tracker) {
+        this._tracker.cancel();
+        this._tracker = null;
+      }
+      if (this._selected.length > 0)
+        this._selected.get(0).highlight()
+    }
+    
+    _onTrackExit() {
+      if (this._selected.length > 0)
+        this._selected.get(0).highlight()
+      this._app.tools.release()
+    }
+
+    _onTrackCancel() {
+      if (null != this._tracker) {
+        this._tracker.cancel()
+        this._tracker = null
+      }
+      this._areaUnselectAll()
+      this._app.tools.release();
+    }
+
+    _onDeleteAll() {
+      this._selected.sort((a,b) => a.figure.isGrid ? -1 : 1)
+      this._selected.forEach(e => this._app.model.removeArea(e.figure))
+      this._selected.empty()
+      this._app.tools.disableGridTools()
+      this._app.setModified(true)
+    }
+
+    _onFreeze() {
+      if (this._selected.length === 1) {
+        let newSel = [];
+        if (this._app.model.freezeGridArea(this._selected.get(0).figure, newSel, bitmap.Mapper.specializeProperties)) {
+          this._selected.get(0).trivialize()
+          this._selected.empty()
+          newSel.forEach(e => this._selected.add(e))
+          if (this._selected.length > 0)
+            this._selected.get(0).highlight()
+          this._updateGridTools()
+          newSel = null
+          this._app.setModified(true)
+        }
+      }
+    }
+
+    _onCopy() {
+      if (this._selected.length < 1) return;
+      this._app.clipboard.data = this._app.model.toClipboard(this._selected.reduce((a,e) => { a.push(e.figure); return a; }, []), this._app.clipboard.a2c)
+    }
+
+    _onPaste(forceDeepCopy) {
+      let areas
+      if (this._app.clipboard.isCopyUnsafe() && !confirm('Areas have been added or deleted and grid references may have been altered. Only a deep copy including grid references can be done.\nPerform a deep copy?'))
+        return
+      areas = this._app.model.fromClipboard(this._app.clipboard.data, this._app.clipboard.c2a, forceDeepCopy)
+      if (areas.length > 0) {
+        this._app.model.addAreas(areas)
+        this._app.aTooler.managePropsDisplay(areas)
+        this._app.setModified()
+        this._areaUnselectAll()
+        this._selectSubset(areas)
+        this._app.aMover.handlers.onStep(this._app.workspace.getParent(), this._app.clipboard.offset, this._app.clipboard.offset)
+      }
+      this._app.setModified()
+    }
+
+    get count()         { return this._getSelectedCount() }
+    get first()         { return this._getSelected() }
+    get list()          { return this._getSelectedList() }
+    select(figure)      { return this._select(figure) }
+    selectSubset(area)  { return this._selectSubset(areas) }
+    empty()             { return this._empty() }
+    unselectAll()       { return this._areaUnselectAll() }
+    
+    get handlers() {
+      return {
+        preventSelect     : this._preventSelect.bind(this),
+        onSelect          : this._onSelect.bind(this),
+        onSelectAll       : this._onSelectAll.bind(this),
+        onUnselectAll     : this._onUnselectAll.bind(this),
+        preventTracking   : this._preventTracking.bind(this),
+        onTrackStart      : this._onTrackStart.bind(this),
+        onTrackProgress   : this._onTrackProgress.bind(this),
+        onTrackEnd        : this._onTrackEnd.bind(this),
+        onTrackExit       : this._onTrackExit.bind(this),
+        onTrackCancel     : this._onTrackCancel.bind(this),
+        onDeleteAll       : this._onDeleteAll.bind(this),
+        onFreeze          : this._onFreeze.bind(this),
+        onCopySelection   : this._onCopy.bind(this),
+        onPasteSelection  : this._onPaste.bind(this)
+      }
+    }
+
+  }
+
+  class AppMoveHandlers {
+
+    constructor(app) {
+      this._app = app
+      this._mover = new bitedit.Mover()
+    }
+
+    _prevent(e) {
+      if (!this._app.model.findArea(e.target)) return true
+      if (!this._app.aSelector.isAreaSelected(e.target)) return true
+      return false
+    }
+
+    _onStart(parent, pt) {
+      const width = parent.getAttribute('width'),
+            height = parent.getAttribute('height'),
+            selected = this._app.aSelector.list
+      selected.sort((a,b) => a.figure.isGrid ? -1 : 1)
+      this._mover.start(selected, pt, width, height)
+      this._app.tools.freeze()
+    }
+
+    _onProgress(pt) {
+      this._mover.progress(pt)
+    }
+
+    _onEnd(pt) {
+      this._mover.end(pt)
+      this._app.setModified()
+    }
+
+    _onExit(e) {
+      this._app.tools.release()
+    }
+
+    _onCancel() {
+      this._mover.cancel();
+      this._app.tools.release();
+    }
+
+    _onStep(parent, dx, dy) {
+      const width = parent.getAttribute('width'),
+            height = parent.getAttribute('height')
+      this._mover.step(this._app.aSelector.list, dx, dy, width, height)
+      this._app.setModified()
+    }
+
+    _onRotate(parent, direction) {
+      if (1 < this._app.aSelector.count) {
+        alert('Rotation is supported for a single selected area!')
+        return
+      }
+      const width = parent.getAttribute('width'),
+            height = parent.getAttribute('height')
+      if (!this._app.aSelector.first.rotate(direction, width, height))
+        alert('ERROR - Rotation possibly makes area go beyond limits!')
+      else
+        this._app.setModified()
+    }
+
+    get handlers() {
+      return {
+        prevent     : this._prevent.bind(this),
+        onStart     : this._onStart.bind(this),
+        onProgress  : this._onProgress.bind(this),
+        onEnd       : this._onEnd.bind(this),
+        onExit      : this._onExit.bind(this),
+        onCancel    : this._onCancel.bind(this),
+        onStep      : this._onStep.bind(this),
+        onRotate    : this._onRotate.bind(this)
+      }
+    }
+
+  }
+
+  class AppEditHandlers {
+
+    constructor(app) {
+      this._app = app
+      this._editor = new bitedit.Editor()
+    }
+
+    _prevent(e) {
+      if (0 === this._app.aSelector.count) return true
+      if (!this._app.aSelector.first.isEditable(e.target)) return true
+      return false
+    }
+
+    _onStart(parent, target, pt) {
+      const width = parent.getAttribute('width'),
+            height = parent.getAttribute('height')
+      this._editor.start(this._app.aSelector.first, target, pt, width, height)
+      this._app.tools.freeze()
+    }
+
+    _onProgress(pt) {
+      this._editor.progress(pt)
+    }
+
+    _onEnd(pt) {
+      this._editor.end(pt)
+      this._app.setModified()
+    }
+
+    _onExit(e) {
+      this._app.tools.release()
+    }
+
+    _onCancel() {
+      this._editor.cancel()
+      this._app.tools.release()
+    }
+
+    get handlers() {
+      return {
+        prevent     : this._prevent.bind(this),
+        onStart     : this._onStart.bind(this),
+        onProgress  : this._onProgress.bind(this),
+        onEnd       : this._onEnd.bind(this),
+        onExit      : this._onExit.bind(this),
+        onCancel    : this._onCancel.bind(this),
+      }
+    }
+
+  }
+
+  // APPLICATION - TOOLS HANDLERS
+
+  class AppToolHandlers {
+
+    constructor(app) {
+      this._app = app
+      this._order = new bitedit.Order()
+      this._sizer = new bitedit.Sizer()
+      this._aligner = new bitedit.Aligner()
+    }
+
+    _onGridScopeChange(v) {
+      if (this._app.aSelector.count === 1) {
+        let area = this._app.aSelector.first.figure
+        if (area.isGrid) {
+          area.gridScope = v
+          this._app.setModified()
+        }
+      }
+    }
+    
+    _onGridAlignChange(v) {
+      if (this._app.aSelector.count === 1) {
+        let area = this._app.aSelector.first.figure
+        if (area.isGrid) {
+          area.gridAlign = v
+          this._app.setModified()
+        }
+      }
+    }
+    
+    _onGridSpaceChange(v) {
+      if (this._app.aSelector.count === 1) {
+        let area = this._app.aSelector.first.figure
+        if (area.isGrid) {
+          area.gridSpace = v
+          this._app.setModified()
+        }
+      }
+    }
+    
+    _onShowOrder(bShow) {
+      if (bShow) {
+        let list, fig
+        if (this._app.aSelector.count === 1) {
+          fig = this._app.aSelector.first.figure
+          list = (fig.isGrid) ? [fig] : fig.copyBonds()
+          list.forEach(g => this._order.display(g.areas))
+        }
+      } else {
+        this._order.hide()
+      }
+    }
+    
+    _onGridOrderChange(v) {
+      if (this._app.aSelector.count === 1) {
+        let area = this._app.aSelector.first.figure
+        if (area.isGrid) {
+          area.gridOrder = v
+          this._app.setModified()
+        }
+      }
+    }
+    
+    _onPropsSave(p) {
+      this._app.tools.saveAreaProps(this._app.aSelector.first.figure, p)
+      this._app.setModified()
+    }
+    
+    _onPropsRestore() {
+      this._app.tools.restoreAreaProps(this._app.aSelector.first.figure)
+    }
+    
+    _onResize() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        if (!this._sizer.checkBoundaries(this._app.aSelector.list, r.width, r.height, d.width, d.height))
+          alert('Resizing selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._sizer.resize(this._app.aSelector.list, r.width, r.height)
+      }
+    }
+    
+    _onAlignCenterHorizontally() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        let cy = Math.round(r.y + r.height/2)
+        if (!this._aligner.checkVerticalBoundaries(this._app.aSelector.list, cy, d.height))
+          alert('Aligning horizontally selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._aligner.alignHorizontally(this._app.aSelector.list, cy)
+      }
+    }
+    
+    _onAlignCenterVertically() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        let cx = Math.round(r.x + r.width/2)
+        if (!this._aligner.checkHorizontalBoundaries(this._app.aSelector.list, cx, d.width))
+          alert('Aligning vertically selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._aligner.alignVertically(this._app.aSelector.list, cx)
+      }
+    }
+    
+    _onAlignLeft() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        if (!this._aligner.checkRightBoundaries(this._app.aSelector.list, r.x, d.width))
+          alert('Aligning on left side selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._aligner.alignLeft(this._app.aSelector.list, r.x)
+      }
+    }
+    
+    _onAlignTop() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        if (!this._aligner.checkBottomBoundaries(this._app.aSelector.list, r.y, d.height))
+          alert('Aligning on top side selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._aligner.alignTop(this._app.aSelector.list, r.y)
+      }
+    }
+    
+    _onAlignRight() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        if (!this._aligner.checkLeftBoundaries(this._app.aSelector.list, r.x + r.width))
+          alert('Aligning on right side selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._aligner.alignRight(this._app.aSelector.list, r.x + r.width)
+      }
+    }
+    
+    _onAlignBottom() {
+      if (1 < this._app.aSelector.count) {
+        let d = this._app.workspace.getDims()
+        let r = this._app.aSelector.first.figure.rect
+        if (!this._aligner.checkTopBoundaries(this._app.aSelector.list, r.y + r.height))
+          alert('Aligning on bottom side selected elements makes at least one of them outside of image boudaries!')
+        else
+          this._aligner.alignBottom(this._app.aSelector.list, r.y + r.height)
+      }
+    }
+
+    get handlers() {
+      return {
+        onGridScopeChange         : this._onGridScopeChange.bind(this),
+        onGridAlignChange         : this._onGridAlignChange.bind(this),
+        onGridSpaceChange         : this._onGridSpaceChange.bind(this),
+        onShowOrder               : this._onShowOrder.bind(this),
+        onGridOrderChange         : this._onGridOrderChange.bind(this),
+        onPropsSave               : this._onPropsSave.bind(this),
+        onPropsRestore            : this._onPropsRestore.bind(this),
+        onResize                  : this._onResize.bind(this),
+        onAlignCenterHorizontally : this._onAlignCenterHorizontally.bind(this),
+        onAlignCenterVertically   : this._onAlignCenterVertically.bind(this),
+        onAlignLeft               : this._onAlignLeft.bind(this),
+        onAlignTop                : this._onAlignTop.bind(this),
+        onAlignRight              : this._onAlignRight.bind(this),
+        onAlignBottom             : this._onAlignBottom.bind(this)
+      }
+    }
+
+    _onAreaEnter(e) {
+      if (this._app.aSelector.count === 0) {
+        this._app.tools.displayAreaProps(this._app.model.findArea(e.target))
+      }
+    }
+    
+    _onAreaLeave(e) {
+      if (this._app.aSelector.count === 0) {
+        this._app.tools.resetAreaProps()
+      }
+    }
+    
+    managePropsDisplay(areas) {
+      areas.forEach(e => {
+        e.dom.addEventListener('mouseover', this._onAreaEnter.bind(this), false)
+        e.dom.addEventListener('mouseleave', this._onAreaLeave.bind(this), false)
+      });
+    }
+    
+  }
+
+  // APPLICATION
+
+  class Application {
+
+    constructor() {
+
+      window.addEventListener("dragenter", this._preventWindowDrop)
+      window.addEventListener("dragover", this._preventWindowDrop)
+      window.addEventListener("drop", this._preventWindowDrop)
+
+      this._aMenu     = new AppMenuHandlers(this)
+      this._aProjects = new AppProjectHandlers(this)
+      this._aDragger  = new AppDragHandlers(this)
+      this._aDrawer   = new AppDrawHandlers(this)
+      this._aSelector = new AppSelectHandlers(this)
+      this._aMover    = new AppMoveHandlers(this)
+      this._aEditor   = new AppEditHandlers(this)
+      this._aTooler   = new AppToolHandlers(this)
+
+      this._model     = new Model()
+      this._footer    = new Footer()
+      this._menu      = new Menu({ handlers : this._aMenu.handlers })
+      this._workspace = new Workspace({
+        handlers : {
+          dragger   : this._aDragger.handlers,
+          drawer    : this._aDrawer.handlers,
+          selector  : this._aSelector.handlers,
+          mover     : this._aMover.handlers,
+          editor    : this._aEditor.handlers
+        },
+        ftr : this._footer
+      })
+      this._tools     = new Tools({ handlers : this._aTooler.handlers })
+      this._store     = new Store({ workspace : this._workspace })
+      this._clipboard = new Clipboard({ workspace :  this._workspace, copyOffset : 10 })
+
+      this._manager   = new ProjectManagerDialog({
+        model : this._model,
+        store : this._store,
+        handlers : this._aProjects.handlers
+      })
+      this._creator   = new ProjectCreatorDialog({
+        handlers : Object.assign({ checkFile : this._model.checkImgFile }, this._aProjects.handlers)
+      })
+      this._opener    = new ProjectLoaderDialog({
+        store : this._store,
+        handlers : this._aProjects.handlers
+      })
+      this._loader    = new HtmlLoaderDialog({ handlers : this._aProjects.handlers })
+      this._generator = new CodeGeneratorDialog({ handlers : this._aProjects.handlers })
+      this._helper    = new HelpDialog({ handlers : this._aProjects.handlers })
+
+    }
+
+    _preventWindowDrop(e) {
+      if (e.target.id != $('file-drop-zone')) {
+        e.preventDefault()
+        e.dataTransfer.effectAllowed = "none"
+        e.dataTransfer.dropEffect = "none"
+      }
+    }
+
+    get aMenu()     { return this._aMenu }
+    get aProjects() { return this._aProjects }
+    get aDragger()  { return this._aDragger }
+    get aDrawer()   { return this._aDrawer }
+    get aSelector() { return this._aSelector }
+    get aMover()    { return this._aMover }
+    get aEditor()   { return this._aEditor }
+    get aTooler()   { return this._aTooler }
+
+    get model()     { return this._model }
+    get store()     { return this._store }
+    get clipboard() { return this._clipboard }
+    get menu()      { return this._menu }
+    get footer()    { return this._footer }
+    get workspace() { return this._workspace }
+    get tools()     { return this._tools }
+    get manager()   { return this._manager }
+    get creator()   { return this._creator }
+    get opener()    { return this._opener }
+    get loader()    { return this._loader }
+    get generator() { return this._generator }
+    get helper()    { return this._helper }
+
+    setModified(unsafe) {
+      this._model.modified = true
+      this._menu.canSave()
+      if (unsafe) this._clipboard.setCopyUnsafe()
+    }
+
+    setUnmodified(unsafe) {
+      this._model.modified = false
+      this._menu.preventSave()
+      if (unsafe) this._clipboard.setCopyUnsafe()
+    }
+
+    freeze() {
+      this._workspace.freeze()
+      this._tools.freeze()
+      this._menu.freeze()
+    }
+
+    release() {
+      this._workspace.release()
+      this._tools.release()
+      this._menu.release()
+    }
+
+  }
+
+  const theApp = new Application()
 
 })(); /* BIT */
