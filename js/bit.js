@@ -65,6 +65,15 @@ var bit = (function() {
       }
     }
 
+    function copyText(node) {
+      node.select()
+      document.execCommand('Copy')
+    }
+
+    function copySelectedText() {
+      document.execCommand('Copy')
+    }
+
     return {
 
       leftButton : e => (0 === e.button) ? true : false,
@@ -73,7 +82,7 @@ var bit = (function() {
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
-      selectText, unselect,
+      selectText, unselect, copyText, copySelectedText,
       fgTypes,
       clsActions
 
@@ -1605,10 +1614,12 @@ var bit = (function() {
       this._doms = {
         code        : $('code-result'),
         btnSelect   : document.querySelector('#project-code .select'),
-        btnClear    : document.querySelector('#project-code .clear')
+        btnClear    : document.querySelector('#project-code .clear'),
+        btnCopy     : document.querySelector('#project-code .copy')
       }
       this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false);
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false);
+      this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false);
     }
 
     _reset() {
@@ -1633,6 +1644,11 @@ var bit = (function() {
     _onClearClick(e) {
       e.preventDefault()
       utils.unselect()
+    }
+
+    _onCopyClick(e) {
+      e.preventDefault()
+      utils.copySelectedText()
     }
 
     _keyAction(e) {
@@ -2415,7 +2431,7 @@ var bit = (function() {
     get first()         { return this._getSelected() }
     get list()          { return this._getSelectedList() }
     select(figure)      { return this._select(figure) }
-    selectSubset(area)  { return this._selectSubset(areas) }
+    selectSubset(areas) { return this._selectSubset(areas) }
     empty()             { return this._empty() }
     unselectAll()       { return this._areaUnselectAll() }
     
