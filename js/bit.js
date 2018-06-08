@@ -83,8 +83,7 @@ var bit = (function() {
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
       selectText, unselect, copyText, copySelectedText,
-      fgTypes,
-      clsActions
+      fgTypes, clsActions
 
     };
 
@@ -1611,19 +1610,23 @@ var bit = (function() {
         keyHandler : e => this._keyAction(e)
       })
       this._handlers = c.handlers
+      this._name = 'untitled'
       this._doms = {
         code        : $('code-result'),
         btnSelect   : document.querySelector('#project-code .select'),
         btnClear    : document.querySelector('#project-code .clear'),
-        btnCopy     : document.querySelector('#project-code .copy')
+        btnCopy     : document.querySelector('#project-code .copy'),
+        btnExport   : document.querySelector('#project-code .export')
       }
-      this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false);
-      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false);
-      this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false);
+      this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false)
+      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
+      this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false)
+      this._doms.btnExport.addEventListener('click', this._onExportClick.bind(this), false)
     }
 
     _reset() {
-      this._doms.code.innerHTML = '';
+      this._doms.code.innerHTML = ''
+      this._name = 'untitled'
     }
 
     _onClose() {
@@ -1651,6 +1654,11 @@ var bit = (function() {
       utils.copySelectedText()
     }
 
+    _onExportClick(e) {
+      e.preventDefault()
+      download(this._doms.code.textContent, this._name, 'text/html')
+    }
+
     _keyAction(e) {
       if('a' === e.key && utils.ctrlMetaKey(e)) {
         e.preventDefault()
@@ -1662,9 +1670,10 @@ var bit = (function() {
       }
     }
 
-    show(s) {
+    show(n, s) {
       this._reset()
       this._doms.code.innerHTML = s
+      this._name = n
       super.show()
     }
 
@@ -1959,7 +1968,9 @@ var bit = (function() {
     }
 
     _onGenerateCode() {
-      this._app.generator.show(bitmap.Mapper.getHtmlString(this._app.model.filename, this._app.model.info, this._app.model.areas));
+      this._app.generator.show(
+          this._app.model.info.name,
+          bitmap.Mapper.getHtmlString(this._app.model.filename, this._app.model.info, this._app.model.areas))
       this._app.freeze()
     }
 
