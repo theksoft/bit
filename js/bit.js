@@ -9,7 +9,8 @@
 var bit = (function() {
   'use strict';
 
-  function $(s) { return document.getElementById(s); }
+  const $ = s => document.getElementById(s)
+  const appName = 'BiT'
 
   var utils = (function() {
 
@@ -1762,6 +1763,7 @@ var bit = (function() {
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
+      this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
       document.addEventListener('keydown', this.onKeyAction, false);
       document.addEventListener('keydown', this.onCheckHelp.bind(this), false);
@@ -1848,15 +1850,17 @@ var bit = (function() {
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
       document.addEventListener('keydown', this.onKeyAction, false);
+      this._title.innerHTML = appName
       return this;
     }
 
-    switchToEditMode() {
+    switchToEditMode(name) {
       this._btns.closeProject.enable()
       this._btns.preview.enable()
       this._btns.preview.element.classList.remove('selected')
       this._btns.generate.enable()
       this._btns.loadHTML.enable()
+      this._title.innerHTML += ' ['+name+']'
       return this;
     }
 
@@ -1982,7 +1986,7 @@ var bit = (function() {
       try {
         this._app.model.file = data.file
         this._app.model.info = data
-        this._app.menu.switchToEditMode()
+        this._app.menu.switchToEditMode(data.name)
         this._app.footer.info(data.file)
         this._app.workspace.load(data.file)
         this._app.setModified(true)
@@ -2004,7 +2008,7 @@ var bit = (function() {
       this._app.workspace.loadEx(project);
       if(this._app.model.fromStore(project, this._app.store.s2a)) {
         this._app.aTooler.managePropsDisplay(this._app.model.areas)
-        this._app.menu.switchToEditMode()
+        this._app.menu.switchToEditMode(name)
         this._app.setUnmodified(true)
         rtn = true
       } else {
