@@ -1790,6 +1790,8 @@ var bit = (function() {
         cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
         generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
         loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
+        exportProject : new bittls.TButton({ element : $('export-project'), action : c.handlers.onExportProject }),
+        importProject : new bittls.TButton({ element : $('import-project'), action : c.handlers.onImportProject }),
         help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
       })
       this._btns.closeProject.disable()
@@ -1797,6 +1799,7 @@ var bit = (function() {
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
+      this._btns.exportProject.disable()
       this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
       document.addEventListener('keydown', this.onKeyAction, false);
@@ -1883,6 +1886,7 @@ var bit = (function() {
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
+      this._btns.exportProject.disable()
       document.addEventListener('keydown', this.onKeyAction, false);
       this._title.innerHTML = appName
       return this;
@@ -1894,6 +1898,7 @@ var bit = (function() {
       this._btns.preview.element.classList.remove('selected')
       this._btns.generate.enable()
       this._btns.loadHTML.enable()
+      this._btns.exportProject.enable()
       this._title.innerHTML += ' ['+name+']'
       return this;
     }
@@ -1984,6 +1989,14 @@ var bit = (function() {
       this._app.freeze()
     }
 
+    _onExportProject() {
+      download(JSON.stringify(this._app.model.toStore(this._app.store.a2s)), this._app.model.info.name+'.bit', 'text/json')
+    }
+
+    _onImportProject() {
+      console.log('Import')
+    }
+
     _onHelp() {
       this._app.helper.show()
       this._app.freeze()
@@ -1999,6 +2012,8 @@ var bit = (function() {
         onCleanProjects : this._onCleanProjects.bind(this),
         onGenerateCode  : this._onGenerateCode.bind(this),
         onLoadHTML      : this._onLoadHTML.bind(this),
+        onExportProject : this._onExportProject.bind(this),
+        onImportProject : this._onImportProject.bind(this),
         onHelp          : this._onHelp.bind(this)
       }
     }
