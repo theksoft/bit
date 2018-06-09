@@ -1535,20 +1535,21 @@ var bit = (function() {
         btnLoad       : document.querySelector('#project-loader .select'),
         imagePreview  : document.querySelector('#project-loader .preview')
       }
-      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false);
-      this._doms.list.addEventListener('input', this._onSelect.bind(this), false);
+      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
+      this._doms.list.addEventListener('input', this._onSelect.bind(this), false)
+      this._doms.imagePreview.addEventListener('dblclick', this._onImageDblClick.bind(this), false)
     }
 
     _fill() {
-      let content = '';
-      this._store.list.forEach(e => content += '<option value="' + e + '">' + e + '</option>' );
-      this._doms.list.innerHTML = content;
+      let content = ''
+      this._store.list.forEach(e => content += '<option value="' + e + '">' + e + '</option>' )
+      this._doms.list.innerHTML = content
     }
 
     _loadPreview() {
-      let project;
-      project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value);
-      this._doms.imagePreview.src = project.dataURL;
+      let project
+      project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value)
+      this._doms.imagePreview.src = project.dataURL
     }
 
     _clear() {
@@ -1583,12 +1584,16 @@ var bit = (function() {
     }
 
     _onLoadClick(e) {
-      let value;
-      e.preventDefault();
-      value = this._doms.list.options[this._doms.list.selectedIndex].value;
+      let value
+      e.preventDefault()
+      value = this._doms.list.options[this._doms.list.selectedIndex].value
       super._onClose()
       this._clear()
       this._handlers.onLoadMap(value)
+    }
+
+    _onImageDblClick(e) {
+      download(this._doms.imagePreview.src, this._doms.list.options[this._doms.list.selectedIndex].value)
     }
 
     show() {
