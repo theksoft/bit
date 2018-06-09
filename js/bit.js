@@ -1951,7 +1951,6 @@ var bit = (function() {
         this._app.tools.reset()
         this._app.menu.reset()
         this._app.model.reset()
-        this._app.creator.reset()
         this._app.opener.show()
         this._app.freeze()
       }
@@ -1994,7 +1993,23 @@ var bit = (function() {
     }
 
     _onImportProject() {
-      console.log('Import')
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._app.footer.reset()
+        this._app.workspace.reset()
+        this._app.tools.reset()
+        this._app.menu.reset()
+        this._app.model.reset()
+        let input = document.createElement('input')
+        input.type = 'file'
+        input.style.display = 'none'
+        input.setAttribute('accept', 'text/json')
+        input.addEventListener('change', e => {
+          if (1 === e.target.files.length)
+            this._app.aProjects.handlers.onImportMap(e.target.files[0])
+          else alert('[ERROR] Only one file must be selected!')
+        }, false)
+        input.click()
+      }
     }
 
     _onHelp() {
@@ -2028,6 +2043,22 @@ var bit = (function() {
       this._app = app
     }
 
+    _loadProject(name, project) {
+      let rtn = false
+      this._app.footer.infoEx(project)
+      this._app.workspace.loadEx(project)
+      if(this._app.model.fromStore(project, this._app.store.s2a)) {
+        this._app.aTooler.managePropsDisplay(this._app.model.areas)
+        this._app.menu.switchToEditMode(name)
+        this._app.setUnmodified(true)
+        rtn = true
+      } else {
+        this._app.footer.errorEx(project)
+      }
+      this._app.release()
+      return rtn
+    }
+
     _onClose() {
       this._app.release()
     }
@@ -2052,21 +2083,22 @@ var bit = (function() {
     }
 
     _onLoadMap(name) {
-      let rtn, project;
-      rtn = false;
-      project = this._app.store.read(name);
-      this._app.footer.infoEx(project);
-      this._app.workspace.loadEx(project);
-      if(this._app.model.fromStore(project, this._app.store.s2a)) {
-        this._app.aTooler.managePropsDisplay(this._app.model.areas)
-        this._app.menu.switchToEditMode(name)
-        this._app.setUnmodified(true)
-        rtn = true
-      } else {
-        this._app.footer.errorEx(project)
+      return this._loadProject(name, this._app.store.read(name))
+    }
+
+    _onImportMap(file) {
+      let rd = new FileReader()
+      rd.onload = () => {
+        let project = null;
+        try {
+          project = JSON.parse(rd.result)
+          this._loadProject(project.name, project)
+        } catch(e) {
+          alert('ERROR[' + file.name + '] Invalid file - ' + e.message)
+          this._app.footer.error(file)
+        }
       }
-      this._app.release()
-      return rtn
+      rd.readAsText(file) 
     }
 
     _onLoadCode(code) {
@@ -2093,7 +2125,8 @@ var bit = (function() {
         onClose     : this._onClose.bind(this),
         onNewMap    : this._onNewMap.bind(this),
         onLoadMap   : this._onLoadMap.bind(this),
-        onLoadCode  : this._onLoadCode.bind(this)
+        onLoadCode  : this._onLoadCode.bind(this),
+        onImportMap : this._onImportMap.bind(this)
       }
     }
 
