@@ -83,8 +83,7 @@ var bit = (function() {
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
       selectText, unselect, copyText, copySelectedText,
-      fgTypes,
-      clsActions
+      fgTypes, clsActions
 
     };
 
@@ -1536,20 +1535,21 @@ var bit = (function() {
         btnLoad       : document.querySelector('#project-loader .select'),
         imagePreview  : document.querySelector('#project-loader .preview')
       }
-      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false);
-      this._doms.list.addEventListener('input', this._onSelect.bind(this), false);
+      this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
+      this._doms.list.addEventListener('input', this._onSelect.bind(this), false)
+      this._doms.imagePreview.addEventListener('dblclick', this._onImageDblClick.bind(this), false)
     }
 
     _fill() {
-      let content = '';
-      this._store.list.forEach(e => content += '<option value="' + e + '">' + e + '</option>' );
-      this._doms.list.innerHTML = content;
+      let content = ''
+      this._store.list.forEach(e => content += '<option value="' + e + '">' + e + '</option>' )
+      this._doms.list.innerHTML = content
     }
 
     _loadPreview() {
-      let project;
-      project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value);
-      this._doms.imagePreview.src = project.dataURL;
+      let project
+      project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value)
+      this._doms.imagePreview.src = project.dataURL
     }
 
     _clear() {
@@ -1584,12 +1584,16 @@ var bit = (function() {
     }
 
     _onLoadClick(e) {
-      let value;
-      e.preventDefault();
-      value = this._doms.list.options[this._doms.list.selectedIndex].value;
+      let value
+      e.preventDefault()
+      value = this._doms.list.options[this._doms.list.selectedIndex].value
       super._onClose()
       this._clear()
       this._handlers.onLoadMap(value)
+    }
+
+    _onImageDblClick(e) {
+      download(this._doms.imagePreview.src, this._doms.list.options[this._doms.list.selectedIndex].value)
     }
 
     show() {
@@ -1611,19 +1615,23 @@ var bit = (function() {
         keyHandler : e => this._keyAction(e)
       })
       this._handlers = c.handlers
+      this._name = 'untitled'
       this._doms = {
         code        : $('code-result'),
         btnSelect   : document.querySelector('#project-code .select'),
         btnClear    : document.querySelector('#project-code .clear'),
-        btnCopy     : document.querySelector('#project-code .copy')
+        btnCopy     : document.querySelector('#project-code .copy'),
+        btnExport   : document.querySelector('#project-code .export')
       }
-      this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false);
-      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false);
-      this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false);
+      this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false)
+      this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
+      this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false)
+      this._doms.btnExport.addEventListener('click', this._onExportClick.bind(this), false)
     }
 
     _reset() {
-      this._doms.code.innerHTML = '';
+      this._doms.code.innerHTML = ''
+      this._name = 'untitled'
     }
 
     _onClose() {
@@ -1651,6 +1659,11 @@ var bit = (function() {
       utils.copySelectedText()
     }
 
+    _onExportClick(e) {
+      e.preventDefault()
+      download(this._doms.code.textContent, this._name, 'text/html')
+    }
+
     _keyAction(e) {
       if('a' === e.key && utils.ctrlMetaKey(e)) {
         e.preventDefault()
@@ -1662,9 +1675,10 @@ var bit = (function() {
       }
     }
 
-    show(s) {
+    show(n, s) {
       this._reset()
       this._doms.code.innerHTML = s
+      this._name = n
       super.show()
     }
 
@@ -1776,6 +1790,8 @@ var bit = (function() {
         cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
         generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
         loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
+        exportProject : new bittls.TButton({ element : $('export-project'), action : c.handlers.onExportProject }),
+        importProject : new bittls.TButton({ element : $('import-project'), action : c.handlers.onImportProject }),
         help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
       })
       this._btns.closeProject.disable()
@@ -1783,6 +1799,7 @@ var bit = (function() {
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
+      this._btns.exportProject.disable()
       this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
       document.addEventListener('keydown', this.onKeyAction, false);
@@ -1869,6 +1886,7 @@ var bit = (function() {
       this._btns.preview.disable()
       this._btns.generate.disable()
       this._btns.loadHTML.disable()
+      this._btns.exportProject.disable()
       document.addEventListener('keydown', this.onKeyAction, false);
       this._title.innerHTML = appName
       return this;
@@ -1880,6 +1898,7 @@ var bit = (function() {
       this._btns.preview.element.classList.remove('selected')
       this._btns.generate.enable()
       this._btns.loadHTML.enable()
+      this._btns.exportProject.enable()
       this._title.innerHTML += ' ['+name+']'
       return this;
     }
@@ -1932,7 +1951,6 @@ var bit = (function() {
         this._app.tools.reset()
         this._app.menu.reset()
         this._app.model.reset()
-        this._app.creator.reset()
         this._app.opener.show()
         this._app.freeze()
       }
@@ -1959,13 +1977,39 @@ var bit = (function() {
     }
 
     _onGenerateCode() {
-      this._app.generator.show(bitmap.Mapper.getHtmlString(this._app.model.filename, this._app.model.info, this._app.model.areas));
+      this._app.generator.show(
+          this._app.model.info.name,
+          bitmap.Mapper.getHtmlString(this._app.model.filename, this._app.model.info, this._app.model.areas))
       this._app.freeze()
     }
 
     _onLoadHTML() {
       this._app.loader.show()
       this._app.freeze()
+    }
+
+    _onExportProject() {
+      download(JSON.stringify(this._app.model.toStore(this._app.store.a2s)), this._app.model.info.name+'.bit', 'text/json')
+    }
+
+    _onImportProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._app.footer.reset()
+        this._app.workspace.reset()
+        this._app.tools.reset()
+        this._app.menu.reset()
+        this._app.model.reset()
+        let input = document.createElement('input')
+        input.type = 'file'
+        input.style.display = 'none'
+        input.setAttribute('accept', 'text/json')
+        input.addEventListener('change', e => {
+          if (1 === e.target.files.length)
+            this._app.aProjects.handlers.onImportMap(e.target.files[0])
+          else alert('[ERROR] Only one file must be selected!')
+        }, false)
+        input.click()
+      }
     }
 
     _onHelp() {
@@ -1983,6 +2027,8 @@ var bit = (function() {
         onCleanProjects : this._onCleanProjects.bind(this),
         onGenerateCode  : this._onGenerateCode.bind(this),
         onLoadHTML      : this._onLoadHTML.bind(this),
+        onExportProject : this._onExportProject.bind(this),
+        onImportProject : this._onImportProject.bind(this),
         onHelp          : this._onHelp.bind(this)
       }
     }
@@ -1995,6 +2041,22 @@ var bit = (function() {
 
     constructor(app) {
       this._app = app
+    }
+
+    _loadProject(name, project) {
+      let rtn = false
+      this._app.footer.infoEx(project)
+      this._app.workspace.loadEx(project)
+      if(this._app.model.fromStore(project, this._app.store.s2a)) {
+        this._app.aTooler.managePropsDisplay(this._app.model.areas)
+        this._app.menu.switchToEditMode(name)
+        this._app.setUnmodified(true)
+        rtn = true
+      } else {
+        this._app.footer.errorEx(project)
+      }
+      this._app.release()
+      return rtn
     }
 
     _onClose() {
@@ -2021,21 +2083,22 @@ var bit = (function() {
     }
 
     _onLoadMap(name) {
-      let rtn, project;
-      rtn = false;
-      project = this._app.store.read(name);
-      this._app.footer.infoEx(project);
-      this._app.workspace.loadEx(project);
-      if(this._app.model.fromStore(project, this._app.store.s2a)) {
-        this._app.aTooler.managePropsDisplay(this._app.model.areas)
-        this._app.menu.switchToEditMode(name)
-        this._app.setUnmodified(true)
-        rtn = true
-      } else {
-        this._app.footer.errorEx(project)
+      return this._loadProject(name, this._app.store.read(name))
+    }
+
+    _onImportMap(file) {
+      let rd = new FileReader()
+      rd.onload = () => {
+        let project = null;
+        try {
+          project = JSON.parse(rd.result)
+          this._loadProject(project.name, project)
+        } catch(e) {
+          alert('ERROR[' + file.name + '] Invalid file - ' + e.message)
+          this._app.footer.error(file)
+        }
       }
-      this._app.release()
-      return rtn
+      rd.readAsText(file) 
     }
 
     _onLoadCode(code) {
@@ -2062,7 +2125,8 @@ var bit = (function() {
         onClose     : this._onClose.bind(this),
         onNewMap    : this._onNewMap.bind(this),
         onLoadMap   : this._onLoadMap.bind(this),
-        onLoadCode  : this._onLoadCode.bind(this)
+        onLoadCode  : this._onLoadCode.bind(this),
+        onImportMap : this._onImportMap.bind(this)
       }
     }
 
