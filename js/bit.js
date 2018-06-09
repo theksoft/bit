@@ -74,6 +74,19 @@ var bit = (function() {
       document.execCommand('Copy')
     }
 
+    function selectFileAndProcess(accept, action) {
+      let input = document.createElement('input')
+      input.type = 'file'
+      input.style.display = 'none'
+      input.setAttribute('accept', accept)
+      input.addEventListener('change', e => {
+        if (1 === e.target.files.length)
+          action(e.target.files[0])
+        else alert('[ERROR] Only one file must be selected!')
+      }, false)
+      input.click()
+    }
+
     return {
 
       leftButton : e => (0 === e.button) ? true : false,
@@ -82,7 +95,7 @@ var bit = (function() {
       ctrlKey : e => (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey) ? true : false,
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
-      selectText, unselect, copyText, copySelectedText,
+      selectText, unselect, copyText, copySelectedText, selectFileAndProcess,
       fgTypes, clsActions
 
     };
@@ -141,6 +154,10 @@ var bit = (function() {
 
     get filename() {
       return this._file.filename; 
+    }
+
+    get dataURL() {
+      return this._file.dataURL
     }
 
     set info(data) {
@@ -1792,14 +1809,15 @@ var bit = (function() {
         loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
         exportProject : new bittls.TButton({ element : $('export-project'), action : c.handlers.onExportProject }),
         importProject : new bittls.TButton({ element : $('import-project'), action : c.handlers.onImportProject }),
+        exportImage   : new bittls.TButton({ element : $('export-image'),   action : c.handlers.onExportImage }),
         help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
       })
-      this._btns.closeProject.disable()
+      this._btnsEdit = [
+        this._btns.closeProject, this._btns.preview, this._btns.generate,
+        this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage
+      ]
       this._btns.saveProject.disable()
-      this._btns.preview.disable()
-      this._btns.generate.disable()
-      this._btns.loadHTML.disable()
-      this._btns.exportProject.disable()
+      this._btnsEdit.forEach(e => e.disable())
       this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
       document.addEventListener('keydown', this.onKeyAction, false);
@@ -1880,25 +1898,17 @@ var bit = (function() {
     }
 
     reset() {
-      this._btns.closeProject.disable()
       this._btns.saveProject.disable()
+      this._btnsEdit.forEach(e => e.disable())
       this._btns.preview.element.classList.remove('selected')
-      this._btns.preview.disable()
-      this._btns.generate.disable()
-      this._btns.loadHTML.disable()
-      this._btns.exportProject.disable()
       document.addEventListener('keydown', this.onKeyAction, false);
       this._title.innerHTML = appName
       return this;
     }
 
     switchToEditMode(name) {
-      this._btns.closeProject.enable()
-      this._btns.preview.enable()
+      this._btnsEdit.forEach(e => e.enable())
       this._btns.preview.element.classList.remove('selected')
-      this._btns.generate.enable()
-      this._btns.loadHTML.enable()
-      this._btns.exportProject.enable()
       this._title.innerHTML += ' ['+name+']'
       return this;
     }
@@ -1999,19 +2009,14 @@ var bit = (function() {
         this._app.tools.reset()
         this._app.menu.reset()
         this._app.model.reset()
-        let input = document.createElement('input')
-        input.type = 'file'
-        input.style.display = 'none'
-        input.setAttribute('accept', 'text/json')
-        input.addEventListener('change', e => {
-          if (1 === e.target.files.length)
-            this._app.aProjects.handlers.onImportMap(e.target.files[0])
-          else alert('[ERROR] Only one file must be selected!')
-        }, false)
-        input.click()
+        utils.selectFileAndProcess('text/json', f => this._app.aProjects.handlers.onImportMap(f) )
       }
     }
 
+    _onExportImage() {
+      download(this._app.model.dataURL, this._app.model.info.name)
+    }
+    
     _onHelp() {
       this._app.helper.show()
       this._app.freeze()
@@ -2029,6 +2034,7 @@ var bit = (function() {
         onLoadHTML      : this._onLoadHTML.bind(this),
         onExportProject : this._onExportProject.bind(this),
         onImportProject : this._onImportProject.bind(this),
+        onExportImage   : this._onExportImage.bind(this),
         onHelp          : this._onHelp.bind(this)
       }
     }
