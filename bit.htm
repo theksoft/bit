@@ -162,7 +162,7 @@
     <fieldset id="map-attributes"><legend>Image map attributes</legend>
       <p>
        <label for="map-name">Project / map name:</label>
-       <input type="text" id="map-name" placeholder="map" value="" title="'name' attribute of the image map" />
+       <input type="text" id="map-name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
       </p>
       <p>
        <label for="map-alt">alt:</label>
@@ -170,12 +170,18 @@
       </p>
     </fieldset>
     <fieldset id="map-image"><legend>Image file</legend>
+      <div id="image-url-area">
+        <label for="load-url">URL:</label>
+        <input type="url" id="image-url" />
+        <button class="load">Preview</button>
+      </div>
       <div>
-	      <label>Drop image file here</label>
+	      <label>(or) Drop image file here</label>
 		    <div id="image-drop-zone">
 	        <img class="preview" src="" alt="Preview selected image" />
 	      </div>
       </div>
+      <p>(or)</p>
 	    <p>
 	     <label for="load-image-file" id="load-image-file-lbl">Load image file</label>
 	     <input type="file" id="load-image-file" accept="image/jpeg,image/png,image/gif" />
@@ -311,7 +317,6 @@
     <button class="close">Close</button>
   </form>
 
-  <script type="text/javascript" src="js/download2.js"></script>
   <script type="text/javascript" src="js/bitgeo.js"></script>
   <script type="text/javascript" src="js/bittls.js"></script>
   <script type="text/javascript" src="js/bitarea.js"></script>

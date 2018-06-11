@@ -488,8 +488,8 @@ form.modal option:disabled {
   color: #b55;
 }
 
-form.modal input[type=text] {
-  background-color: #ccc;
+form.modal input[type=text], form.modal input[type=url] {
+	background-color: #ccc;
   color: #333;
   border: 2px solid #555;
   border-radius: 3px;
@@ -498,7 +498,7 @@ form.modal input[type=text] {
   margin: 4px 12px 1px 1px;
 }
 
-form.modal input[type=text].error {
+form.modal input[type=text].error, form.modal input[type=url].error {
   border: 2px solid #f44;
   color: #f44;
 }
@@ -511,6 +511,10 @@ form.modal textarea {
   width: 120px;
   padding: 2px 5px;
   margin: 4px 12px 1px 1px;
+}
+
+form.modal input:invalid {
+  border: 1px dashed red;
 }
 
 /* PROJECT CREATOR FORM */
@@ -598,6 +602,10 @@ form.modal textarea {
 
 #load-image-file-lbl:active {
   background-color: #337;
+}
+
+#image-url-area * {
+  vertical-align: middle;
 }
 
 #project-creator > .buttons {

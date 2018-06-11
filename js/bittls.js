@@ -621,13 +621,23 @@ var bittls = (function(){
     }
 
     _setAppStore(s) {
-      window.localStorage.setItem(this._appKey, JSON.stringify(s));     
+      try {
+        window.localStorage.setItem(this._appKey, JSON.stringify(s))
+      } catch(e) {
+        alert('[ERROR] ' + e.message)
+        return false
+      }
+      return true
     }
 
     write(projectName, value) {
       let s = this._getAppStore()
       s[projectName] = value
-      this._setAppStore(s)
+      if (!this._setAppStore(s)) {
+        delete s[projectName]
+        return false
+      }
+      return true
     }
 
     read(projectName) {
@@ -703,16 +713,96 @@ var bittls = (function(){
 
   }
 
+  function selectFilesAndProcess(accept, action, multiple) {
+    let input = document.createElement('input')
+    input.type = 'file'
+    input.style.display = 'none'
+    input.setAttribute('accept', accept)
+    if (!multiple) {
+      input.addEventListener('change', e => { if (e.target.files.length) action(e.target.files[0]) }, false)
+    } else {
+      input.setAttribute('multiple', true)
+      input.addEventListener('change', e => { if (e.target.files.length) action(e.target.files) }, false)
+    }
+    input.click()
+  }
+
+  function _saveAs(getURL, releaseURL, filename) {
+    let url, a
+    url = getURL()
+    a = document.createElement('a')
+    document.body.appendChild(a)
+    a.style.display = 'none'
+    a.href = url
+    a.download = filename
+    a.onClick = e => {
+      document.body.removeChild(e)
+      releaseURL(url)
+    }
+    a.click()
+  }
+
+  function saveUrlAs(url, filename) {
+    _saveAs(() => url, () => {}, filename)
+  }
+
+  function saveDataAs(data, filename, mime) {
+    let blob, url, a
+    blob = new Blob([data], {type: mime || 'application/octet-stream'})
+    _saveAs(() => window.URL.createObjectURL(blob), u => window.URL.revokeObjectURL(u), filename)
+  }
+
+  function saveObjectAs(object, filename) {
+    saveDataAs(JSON.stringify(object), filename, 'application/json')
+  }
+
+  function selectText(node) {
+    if (document.body.createTextRange) {
+      const range = document.body.createTextRange()
+      range.moveToElementText(node)
+      range.select()
+    } else if (window.getSelection) {
+      const selection = window.getSelection()
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    } else {
+      console.warn("ERROR: Could not select text in node - Unsupported browser!")
+    }
+  }
+
+  function unselect() {
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges()
+    } else {
+      console.warn("ERROR: Could not clear selection - Unsupported browser!")
+    }
+  }
+
+  function copyText(node) {
+    node.select()
+    document.execCommand('Copy')
+  }
+
+  function copySelectedText() {
+    document.execCommand('Copy')
+  }
+
   /*
    * EXPORTS
    */
 
   return {
+    // Classes
     TButton, TToggle, TState, TRadioToggles,
     TNumber,
     MouseStateMachine, MouseStateMachineRadioGroup,
     MousePositionTracker, ContainerMask,
-    LocalProjectStore, DialogForm
+    LocalProjectStore, DialogForm,
+    // Functions
+    selectFilesAndProcess, saveUrlAs, saveDataAs, saveObjectAs,
+    selectText, unselect, copyText, copySelectedText
   }
 
-}()); // GUI definitions
+}());
