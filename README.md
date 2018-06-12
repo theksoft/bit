@@ -1,6 +1,6 @@
 # Boardgame image Tool (BiT)
 https://github.com/theksoft/bit <br>
-Just another HTML map creator in plain javascript featuring project with grid management.
+HTML map creator in plain javascript featuring project with grid management.
 
 ## Menu commands
 
@@ -22,6 +22,7 @@ Projets are stored in local storage by the name of each map.
 - `Generate` : Display HTML map code [`CTRL`+`G`]
 - `Add HTML areas` : Add areas from HTML map source code.<br>
   Full *\<map\>* source code or only *\<area\>* source code can be entered.
+- `Export image` : Export project image to a local file.
 
 #### Other
 
