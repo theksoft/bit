@@ -11,6 +11,13 @@ var bit = (function() {
 
   const $ = s => document.getElementById(s)
   const appName = 'BiT'
+  const loadIndicator = (function() {
+    const dom = document.querySelector('#load-indicator')
+    return {
+      show : () => dom.style.display = 'block',
+      hide : () => dom.style.display = 'none'
+    }
+  })()
 
   var utils = (function() {
 
@@ -50,10 +57,9 @@ var bit = (function() {
       ctrlMetaKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) ? true : false,
       ctrlMetaShiftKey : e => ((e.ctrlKey || e.metaKey) && !e.altKey && e.shiftKey) ? true : false,
       fgTypes, clsActions
+    }
 
-    };
-
-  })();
+  })()
   
   /*
    * DATA MODEL MANAGEMENT
@@ -1231,8 +1237,7 @@ var bit = (function() {
 
     constructor() {
       this._doms = {
-        info : $('selected-file'),
-        load : $('load-indicator')
+        info : $('selected-file')
       }
       this._toRevoke = ''
     }
@@ -1318,13 +1323,6 @@ var bit = (function() {
 
     infoUpdate(width, height) {
       this._doms.info.lastChild.innerHTML += ' - ' + width + 'x' + height + ' px'
-    }
-
-    get loading() {
-      return {
-        show : () => this._doms.load.style.display = 'inline',
-        hide : () => this._doms.load.style.display = 'none'
-      };
     }
 
   }
@@ -1439,6 +1437,7 @@ var bit = (function() {
       this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
       this._doms.inImageUrl.addEventListener('input', this._onUrlInput.bind(this), false)
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
+      this._doms.imagePreview.onload = () => loadIndicator.hide()
       this.reset()
     }
 
@@ -1475,6 +1474,7 @@ var bit = (function() {
       if (1 < files.length || 0 == files.length || !this._handlers.checkFile(files[0])) {
         this._error(this._doms.dropZone)
       } else {
+        loadIndicator.show()
         this._file = files[0]
         this._url = window.URL.createObjectURL(this._file)
         this._doms.imagePreview.src = this._url
@@ -1517,6 +1517,7 @@ var bit = (function() {
     _onLoadClick(e) {
       if (!this._doms.inImageUrl.validity.typeMismatch) {
         let url = this._doms.inImageUrl.value.trim(), tmp = url.split('/')
+        loadIndicator.show()
         this._doms.imagePreview.src = url
         this._doms.imagePreview.style.display = 'block'
         this._url = url
@@ -1584,6 +1585,7 @@ var bit = (function() {
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
       this._doms.list.addEventListener('input', this._onSelect.bind(this), false)
       this._doms.imagePreview.addEventListener('dblclick', this._onImageDblClick.bind(this), false)
+      this._doms.imagePreview.onload = () => loadIndicator.hide()
     }
 
     _fill() {
@@ -1594,6 +1596,7 @@ var bit = (function() {
 
     _loadPreview() {
       let project
+      loadIndicator.show()
       project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value)
       this._doms.imagePreview.src = project.url
       this._filename = project.filename
@@ -2890,6 +2893,7 @@ var bit = (function() {
       window.addEventListener("dragenter", this._preventWindowDrop)
       window.addEventListener("dragover", this._preventWindowDrop)
       window.addEventListener("drop", this._preventWindowDrop)
+      loadIndicator.hide()
 
       this._aMenu     = new AppMenuHandlers(this)
       this._aProjects = new AppProjectHandlers(this)
