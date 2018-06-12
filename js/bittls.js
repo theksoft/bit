@@ -713,18 +713,38 @@ var bittls = (function(){
 
   }
 
-  function selectFilesAndProcess(accept, action, multiple) {
-    let input = document.createElement('input')
-    input.type = 'file'
-    input.style.display = 'none'
-    input.setAttribute('accept', accept)
-    if (!multiple) {
-      input.addEventListener('change', e => { if (e.target.files.length) action(e.target.files[0]) }, false)
-    } else {
-      input.setAttribute('multiple', true)
-      input.addEventListener('change', e => { if (e.target.files.length) action(e.target.files) }, false)
-    }
-    input.click()
+  function selectFiles(accept, multiple) {
+    return new Promise((resolve, reject) => {
+      let input = document.createElement('input')
+      input.type = 'file'
+      input.style.display = 'none'
+      input.setAttribute('accept', accept)
+      if (!multiple) {
+        input.addEventListener('change', e => { if (e.target.files.length) resolve(e.target.files[0]) }, false)
+      } else {
+        input.setAttribute('multiple', true)
+        input.addEventListener('change', e => { if (e.target.files.length) resolve(e.target.files) }, false)
+      }
+      input.click()
+    })
+  }
+
+  function readFileDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = e => reject(e)
+      reader.onload = () => resolve(reader.result)
+      reader.readAsDataURL(file)
+    })
+  }
+
+  function readFileText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = e => reject(e)
+      reader.onload = () => resolve(reader.result)
+      reader.readAsText(file)
+    })
   }
 
   function _saveAs(getURL, releaseURL, filename) {
@@ -789,6 +809,15 @@ var bittls = (function(){
     document.execCommand('Copy')
   }
 
+  function loadImage(node, url) {
+    return new Promise((resolve, reject) => {
+      let cleanup = () => node.onload = node.onerror = () => {}
+      node.onload = () => { cleanup(); resolve() }
+      node.onerror = e => { cleanup(); reject(new Error('Unable to load image')) }
+      node.src = url
+    })
+  }
+
   /*
    * EXPORTS
    */
@@ -801,8 +830,9 @@ var bittls = (function(){
     MousePositionTracker, ContainerMask,
     LocalProjectStore, DialogForm,
     // Functions
-    selectFilesAndProcess, saveUrlAs, saveDataAs, saveObjectAs,
-    selectText, unselect, copyText, copySelectedText
+    selectFiles, readFileDataUrl, readFileText, saveUrlAs, saveDataAs, saveObjectAs,
+    selectText, unselect, copyText, copySelectedText,
+    loadImage
   }
 
 }());

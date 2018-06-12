@@ -111,7 +111,6 @@ var bit = (function() {
     }
 
     set url(d) {
-      let onLoadEnd = d.onLoadEnd || (()=>{})
       switch(d.type) {
       case 'URL':
         if (!this._checkImgExt(d.url))
@@ -120,24 +119,17 @@ var bit = (function() {
         this._url.url = d.url
         let tmp = d.url.split('/')
         this._url.filename = tmp[tmp.length-1]
-        onLoadEnd()
         break
-      case 'objectURL':
+      case 'dataURL':
         if (!this._checkImgFile(d.file))
           throw new Error('ERROR[Model] ' + d.file.type + ' Invalid image file type!')
+        this._url.url = d.url
         this._url.type = 'dataURL'
         this._url.filename = d.file.name
         this._url.size = d.file.size
-        var reader = new FileReader()
-        reader.addEventListener('load', () => {
-          console.log('loaded');
-          this._url.url = reader.result
-          onLoadEnd()
-        }, false) // ***
-        reader.readAsDataURL(d.file)
         break
       default:
-        alert('[ERROR] Unsupprted format - ' + d.type)
+        alert('[ERROR] Unsupported format - ' + d.type)
       }
     }
 
@@ -809,17 +801,6 @@ var bit = (function() {
     _hide(obj) { obj.style.display = 'none' }
     _show(obj) { obj.style.display = 'block' }
 
-    _onLoadImage() {
-      this._ftr.loading.hide()
-      this._ftr.infoUpdate(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
-      this._show(this._doms.aside)
-      this._show(this._doms.workarea)
-      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
-                    .resize()
-      this._coordTracker.enable()
-      this._group.enable()
-    }
-
     ready() {
       return this._group.ready()
     }
@@ -836,10 +817,17 @@ var bit = (function() {
     }
 
     load(url) {
-      this._ftr.loading.show()
-      this._doms.image.onload = this._onLoadImage.bind(this)
-      this._doms.image.src = url
-      return this
+      return bittls.loadImage(this._doms.image, url).then(
+        () => {
+          this._ftr.infoUpdate(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
+          this._show(this._doms.aside)
+          this._show(this._doms.workarea)
+          this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+                        .resize()
+          this._coordTracker.enable()
+          this._group.enable()
+        }
+      )
     }
 
     switchToPreview() {
@@ -1239,17 +1227,11 @@ var bit = (function() {
       this._doms = {
         info : $('selected-file')
       }
-      this._toRevoke = ''
     }
 
     _clear() {
-      if ('' !== this._toRevoke) {
-        window.URL.revokeObjectURL(this._toRevoke)
-        this._toRevoke = ''
-      }
-      while(this._doms.info.firstChild) {
+      while(this._doms.info.firstChild)
         this._doms.info.removeChild(this._doms.info.firstChild)
-      }
       this._doms.info.classList.remove('error')
       return this
     }
@@ -1263,14 +1245,14 @@ var bit = (function() {
     }
 
     set error(d) {
-      this._clear();
+      this._clear()
       let info = document.createElement('p')
       switch(d.type) {
       case 'URL':
         info.textContent = 'No image file selected - Selected file is not an image file: ' + d.filename
         break
       case 'file':
-      case 'ObjectURL':
+      case 'dataURL':
         info.textContent = 'No image file selected - ' + ((d.file === null) ? 'Too many files selected' : ( 'Selected file is not correct: ' + d.file.name ))
         break
       default:
@@ -1297,16 +1279,14 @@ var bit = (function() {
         output.push('<strong>', encodeURIComponent(d.filename), '</strong>')
         url = d.url
         break
-      case 'objectURL':
-        output.push('<strong>', encodeURIComponent(d.filename), '</strong> (', d.file.type || 'n/a', ') - ',
-          d.file.size, ' bytes, last modified: ',
-          d.file.lastModified ? (new Date(d.file.lastModified)).toLocaleDateString() : 'n/a')
-        url = window.URL.createObjectURL(d.file)
-        this._toRevoke = url
-        break
       case 'dataURL':
-        output.push('<strong>', encodeURIComponent(d.filename), '</strong> - ',
-            d.size, ' bytes, last modified: n/a')
+        if (d.file)
+          output.push('<strong>', encodeURIComponent(d.filename), '</strong> (', d.file.type || 'n/a', ') - ',
+                      d.file.size, ' bytes, last modified: ',
+                      d.file.lastModified ? (new Date(d.file.lastModified)).toLocaleDateString() : 'n/a')
+        else
+          output.push('<strong>', encodeURIComponent(d.filename), '</strong> - ',
+                      d.size, ' bytes, last modified: n/a')
         url = d.url
         break
       default:
@@ -1437,7 +1417,6 @@ var bit = (function() {
       this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
       this._doms.inImageUrl.addEventListener('input', this._onUrlInput.bind(this), false)
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
-      this._doms.imagePreview.onload = () => loadIndicator.hide()
       this.reset()
     }
 
@@ -1448,13 +1427,12 @@ var bit = (function() {
       this._doms.btnSet.disabled = true
       switch(this._type) {
       case 'URL':
-        if (!keep) this._doms.inImageUrl.value = this._doms.inImageUrl.defaultValue = ''
+        if (!keep || 'dataURL' === keep) this._doms.inImageUrl.value = this._doms.inImageUrl.defaultValue = ''
         this._doms.btnLoad.disabled = true
         break
-      case 'objectURL':
+      case 'dataURL':
         this._file = null
-        if ('' !== this._url) window.URL.revokeObjectURL(this._url)
-        if (!keep) this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
+        if (!keep || 'URL' === keep) this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
         break
       default:
       }
@@ -1470,17 +1448,30 @@ var bit = (function() {
       return (this._doms.inMapName.validity.valid && this._url !== '')
     }
 
-    _processFiles(files) {
-      if (1 < files.length || 0 == files.length || !this._handlers.checkFile(files[0])) {
+    _processFiles(file) {
+      if (!this._handlers.checkFile(file)) {
         this._error(this._doms.dropZone)
       } else {
+        let url;
         loadIndicator.show()
-        this._file = files[0]
-        this._url = window.URL.createObjectURL(this._file)
-        this._doms.imagePreview.src = this._url
-        this._doms.imagePreview.style.display = 'block'
-        this._type = 'objectURL'
-        this._doms.btnSet.disabled = !this._validate()
+        bittls.readFileDataUrl(file).then(
+          u => bittls.loadImage(this._doms.imagePreview, url = u)
+        ).then(
+          () => {
+            this._file = file
+            this._url = url
+            this._type = 'dataURL'
+            this._doms.imagePreview.style.display = 'block'
+            this._doms.btnSet.disabled = !this._validate()
+          }
+        ).catch(
+          e => {
+            this._doms.imagePreview.src = ''
+            alert('ERROR['+file.name+'] Unable to load requested image file - ' + e.message)
+          }
+        ).finally(
+          () => loadIndicator.hide()
+        )
       }
     }
 
@@ -1493,13 +1484,16 @@ var bit = (function() {
       e.stopPropagation()
       e.preventDefault()
       this._clear()
-      this._processFiles(e.dataTransfer.files)
+      if (1 !== e.dataTransfer.files.length)
+        this._error(this._doms.dropZone)
+      this._processFiles(e.dataTransfer.files[0])
     }
 
     _onImageFileChange(e) {
       e.preventDefault()
-      this._clear(true)
-      this._processFiles(e.target.files)
+      this._clear('dataURL')
+      if (0 !== e.target.files.length)
+        this._processFiles(e.target.files[0])
     }
 
     _onNameInput(e) {
@@ -1509,20 +1503,31 @@ var bit = (function() {
     _onUrlInput(e) {
       const v = this._doms.inImageUrl.value
       if (v !== '' && 'none' !== this._doms.imagePreview.style.display)
-        this._clear(true)
+        this._clear('URL')
       this._doms.inImageUrl.defaultValue = v
       this._doms.btnLoad.disabled = v.trim() === '' || this._doms.inImageUrl.validity.typeMismatch
     }
 
     _onLoadClick(e) {
       if (!this._doms.inImageUrl.validity.typeMismatch) {
-        let url = this._doms.inImageUrl.value.trim(), tmp = url.split('/')
+        let url = this._doms.inImageUrl.value.trim()
         loadIndicator.show()
-        this._doms.imagePreview.src = url
-        this._doms.imagePreview.style.display = 'block'
-        this._url = url
-        this._type = 'URL'
-        this._doms.btnSet.disabled = !this._validate()
+        bittls.loadImage(this._doms.imagePreview, url).then(
+          () => {
+            this._url = url
+            this._type = 'URL'
+            this._doms.imagePreview.style.display = 'block'
+            this._doms.btnSet.disabled = !this._validate()
+          } 
+        ).catch(
+          e => {
+            console.log(this._doms.imagePreview.src)
+            this._doms.imagePreview.src = ''
+            alert('ERROR['+url+'] Unable to load requested image URL - ' + e.message)
+          }
+        ).finally(
+          () => loadIndicator.hide()
+        )
       }
 
     }
@@ -1547,8 +1552,7 @@ var bit = (function() {
           name      : this._doms.inMapName.value,
           alt       : this._doms.inMapAlt.value
         }
-        if (!this._handlers.onNewMap(data))
-          console.log('ERROR - Invalid input management')
+        this._handlers.onNewMap(data)
         this._onClose()
       } else {
         if (this._doms.inMapName.value !== '')
@@ -1585,7 +1589,6 @@ var bit = (function() {
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
       this._doms.list.addEventListener('input', this._onSelect.bind(this), false)
       this._doms.imagePreview.addEventListener('dblclick', this._onImageDblClick.bind(this), false)
-      this._doms.imagePreview.onload = () => loadIndicator.hide()
     }
 
     _fill() {
@@ -1598,8 +1601,16 @@ var bit = (function() {
       let project
       loadIndicator.show()
       project = this._store.read(this._doms.list.options[this._doms.list.selectedIndex].value)
-      this._doms.imagePreview.src = project.url
-      this._filename = project.filename
+      bittls.loadImage(this._doms.imagePreview, project.url).then(
+        () => this._filename = project.filename
+      ).catch(
+        e => {
+          this._doms.imagePreview.src = ''
+          alert('ERROR['+project.name+'] Unable to load requested project image - ' + e.message)
+        }
+      ).finally(
+        () => loadIndicator.hide()
+      )
     }
 
     _clear() {
@@ -2042,7 +2053,9 @@ var bit = (function() {
         this._app.tools.reset()
         this._app.menu.reset()
         this._app.model.reset()
-        bittls.selectFilesAndProcess('.bit', f => this._app.aProjects.handlers.onImportMap(f) )
+        bittls.selectFiles('.bit').then(
+          file => this._app.aProjects.handlers.onImportMap(file)
+        )
       }
     }
 
@@ -2082,20 +2095,35 @@ var bit = (function() {
       this._app = app
     }
 
+    _cleanup() {
+      this._app.footer.reset()
+      this._app.workspace.reset()
+      this._app.tools.reset()
+      this._app.menu.reset()
+      this._app.model.reset()
+    }
+
     _loadProject(name, project) {
-      let rtn = false
-      this._app.footer.info = { type : project.type, url: project.url, filename : project.filename, size : project.size }
-      this._app.workspace.load(project.url)
-      if(this._app.model.fromStore(project, this._app.store.s2a)) {
-        this._app.aTooler.managePropsDisplay(this._app.model.areas)
-        this._app.menu.switchToEditMode(name)
-        this._app.setUnmodified(true)
-        rtn = true
-      } else {
-        this._app.footer.errorEx = project
-      }
-      this._app.release()
-      return rtn
+      return new Promise((resolve, reject) => {
+        this._app.workspace.load(project.url).then(
+          () => {
+            this._app.footer.info = { type : project.type, url: project.url, filename : project.filename, size : project.size }
+            if(this._app.model.fromStore(project, this._app.store.s2a)) {
+              this._app.aTooler.managePropsDisplay(this._app.model.areas)
+              this._app.menu.switchToEditMode(name)
+              this._app.setUnmodified(true)
+              resolve()
+            } else {
+              this._app.footer.errorEx = project
+              reject()
+            }
+          }
+        ).catch(
+          e => { this._cleanup(); reject(e) }
+        ).finally(
+          () => this._app.release()
+        )
+      })
     }
 
     _onClose() {
@@ -2103,44 +2131,47 @@ var bit = (function() {
     }
 
     _onNewMap(data) {
-      let rtn = false
+      loadIndicator.show()
       try {
-        data.onLoadEnd = (() => {
-          data.filename = this._app.model.filename
-          this._app.model.info = data
-          this._app.menu.switchToEditMode(data.name)
-          this._app.footer.info = data
-          this._app.workspace.load(this._app.model.url)
-          this._app.setModified(true)
-        }).bind(this)
         this._app.model.url = data
-        rtn = true
-      } catch (e) {
-        console.log(e.message)
+        data.filename = this._app.model.filename
+        this._app.model.info = data
+        this._app.menu.switchToEditMode(data.name)
+        this._app.footer.info = data
+        this._app.workspace.load(this._app.model.url)
+        this._app.setModified(true)
+      } catch(e) {
+        alert('ERROR[<data.name>] Unable to create project - ' + e.message)
         this._app.footer.error = data
         this._app.release()
-        rtn = false
+      } finally {
+        loadIndicator.hide()
       }
-      return rtn
     }
 
     _onLoadMap(name) {
-      return this._loadProject(name, this._app.store.read(name))
+      loadIndicator.show()
+      this._loadProject(name, this._app.store.read(name)).catch(
+        e => alert('ERROR['+name+'] Invalid project - ' + e.message)
+      ).finally(
+        () => loadIndicator.hide()
+      )
     }
 
     _onImportMap(file) {
-      let rd = new FileReader()
-      rd.onload = () => {
-        let project = null;
-        try {
-          project = JSON.parse(rd.result)
-          this._loadProject(project.name, project)
-        } catch(e) {
-          alert('ERROR[' + file.name + '] Invalid file - ' + e.message)
+      loadIndicator.show()
+      bittls.readFileText(file).then(
+        text => JSON.parse(text)
+      ).then(
+        project => this._loadProject(project.name, project)
+      ).catch(
+        e => {
+          alert('ERROR['+file.name+'] Invalid file - ' + e.message)
           this._app.footer.error = { type: 'file', file: file }
         }
-      }
-      rd.readAsText(file) 
+      ).finally(
+        loadIndicator.hide()
+      )
     }
 
     _onLoadCode(code) {
