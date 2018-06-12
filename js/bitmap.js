@@ -166,45 +166,71 @@ var bitmap = (function() {
   class Mapper {
 
     constructor() {
-      this._map = this._container = this._image = null;
+      this._map = this._container = this._image = this._svg = null;
+      this._area = null;
     }
 
-    getInnerString(areas) {
+    _getInnerString(areas) {
       return areas.reduceRight((a,e) => a + create(e).htmlString, '');
+    }
+
+    _getMapAreaString(area) {
+      let attrs, sa;
+      sa = '';
+      if (area.hasAttributes()) {
+        attrs = area.attributes;
+        for(let i = 0; i < attrs.length; i++)
+          sa += ' ' + attrs[i].name + '="' + attrs[i].value + '"';
+      }
+      return '<area' + sa + ' />';
+    }
+
+    _createDynamicMap(string, name) {
+      this._image.setAttribute('usemap', '#'+name);
+      this._map = document.createElement('map');
+      this._map.setAttribute('name', name);
+      this._container.appendChild(this._map);
+      this._map.innerHTML = string;
+    }
+
+    _createDynamicOverlay() {
+      const svg = document.createElementNS(bitarea.NSSVG, 'svg');
+      this._svg = svg;
+      this._container.appendChild(this._svg);
+      svg.setAttributeNS(null, 'width', this._image.width+'px');
+      svg.setAttributeNS(null, 'height', this._image.height+'px');
+      svg.setAttributeNS(null, 'id', 'map-overlay');
+    }
+
+    _defineAreaOverlay() {
+      let i, list;
+      list = this._map.querySelectorAll('area');
+      for (i = 0; i < list.length; i++) {
+        let a = list[i], s = this._getMapAreaString(a);
+        a.addEventListener('click', () => alert(s), false);
+        a.addEventListener('mouseenter', () => this._area = bitarea.createFromRecord(Mapper.loadHtmlString(s)[0], this._svg), false);
+        a.addEventListener('mouseleave', () => { this._area.remove(); this._area = null; }, false);
+      }
+      return list;
     }
 
     displayPreview(container, image, areas, info) {
       this._container = container;
       this._image = image;
-      this._image.setAttribute('usemap', '#'+info.name);
-      this._map = document.createElement('map');
-      this._map.setAttribute('name', info.name);
-      this._container.appendChild(this._map);
-      this._map.innerHTML = this.getInnerString(areas);
-      let i, list;
-      list = this._map.querySelectorAll('area');
-      for (i = 0; i < list.length; i++) {
-        list[i].addEventListener('click', e => {
-          e.preventDefault();
-          let output, attrs, sa;
-          sa = '';
-          if (e.target.hasAttributes()) {
-            attrs = e.target.attributes;
-            for(let i = 0; i < attrs.length; i++)
-              sa += ' ' + attrs[i].name + '="' + attrs[i].value + '"';
-          }
-          output = '<area' + sa + ' />';
-          alert(output);
-        }, false);
-      }
+      this._createDynamicMap(this._getInnerString(areas), info.name)
+      this._createDynamicOverlay();
+      this._defineAreaOverlay();
     }
 
     cancelPreview() {
       if (null !== this._container)
         this._container.removeChild(this._map);
+      if (null != this._svg)
+        this._container.removeChild(this._svg);
       if (null !== this._image)
         this._image.removeAttribute('usemap');
-      this._map = this._container = this._image = null;
+      this._map = this._container = this._image = this._svg = null;
+      this._area = null;
     }
 
     static specializeProperties(props, n) {
@@ -231,7 +257,7 @@ var bitmap = (function() {
     }
 
     static loadHtmlString(code) {
-      const MAPEXP = /<area([\s\S]*?)\/>/gmi,
+      const MAPEXP = /<area([\s\S]*?)(\/>|>)/gmi,
       AREAEXP = {
         shape   : / shape="(rect|circle|poly)"/,
         coords  : / coords="([\d ,]+?)"/,
@@ -279,7 +305,6 @@ var bitmap = (function() {
       }
   
       let records;
-  
       records = [];
       if (code) {
         while(true) {

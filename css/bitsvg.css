@@ -247,3 +247,19 @@
   fill: #222;
   stroke: none;
 }
+
+/*
+ * Preview overlays
+ */
+
+#map-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: block;
+  pointer-events : none;
+  fill: #fff;
+  fill-opacity: 0.15;
+  cursor : help;
+}
