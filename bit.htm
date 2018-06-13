@@ -149,7 +149,7 @@
 
   <!-- Project manager -->
   <form id="project-manager" class="modal">
-    <select class="project-list" multiple>
+    <select class="list" multiple>
     </select>
     <div class="buttons">
       <button class="close">Close</button>
@@ -158,35 +158,35 @@
     </div>
   </form>
 
-  <!-- Map attributes and image loader -->
+  <!-- Project attributes and image loader -->
   <form id="project-creator" class="modal">
-    <fieldset id="map-attributes"><legend>Image map attributes</legend>
-      <p>
-       <label for="map-name">Project / map name:</label>
-       <input type="text" id="map-name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
-      </p>
-      <p>
-       <label for="map-alt">alt:</label>
-       <input type="text" id="map-alt" value="" title="'alt' attribute of the image map" />
-      </p>
+    <fieldset class="attrs"><legend>Image map attributes</legend>
+	    <label><span>Project / map name: </span> 
+	      <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
+	    </label>
+	    <label><span>alt: </span> 
+	      <input type="text" class="text alt" value="" title="'alt' attribute of the image map" />
+	    </label>
     </fieldset>
-    <fieldset id="map-image"><legend>Image file</legend>
-      <div id="image-url-area">
-        <label for="load-url">URL:</label>
-        <input type="url" id="image-url" />
+    <fieldset class="image"><legend>Image file</legend>
+      <div class="url">
+        <label>URL:
+          <input type="url" class="text url" />
+        </label>
         <button class="load">Preview</button>
       </div>
       <div>
 	      <label>(or) Drop image file here</label>
-		    <div id="image-drop-zone">
+		    <div class="drop">
 	        <img class="preview" src="" alt="Preview selected image" />
 	      </div>
       </div>
-      <p>(or)</p>
-	    <p>
-	     <label for="load-image-file" id="load-image-file-lbl">Load image file</label>
-	     <input type="file" id="load-image-file" accept="image/jpeg,image/png,image/gif" />
-	    </p>
+      <div>(or)</div>
+	    <div class="file">
+	     <label>Load image file
+	       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+	     </label>
+	    </div>
     </fieldset>
     <div class="buttons">
       <button class="create" disabled>Create</button>
@@ -198,7 +198,7 @@
   <form id="project-loader" class="modal">
     <select class="project-list">
     </select>
-    <div id="project-image">
+    <div class="image">
       <img class="preview" src="" alt="Preview selected image" />
     </div>
     <div class="buttons">
@@ -207,12 +207,13 @@
     </div>
   </form>
 
-  <!-- Map attributes change -->
-  <form id="project-changer" class="modal">
-    <p>
-	    <label for="map-attr-name">Project / map name:</label>
-	    <input type="text" id="map-attr-name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
-    </p>
+  <!-- Project name change -->
+  <form id="project-renamer" class="modal">
+    <div>
+      <label>Project / map name:
+        <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
+      </label>
+    </div>
     <div class="buttons">
       <button class="apply">Save</button>
       <button class="cancel" >Cancel</button>
@@ -221,7 +222,7 @@
 
   <!-- HTML code display -->
   <form id="project-code" class="modal">
-    <div id="code-result"></div>
+    <div class="code"></div>
     <div class="buttons">
       <button class="export">Export</button>
       <button class="copy">Copy Selection</button>
@@ -233,10 +234,11 @@
 
   <!-- HTML code input -->
   <form id="code-loader" class="modal">
-    <p>
-      <label for="input-code">Enter HTML code here:</label>
-      <textarea id="input-code"></textarea>
-    </p>
+    <div>
+      <label>Enter HTML code here:
+        <textarea class="text code"></textarea>
+      </label>
+    </div>
     <div class="buttons">
       <button class="select" disabled>Load</button>
       <button class="clear">Clear</button>

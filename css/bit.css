@@ -448,6 +448,10 @@ form.modal {
   display: none;
 }
 
+form.modal.show {
+  display : block;
+}
+
 form.modal button {
   background-color: #004;
   margin-top: 10px;
@@ -514,7 +518,7 @@ form.modal textarea {
 }
 
 form.modal input:invalid {
-  border: 1px dashed red;
+  border: 2px dashed red;
 }
 
 /* PROJECT CREATOR FORM */
@@ -538,21 +542,30 @@ form.modal input:invalid {
 	font-size: 14px;
 }
 
-#project-creator label {
+#project-creator fieldset.attrs label {
+	white-space: nowrap;
+}
+
+#project-creator fieldset.attrs label > span,
+#project-creator fieldset.attrs label > input[type=text] {
   display: inline-block;
 }
 
-#map-attributes label {
+#project-creator fieldset.attrs label > span {
   width: 120px;
   text-align: right;
 }
 
-#map-image label {
+#project-creator fieldset.image label {
   margin: 5px auto;
   text-align: center;
 }
 
-#image-drop-zone {
+#project-creator fieldset.image .url * {
+  vertical-align: middle;
+}
+
+#project-creator .drop {
   width: 80%;
   height: 200px;
 	border: 2px dashed #999;
@@ -566,7 +579,7 @@ form.modal input:invalid {
   text-align: center;
 }
 
-#image-drop-zone .preview {
+#project-creator .preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
@@ -574,17 +587,21 @@ form.modal input:invalid {
   display: none;
 }
 
-.error#image-drop-zone {
+#project-creator .error.drop {
   border: 2px dashed #f44;
 }
 
-#load-image-file {
+#project-creator .file {
+	margin-top: 10px
+}
+
+#project-creator .file input[type=file] {
   position: fixed;
   top: -100em;
   opacity: 0;
 }
 
-#load-image-file-lbl {
+#project-creator .file label {
   background-color: #004;
   margin-top: 10px;
   margin-bottom: 4px;
@@ -596,16 +613,12 @@ form.modal input:invalid {
   border: 1px ridge gray;
 }
 
-#load-image-file-lbl:hover {
+#project-creator .file label:hover {
   background-color: #226;
 }
 
-#load-image-file-lbl:active {
+#project-creator .file label:active {
   background-color: #337;
-}
-
-#image-url-area * {
-  vertical-align: middle;
 }
 
 #project-creator > .buttons {
@@ -628,7 +641,7 @@ form.modal input:invalid {
 
 /* PROJECT MODIFiER FORM */
 
-#project-changer {
+#project-renamer {
   top: 10%;
   left: 40%;
   width: 20%;
@@ -671,7 +684,7 @@ form.modal input:invalid {
   margin-right: 10px;
 }
 
-#project-image {
+#project-loader > div.image {
   width: 80%;
   height: 200px;
   border: 2px dashed #999;
@@ -684,7 +697,7 @@ form.modal input:invalid {
   text-align: center;
 }
 
-#project-image .preview {
+#project-loader > div.image > img.preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
@@ -704,7 +717,7 @@ form.modal input:invalid {
   text-align: right;
 }
 
-#code-result {
+#project-code > .code {
 	width: 96%;
 	padding: 5px 0;
 	text-align: left;
@@ -913,6 +926,7 @@ form.modal input:invalid {
   width: 100%;
   height: 100%;
   z-index: 15;
+  display: none;
 }
 
 #spinner {
@@ -925,3 +939,8 @@ form.modal input:invalid {
   border-radius: 5px;
   line-height: 3;
 }
+
+.show#load-indicator {
+  display: block;
+}
+

@@ -14,8 +14,8 @@ var bit = (function() {
   const loadIndicator = (function() {
     const dom = document.querySelector('#load-indicator')
     return {
-      show : () => dom.style.display = 'block',
-      hide : () => dom.style.display = 'none'
+      show : () => dom.classList.add('show'),
+      hide : () => dom.classList.remove('show')
     }
   })()
 
@@ -1320,9 +1320,9 @@ var bit = (function() {
       this._handlers = c.handlers
       this._canClear = true
       this._doms = {
-        list      : document.querySelector('#project-manager .project-list'),
-        deleteBtn : document.querySelector('#project-manager .delete'),
-        clearBtn  : document.querySelector('#project-manager .clear')
+        list      : this._form.querySelector('.list'),
+        deleteBtn : this._form.querySelector('.delete'),
+        clearBtn  : this._form.querySelector('.clear')
       }
       this._doms.deleteBtn.addEventListener('click', this._onDelete.bind(this), false)
       this._doms.clearBtn.addEventListener('click', this._onClear.bind(this), false)
@@ -1374,10 +1374,10 @@ var bit = (function() {
       }
     }
 
-   show() {
+    show() {
+      super.show()
       this._canClear = this._fill()
       this._doms.clearBtn.disabled = !this._canClear
-      super.show()
     }
 
   }
@@ -1389,23 +1389,20 @@ var bit = (function() {
   class ProjectCreatorDialog extends bittls.DialogForm {
 
     constructor(c) {
-      super({
-        form : $('project-creator'),
-        textRecipients : [$('map-name'), $('map-alt'), $('image-url')]
-      })
+      super({ form : $('project-creator') })
       this._handlers = c.handlers
       this._file = null
       this._url = ''
       this._type = 'none'
       this._doms = {
-        btnSet        : document.querySelector('#project-creator .create'),
-        dropZone      : $('image-drop-zone'),
-        imagePreview  : document.querySelector('#project-creator .preview'),
-        inImageFile   : $('load-image-file'),
-        inMapName     : $('map-name'),
-        inMapAlt      : $('map-alt'),
-        inImageUrl    : $('image-url'),
-        btnLoad       : document.querySelector('#project-creator .load')
+        btnSet        : this._form.querySelector('.create'),
+        dropZone      : this._form.querySelector('.drop'),
+        imagePreview  : this._form.querySelector('.preview'),
+        inImageFile   : this._form.querySelector('input[type=file]'),
+        inMapName     : this._form.querySelector('.text.name'),
+        inMapAlt      : this._form.querySelector('.text.alt'),
+        inImageUrl    : this._form.querySelector('.text.url'),
+        btnLoad       : this._form.querySelector('button.load')
       }
 
       this._doms.btnSet.addEventListener('click', this._onSetClick.bind(this), false)
@@ -1438,6 +1435,14 @@ var bit = (function() {
       }
       this._url = ''
       this._type = 'none'
+    }
+
+    reset() {
+      this._clear()
+      this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
+      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
+      this._doms.inMapAlt.value = this._doms.inMapAlt.defaultValue = ''
+      this._doms.inImageUrl.value = this._doms.inImageUrl.defaultValue = ''
     }
 
     _error(e) {
@@ -1533,7 +1538,6 @@ var bit = (function() {
     }
 
     _onCancel() {
-      this._clear()
       this._handlers.onClose()
       super._onCancel()
     }
@@ -1545,27 +1549,18 @@ var bit = (function() {
     _onSetClick(e) {
       e.preventDefault()
       if(this._validate()) {
-        let data = {
+        this._handlers.onNewMap({
           type      : this._type,
           url       : this._url,
           file      : this._file,
           name      : this._doms.inMapName.value,
           alt       : this._doms.inMapAlt.value
-        }
-        this._handlers.onNewMap(data)
+        })
         this._onClose()
       } else {
         if (this._doms.inMapName.value !== '')
           this._error(this._doms.dropZone)
       }
-    }
-
-    reset() {
-      this._clear()
-      this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
-      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
-      this._doms.inMapAlt.value = this._doms.inMapAlt.defaultValue = ''
-      this._doms.inImageUrl.value = this._doms.inImageUrl.defaultValue = ''
     }
 
   }
@@ -1582,9 +1577,9 @@ var bit = (function() {
       this._store = c.store
       this._filename = ''
       this._doms = {
-        list          : document.querySelector('#project-loader .project-list'),
-        btnLoad       : document.querySelector('#project-loader .select'),
-        imagePreview  : document.querySelector('#project-loader .preview')
+        list          : this._form.querySelector('.project-list'),
+        btnLoad       : this._form.querySelector('.select'),
+        imagePreview  : this._form.querySelector('.preview')
       }
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
       this._doms.list.addEventListener('input', this._onSelect.bind(this), false)
@@ -1613,26 +1608,15 @@ var bit = (function() {
       )
     }
 
-    _clear() {
+    _reset() {
       this._doms.imagePreview.style.display = 'none'
       this._doms.imagePreview.src = ''
       this._doms.list.innerHTML = ''
       this._doms.btnLoad.disabled = true
     }
 
-    _reset() {
-      this._clear()
-      this._fill()
-      if (this._doms.list.length > 0) {
-        this._doms.btnLoad.disabled = false
-        this._loadPreview();
-        this._doms.imagePreview.style.display = 'block'
-      }
-    }
-
     _onCancel() {
       super._onCancel()
-      this._clear()
       this._handlers.onClose()
     }
 
@@ -1649,7 +1633,6 @@ var bit = (function() {
       e.preventDefault()
       value = this._doms.list.options[this._doms.list.selectedIndex].value
       super._onClose()
-      this._clear()
       this._handlers.onLoadMap(value)
     }
 
@@ -1658,8 +1641,13 @@ var bit = (function() {
     }
 
     show() {
-      this._reset()
       super.show()
+      this._fill()
+      if (this._doms.list.length > 0) {
+        this._doms.btnLoad.disabled = false
+        this._loadPreview()
+        this._doms.imagePreview.style.display = 'block'
+      }
     }
 
   }
@@ -1668,28 +1656,20 @@ var bit = (function() {
    *  MAP PROJECT ATTRIBUTES MODIFIER
    */
 
-  class ProjectChangerDialog extends bittls.DialogForm {
+  class ProjectRenamerDialog extends bittls.DialogForm {
 
     constructor(c) {
-      super({
-        form : $('project-changer'),
-        textRecipients : [$('map-attr-name')]
-      })
+      super({ form : $('project-renamer') })
       this._handlers = c.handlers
       this._doms = {
-        btnSet        : document.querySelector('#project-changer .apply'),
-        inMapName     : $('map-attr-name')
+        btnSet        : this._form.querySelector('.apply'),
+        inMapName     : this._form.querySelector('.name')
       }
 
       this._doms.btnSet.addEventListener('click', this._onSetClick.bind(this), false)
       this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
-      this._name = this._alt = '' 
-      this.reset()
-    }
-
-    _clear() {
-      this._doms.btnSet.disabled = true
-      this._name = this._alt = ''
+      this._name = '' 
+      this._reset()
     }
 
     _validate() {
@@ -1701,7 +1681,6 @@ var bit = (function() {
     }
 
     _onCancel() {
-      this._clear()
       this._handlers.onClose()
       super._onCancel()
     }
@@ -1719,8 +1698,9 @@ var bit = (function() {
       }
     }
 
-    reset() {
-      this._clear()
+    _reset() {
+      this._name = ''
+      this._doms.btnSet.disabled = true
       this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
     }
 
@@ -1733,18 +1713,15 @@ var bit = (function() {
   class CodeGeneratorDialog extends bittls.DialogForm {
 
     constructor(c) {
-      super({
-        form : $('project-code'),
-        keyHandler : e => this._keyAction(e)
-      })
+      super({ form : $('project-code'), keyHandler : e => this._keyAction(e) })
       this._handlers = c.handlers
       this._name = 'untitled'
       this._doms = {
-        code        : $('code-result'),
-        btnSelect   : document.querySelector('#project-code .select'),
-        btnClear    : document.querySelector('#project-code .clear'),
-        btnCopy     : document.querySelector('#project-code .copy'),
-        btnExport   : document.querySelector('#project-code .export')
+        code        : this._form.querySelector('.code'),
+        btnSelect   : this._form.querySelector('.select'),
+        btnClear    : this._form.querySelector('.clear'),
+        btnCopy     : this._form.querySelector('.copy'),
+        btnExport   : this._form.querySelector('.export')
       }
       this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false)
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
@@ -1799,10 +1776,9 @@ var bit = (function() {
     }
 
     show(n, s) {
-      this._reset()
-      this._doms.code.innerHTML = s
-      this._name = n
       super.show()
+      this._name = n
+      this._doms.code.innerHTML = s
     }
 
   }
@@ -1814,33 +1790,25 @@ var bit = (function() {
   class HtmlLoaderDialog extends bittls.DialogForm {
 
     constructor(c) {
-      super({
-        form : $('code-loader'),
-        textRecipients : [$('input-code')]
-      })
+      super({ form : $('code-loader') })
       this._handlers = c.handlers
       this._doms = {
-        btnLoad    : document.querySelector('#code-loader .select'),
-        btnClear   : document.querySelector('#code-loader .clear'),
-        code       : $('input-code')
+        btnLoad    : this._form.querySelector('.select'),
+        btnClear   : this._form.querySelector('.clear'),
+        code       : this._form.querySelector('.code')
       }
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
       this._doms.code.addEventListener('input', this._onCodeInput.bind(this), false)
     }
 
-    _clear() {
-      this._doms.btnLoad.disabled = true
-    }
-
     _reset() {
-      this._clear()
+      this._doms.btnLoad.disabled = true
       if (this._doms.code.value != '')
         this._doms.btnLoad.disabled = false
     }
 
     _onClose() {
-      this._clear()
       this._handlers.onClose()
       super._onClose()
     }
@@ -1854,21 +1822,16 @@ var bit = (function() {
     }
 
     _onLoadClick(e) {
+      const code = this._doms.code.value
       e.preventDefault()
-      this._clear()
       super._onClose()
-      this._handlers.onLoadCode(this._doms.code.value);
+      this._handlers.onLoadCode(code);
     }
 
     _onClearClick(e) {
       e.preventDefault()
       this._doms.code.value = ''
       this._doms.btnLoad.disabled = true
-    }
-
-    show() {
-      this._reset()
-      super.show()
     }
 
   }
@@ -2042,7 +2005,6 @@ var bit = (function() {
         this._app.tools.reset()
         this._app.menu.reset()
         this._app.model.reset()
-        this._app.creator.reset()
         this._app.creator.show()
         this._app.freeze()
       }
@@ -2079,7 +2041,7 @@ var bit = (function() {
     }
 
     _onSaveProjectAs() {
-      this._app.changer.show()
+      this._app.renamer.show()
       this._app.freeze()
     }
 
@@ -3040,7 +3002,7 @@ var bit = (function() {
         store : this._store,
         handlers : this._aProjects.handlers
       })
-      this._changer    = new ProjectChangerDialog({
+      this._renamer    = new ProjectRenamerDialog({
         handlers : this._aProjects.handlers
       })
       this._loader    = new HtmlLoaderDialog({ handlers : this._aProjects.handlers })
@@ -3076,7 +3038,7 @@ var bit = (function() {
     get manager()   { return this._manager }
     get creator()   { return this._creator }
     get opener()    { return this._opener }
-    get changer()   { return this._changer }
+    get renamer()   { return this._renamer }
     get loader()    { return this._loader }
     get generator() { return this._generator }
     get helper()    { return this._helper }

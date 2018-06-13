@@ -665,25 +665,30 @@ var bittls = (function(){
     constructor(c) {
       let e;
       this._form = c.form
-      this._textRecipients = c.textRecipients || []
       this._keyHandler = c.keyHandler || (() => {})
       this.onKeyAction = this._onKeyAction.bind(this)
-      this._textRecipients.forEach(e => e.addEventListener('keydown', e => { if ('Escape' !== e.key) e.stopPropagation() }, false))
-      e = c.form.querySelector('.close');
+      e = c.form.querySelector('.close')
       if (e) e.addEventListener('click', this._onCloseClick.bind(this), false)
-      e = c.form.querySelector('.cancel');
+      e = c.form.querySelector('.cancel')
       if (e) e.addEventListener('click', this._onCancelClick.bind(this), false)
+      e = c.form.querySelectorAll('.text')
+      for (let i = 0; i < e.length; i++)
+        e[i].addEventListener('keydown', e => { if ('Escape' !== e.key) e.stopPropagation() }, false)
     }
 
     show() {
+      this._reset()
       document.addEventListener('keydown', this.onKeyAction, false)
-      this._form.style.display = 'block'
+      this._form.classList.add('show')
     }
 
     close() {
       document.removeEventListener('keydown', this.onKeyAction, false)
-      this._form.style.display = 'none'
+      this._form.classList.remove('show')
+      this._reset()
     }
+
+    _reset() {}
 
     _onCancel() {
       this.close()
