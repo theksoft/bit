@@ -54,6 +54,7 @@ Tool                              | Description
 
 - Starting area drawing cancels current selection.
 - Pressing `ESC` cancels any area drawing in progress.
+- For polygons, pressing `ENTER` closes the figure in progress providing at least 3 points have been defined.
 - Once an area drawing ends, the resulting area is selected by default.
 
 ###### Map result (Code Generation)

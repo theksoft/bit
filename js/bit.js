@@ -498,20 +498,38 @@ var bit = (function() {
         onStart : (p,e) => {
           if (this._handlers.onStart(this._drawarea, p, e.altKey, this._gridarea)) {
             this._drawarea.classList.add(utils.clsActions.DRAWING)
+            document.addEventListener('keydown', this.onCheckEnter, false)
             return true
           }
           return false
         },
         onProgress : p => this._handlers.onProgress(this._drawarea, p),
         onEnd : p => this._handlers.onEnd(this._drawarea, p),
-        onExit : () => this._drawarea.classList.remove(utils.clsActions.DRAWING),
+        onExit : () => {
+          this._drawarea.classList.remove(utils.clsActions.DRAWING)
+          document.removeEventListener('keydown', this.onCheckEnter, false)
+        },
         onCancel : () => this._handlers.onCancel()
       }, { group : c.group, state : states.DRAWING })
       this._handlers = c.handlers
       this._viewport = c.viewport
       this._drawarea = c.drawarea
       this._gridarea = c.gridarea
+      this.onCheckEnter = this._onCheckEnter.bind(this)
     }
+    
+    _onCheckEnter(e) {
+      e.preventDefault()
+      if ('Enter' === e.key) {
+        if (this._handlers.onAchieve(this._drawarea)) {
+          this._state = 'done'
+          this._inactivate();
+          this._exit(this._element)
+          this._state = 'inactive'
+        }
+      }
+    }
+
   }
   
   // AREA SELECTOR
@@ -2381,13 +2399,25 @@ var bit = (function() {
       this._app.tools.disableGridTools()
     }
 
+    _onAchieve(parent) {
+      if (this._generator && bitarea.types.POLYLINE === this._generator.figure.type) {
+        let figure = this._generator.figure
+        if (3 < figure.coords.length) {
+          this._onEnd(parent, figure.coords[0])
+          return true
+        }
+      }
+      return false
+    }
+
     get handlers() {
       return {
         prevent     : this._prevent.bind(this),
         onStart     : this._onStart.bind(this),
         onProgress  : this._onProgress.bind(this),
         onEnd       : this._onEnd.bind(this),
-        onCancel    : this._onCancel.bind(this)
+        onCancel    : this._onCancel.bind(this),
+        onAchieve   : this._onAchieve.bind(this)
       }
     }
 
