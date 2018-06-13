@@ -721,6 +721,7 @@ var bittls = (function(){
   function selectFiles(accept, multiple) {
     return new Promise((resolve, reject) => {
       let input = document.createElement('input')
+      input.defaultValue = input.value = ''
       input.type = 'file'
       input.style.display = 'none'
       input.setAttribute('accept', accept)
@@ -729,6 +730,11 @@ var bittls = (function(){
       } else {
         input.setAttribute('multiple', true)
         input.addEventListener('change', e => { if (e.target.files.length) resolve(e.target.files) }, false)
+      }
+      document.body.onfocus = () => {
+        document.body.onfocus = null
+        // Focus occurs before input change and before its value is set
+        window.setTimeout(e => { if (!e.value.length) resolve() }, 1000, input)
       }
       input.click()
     })

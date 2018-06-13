@@ -1317,7 +1317,7 @@ var bit = (function() {
       super({ form : $('project-manager') })
       this._model = c.model
       this._store = c.store
-      this._handlers = c.handlers
+      this._handlers = {}
       this._canClear = true
       this._doms = {
         list      : this._form.querySelector('.list'),
@@ -1346,8 +1346,8 @@ var bit = (function() {
 
     _onClose() {
       this._doms.list.innerHTML = ''
-      this._handlers.onClose()
       super._onClose()
+      this._handlers.onClose()
     }
 
     _onCancel() {
@@ -1374,7 +1374,8 @@ var bit = (function() {
       }
     }
 
-    show() {
+    show(h) {
+      this._handlers.onClose = h.onClose || (() => {})
       super.show()
       this._canClear = this._fill()
       this._doms.clearBtn.disabled = !this._canClear
@@ -1390,7 +1391,8 @@ var bit = (function() {
 
     constructor(c) {
       super({ form : $('project-creator') })
-      this._handlers = c.handlers
+      this._handlers = {}
+      this._checkFile = c.checkFile || (() => true)
       this._file = null
       this._url = ''
       this._type = 'none'
@@ -1414,7 +1416,7 @@ var bit = (function() {
       this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
       this._doms.inImageUrl.addEventListener('input', this._onUrlInput.bind(this), false)
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
-      this.reset()
+      this._reset()
     }
 
     _clear(keep) {
@@ -1437,7 +1439,7 @@ var bit = (function() {
       this._type = 'none'
     }
 
-    reset() {
+    _reset() {
       this._clear()
       this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
       this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
@@ -1454,7 +1456,7 @@ var bit = (function() {
     }
 
     _processFiles(file) {
-      if (!this._handlers.checkFile(file)) {
+      if (!this._checkFile(file)) {
         this._error(this._doms.dropZone)
       } else {
         let url;
@@ -1538,8 +1540,8 @@ var bit = (function() {
     }
 
     _onCancel() {
-      this._handlers.onClose()
       super._onCancel()
+      this._handlers.onCancel()
     }
 
     _onClose() {
@@ -1549,20 +1551,26 @@ var bit = (function() {
     _onSetClick(e) {
       e.preventDefault()
       if(this._validate()) {
-        this._handlers.onNewMap({
-          type      : this._type,
-          url       : this._url,
-          file      : this._file,
-          name      : this._doms.inMapName.value,
-          alt       : this._doms.inMapAlt.value
-        })
-        this._onClose()
+        let data = {
+            type      : this._type,
+            url       : this._url,
+            file      : this._file,
+            name      : this._doms.inMapName.value,
+            alt       : this._doms.inMapAlt.value
+        }
+        this.close()
+        this._handlers.onCreate(data)
       } else {
         if (this._doms.inMapName.value !== '')
           this._error(this._doms.dropZone)
       }
     }
 
+    show(h) {
+      this._handlers.onCancel = h.onCancel || (() => {})
+      this._handlers.onCreate = h.onCreate || (() => {})
+      super.show()
+    }
   }
 
   /*
@@ -1573,7 +1581,7 @@ var bit = (function() {
 
     constructor(c) {
       super({ form : $('project-loader') })
-      this._handlers = c.handlers
+      this._handlers = {}
       this._store = c.store
       this._filename = ''
       this._doms = {
@@ -1616,8 +1624,8 @@ var bit = (function() {
     }
 
     _onCancel() {
+      this._handlers.onCancel()
       super._onCancel()
-      this._handlers.onClose()
     }
 
     _onClose() {
@@ -1632,15 +1640,17 @@ var bit = (function() {
       let value
       e.preventDefault()
       value = this._doms.list.options[this._doms.list.selectedIndex].value
-      super._onClose()
-      this._handlers.onLoadMap(value)
+      super.close()
+      this._handlers.onOpen(value)
     }
 
     _onImageDblClick(e) {
       bittls.saveUrlAs(this._doms.imagePreview.src, this._filename)
     }
 
-    show() {
+    show(h) {
+      this._handlers.onCancel = h.onCancel || (() => {})
+      this._handlers.onOpen = h.onOpen || (() => {})
       super.show()
       this._fill()
       if (this._doms.list.length > 0) {
@@ -1658,9 +1668,9 @@ var bit = (function() {
 
   class ProjectRenamerDialog extends bittls.DialogForm {
 
-    constructor(c) {
+    constructor() {
       super({ form : $('project-renamer') })
-      this._handlers = c.handlers
+      this._handlers = {}
       this._doms = {
         btnSet        : this._form.querySelector('.apply'),
         inMapName     : this._form.querySelector('.name')
@@ -1681,7 +1691,7 @@ var bit = (function() {
     }
 
     _onCancel() {
-      this._handlers.onClose()
+      this._handlers.onCancel()
       super._onCancel()
     }
 
@@ -1693,8 +1703,8 @@ var bit = (function() {
       e.preventDefault()
       if(this._validate()) {
         let data = { name : this._doms.inMapName.value }
-        this._handlers.onSaveMapAs(data)
-        this._onClose()
+        this.close()
+        this._handlers.onSave(data)
       }
     }
 
@@ -1702,6 +1712,12 @@ var bit = (function() {
       this._name = ''
       this._doms.btnSet.disabled = true
       this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
+    }
+
+    show(h) {
+      super.show()
+      this._handlers.onCancel = h.onCancel || (() => {})
+      this._handlers.onSave = h.onSave || (() => {})
     }
 
   }
@@ -1714,7 +1730,7 @@ var bit = (function() {
 
     constructor(c) {
       super({ form : $('project-code'), keyHandler : e => this._keyAction(e) })
-      this._handlers = c.handlers
+      this._handlers = {}
       this._name = 'untitled'
       this._doms = {
         code        : this._form.querySelector('.code'),
@@ -1775,10 +1791,11 @@ var bit = (function() {
       }
     }
 
-    show(n, s) {
+    show(n, s, h) {
       super.show()
       this._name = n
       this._doms.code.innerHTML = s
+      this._handlers.onClose = h.onClose || (() => {})
     }
 
   }
@@ -1789,9 +1806,9 @@ var bit = (function() {
 
   class HtmlLoaderDialog extends bittls.DialogForm {
 
-    constructor(c) {
+    constructor() {
       super({ form : $('code-loader') })
-      this._handlers = c.handlers
+      this._handlers = {}
       this._doms = {
         btnLoad    : this._form.querySelector('.select'),
         btnClear   : this._form.querySelector('.clear'),
@@ -1809,12 +1826,12 @@ var bit = (function() {
     }
 
     _onClose() {
-      this._handlers.onClose()
-      super._onClose()
+      this._onCancel()
     }
 
     _onCancel() {
-      this._onClose()
+      this._handlers.onCancel()
+      super._onCancel()
     }
  
     _onCodeInput(e) {
@@ -1824,14 +1841,20 @@ var bit = (function() {
     _onLoadClick(e) {
       const code = this._doms.code.value
       e.preventDefault()
-      super._onClose()
-      this._handlers.onLoadCode(code);
+      super.close()
+      this._handlers.onLoad(code);
     }
 
     _onClearClick(e) {
       e.preventDefault()
       this._doms.code.value = ''
       this._doms.btnLoad.disabled = true
+    }
+
+    show(h) {
+      this._handlers.onCancel = h.onCancel || (() => {})
+      this._handlers.onLoad = h.onLoad || (() => {})
+      super.show()
     }
 
   }
@@ -1843,21 +1866,23 @@ var bit = (function() {
   class HelpDialog extends bittls.DialogForm {
 
     constructor(c) {
-      super({
-        form : $('help-display')
-      })
-      this._handlers = c.handlers
+      super({ form : $('help-display') })
+      this._handlers = {}
     }
 
     _onClose() {
-      this._handlers.onClose()
       super._onClose()
+      this._handlers.onClose()
     }
 
     _onCancel() {
       this._onClose()
     }
 
+    show(h) {
+      this._handlers.onClose = h.onClose || (() => {})
+      super.show()
+    }
   }
 
   /*
@@ -1998,134 +2023,6 @@ var bit = (function() {
       this._mapper = new bitmap.Mapper()
     }
 
-    _onNewProject() {
-      if (!this._app.model.modified || confirm('Discard all changes?')) {
-        this._app.footer.reset()
-        this._app.workspace.reset()
-        this._app.tools.reset()
-        this._app.menu.reset()
-        this._app.model.reset()
-        this._app.creator.show()
-        this._app.freeze()
-      }
-    }
-
-    _onPreview(activated) {
-      if (activated) {
-        let t
-        this._app.tools.freeze()
-        t = this._app.workspace.switchToPreview()
-        this._mapper.displayPreview(t.container, t.image, this._app.model.areas, this._app.model.info)
-      } else {
-        this._app.workspace.switchToEdit()
-        this._mapper.cancelPreview()
-        this._app.tools.release()
-      }
-    }
-
-    _onLoadProject() {
-      if (!this._app.model.modified || confirm('Discard all changes?')) {
-        this._app.footer.reset()
-        this._app.workspace.reset()
-        this._app.tools.reset()
-        this._app.menu.reset()
-        this._app.model.reset()
-        this._app.opener.show()
-        this._app.freeze()
-      }
-    }
-
-    _onSaveProject() {
-      if (this._app.store.write(this._app.model.info.name, this._app.model.toStore(this._app.store.a2s)))
-        this._app.setUnmodified()
-    }
-
-    _onSaveProjectAs() {
-      this._app.renamer.show()
-      this._app.freeze()
-    }
-
-    _onCloseProject() {
-      if (!this._app.model.modified || confirm('Discard all changes?')) {
-        this._app.footer.reset()
-        this._app.workspace.reset()
-        this._app.tools.reset()
-        this._app.menu.reset()
-        this._app.model.reset()
-      }
-    }
-
-    _onCleanProjects() {
-      this._app.manager.show()
-      this._app.freeze()
-    }
-
-    _onGenerateCode() {
-      this._app.generator.show(
-          this._app.model.info.name,
-          bitmap.Mapper.getHtmlString(this._app.model.filename, this._app.model.info, this._app.model.areas))
-      this._app.freeze()
-    }
-
-    _onLoadHTML() {
-      this._app.loader.show()
-      this._app.freeze()
-    }
-
-    _onExportProject() {
-      bittls.saveObjectAs(this._app.model.toStore(this._app.store.a2s), this._app.model.info.name+'.bit')
-    }
-
-    _onImportProject() {
-      if (!this._app.model.modified || confirm('Discard all changes?')) {
-        this._app.footer.reset()
-        this._app.workspace.reset()
-        this._app.tools.reset()
-        this._app.menu.reset()
-        this._app.model.reset()
-        bittls.selectFiles('.bit').then(
-          file => this._app.aProjects.handlers.onImportMap(file)
-        )
-      }
-    }
-
-    _onExportImage() {
-      bittls.saveUrlAs(this._app.model.url, this._app.model.filename)
-    }
-    
-    _onHelp() {
-      this._app.helper.show()
-      this._app.freeze()
-    }
-
-    get handlers() {
-      return {
-        onNewProject    : this._onNewProject.bind(this),
-        onPreview       : this._onPreview.bind(this),
-        onLoadProject   : this._onLoadProject.bind(this),
-        onSaveProject   : this._onSaveProject.bind(this),
-        onSaveProjectAs : this._onSaveProjectAs.bind(this),
-        onCloseProject  : this._onCloseProject.bind(this),
-        onCleanProjects : this._onCleanProjects.bind(this),
-        onGenerateCode  : this._onGenerateCode.bind(this),
-        onLoadHTML      : this._onLoadHTML.bind(this),
-        onExportProject : this._onExportProject.bind(this),
-        onImportProject : this._onImportProject.bind(this),
-        onExportImage   : this._onExportImage.bind(this),
-        onHelp          : this._onHelp.bind(this)
-      }
-    }
-
-  }
-
-  // APPLICATION - PROJECTS HANDLERS
-
-  class AppProjectHandlers {
-
-    constructor(app) {
-      this._app = app
-    }
-
     _cleanup() {
       this._app.footer.reset()
       this._app.workspace.reset()
@@ -2151,93 +2048,193 @@ var bit = (function() {
           }
         ).catch(
           e => { this._cleanup(); reject(e) }
-        ).finally(
-          () => this._app.release()
         )
       })
     }
 
-    _onClose() {
-      this._app.release()
-    }
-
-    _onNewMap(data) {
-      loadIndicator.show()
-      try {
-        this._app.model.url = data
-        data.filename = this._app.model.filename
-        this._app.model.info = data
-        this._app.menu.switchToEditMode(data.name)
-        this._app.footer.info = data
-        this._app.workspace.load(this._app.model.url)
-        this._app.setModified(true)
-      } catch(e) {
-        alert('ERROR[<data.name>] Unable to create project - ' + e.message)
-        this._app.footer.error = data
-        this._app.release()
-      } finally {
-        loadIndicator.hide()
+    _onNewProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._cleanup()
+        this._app.freeze()
+        this._app.create().then(
+          data => {
+            if (data) {
+              loadIndicator.show()
+              try {
+                this._app.model.url = data
+                data.filename = this._app.model.filename
+                this._app.model.info = data
+                this._app.menu.switchToEditMode(data.name)
+                this._app.footer.info = data
+                this._app.workspace.load(this._app.model.url)
+                this._app.setModified(true)
+              } catch(e) {
+                alert('ERROR[<data.name>] Unable to create project - ' + e.message)
+                this._app.footer.error = data
+              } finally {
+                loadIndicator.hide()
+              }
+            }
+          }
+        ).finally(
+          this._app.release()
+        )
       }
     }
 
-    _onLoadMap(name) {
-      loadIndicator.show()
-      this._loadProject(name, this._app.store.read(name)).catch(
-        e => alert('ERROR['+name+'] Invalid project - ' + e.message)
-      ).finally(
-        () => loadIndicator.hide()
-      )
+    _onPreview(activated) {
+      if (activated) {
+        let t
+        this._app.tools.freeze()
+        t = this._app.workspace.switchToPreview()
+        this._mapper.displayPreview(t.container, t.image, this._app.model.areas, this._app.model.info)
+      } else {
+        this._app.workspace.switchToEdit()
+        this._mapper.cancelPreview()
+        this._app.tools.release()
+      }
     }
 
-    _onImportMap(file) {
-      loadIndicator.show()
-      bittls.readFileText(file).then(
-        text => JSON.parse(text)
-      ).then(
-        project => this._loadProject(project.name, project)
-      ).catch(
-        e => {
-          alert('ERROR['+file.name+'] Invalid file - ' + e.message)
-          this._app.footer.error = { type: 'file', file: file }
-        }
-      ).finally(
-        loadIndicator.hide()
-      )
+    _onLoadProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._cleanup()
+        this._app.freeze()
+        this._app.open().then(
+          name => {
+            if (name) {
+              loadIndicator.show()
+              this._loadProject(name, this._app.store.read(name)).catch(
+                e => alert('ERROR['+name+'] Invalid project - ' + e.message)
+              ).finally(
+                () => loadIndicator.hide()
+              )
+            }
+          }
+        ).finally(
+          () => this._app.release()
+        )
+      }
     }
 
-    _onSaveMapAs(attrs) {
-      this._app.model.info = Object.assign({ alt : this._app.model.info.alt }, attrs)
-      if (this._app.store.write(attrs.name, this._app.model.toStore(this._app.store.a2s)))
+    _onSaveProject() {
+      if (this._app.store.write(this._app.model.info.name, this._app.model.toStore(this._app.store.a2s)))
         this._app.setUnmodified()
     }
 
-    _onLoadCode(code) {
-      let areas, rtn
-      areas = []
-      rtn = false
-      if (code) {
-        bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, this._app.workspace.getParent())))
-        if (areas.length > 0) {
-          this._app.model.addAreas(areas)
-          this._app.aTooler.managePropsDisplay(this._app.model.areas)
-          this._app.setModified(true)
-          this._app.aSelector.unselectAll()
-          this._app.aSelector.selectSubset(areas)
-          rtn = true
+    _onSaveProjectAs() {
+      this._app.freeze()
+      this._app.rename().then(
+        data => {
+          if (data && '' !== data.name) {
+            this._app.model.info = Object.assign({ alt : this._app.model.info.alt }, data)
+            if (this._app.store.write(data.name, this._app.model.toStore(this._app.store.a2s)))
+              this._app.setUnmodified()
+          }
         }
+      ).finally(
+        () => this._app.release()
+      )
+    }
+
+    _onCloseProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._cleanup()
       }
-      this._app.release()
-      return rtn
+    }
+
+    _onCleanProjects() {
+      this._app.freeze()
+      this._app.manage().finally(
+        () => this._app.release()
+      )
+    }
+
+    _onGenerateCode() {
+      this._app.freeze()
+      this._app.generate().finally(
+        () => { console.log('release'); this._app.release() }
+      )
+    }
+
+    _onLoadHTML() {
+      this._app.freeze()
+      this._app.loadHTML().then(
+        code => {
+          if (code) {
+            let areas = []
+            bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, this._app.workspace.getParent())))
+            if (areas.length > 0) {
+              this._app.model.addAreas(areas)
+              this._app.aTooler.managePropsDisplay(this._app.model.areas)
+              this._app.setModified(true)
+              this._app.aSelector.unselectAll()
+              this._app.aSelector.selectSubset(areas)
+            }
+          }
+        }
+      ).finally(
+        () => this._app.release()
+      )
+    }
+
+    _onExportProject() {
+      bittls.saveObjectAs(this._app.model.toStore(this._app.store.a2s), this._app.model.info.name+'.bit')
+    }
+
+    _onImportProject() {
+      if (!this._app.model.modified || confirm('Discard all changes?')) {
+        this._cleanup()
+        this._app.freeze()
+        bittls.selectFiles('.bit').then(
+          file => {
+            if (file) {
+              loadIndicator.show()
+              bittls.readFileText(file).then(
+                text => JSON.parse(text)
+              ).then(
+                project => this._loadProject(project.name, project)
+              ).catch(
+                e => {
+                  alert('ERROR['+file.name+'] Invalid file - ' + e.message)
+                  this._app.footer.error = { type: 'file', file: file }
+                }
+              ).finally(
+                loadIndicator.hide()
+              )
+            }
+          }
+        ).finally(
+          () => this._app.release()
+        )
+      }
+    }
+
+    _onExportImage() {
+      bittls.saveUrlAs(this._app.model.url, this._app.model.filename)
+    }
+    
+    _onHelp() {
+      this._app.freeze()
+      this._app.help().finally(
+        () => this._app.release()
+      )
     }
 
     get handlers() {
       return {
-        onClose     : this._onClose.bind(this),
-        onNewMap    : this._onNewMap.bind(this),
-        onLoadMap   : this._onLoadMap.bind(this),
-        onLoadCode  : this._onLoadCode.bind(this),
-        onImportMap : this._onImportMap.bind(this),
-        onSaveMapAs : this._onSaveMapAs.bind(this)
+        onNewProject    : this._onNewProject.bind(this),
+        onPreview       : this._onPreview.bind(this),
+        onLoadProject   : this._onLoadProject.bind(this),
+        onSaveProject   : this._onSaveProject.bind(this),
+        onSaveProjectAs : this._onSaveProjectAs.bind(this),
+        onCloseProject  : this._onCloseProject.bind(this),
+        onCleanProjects : this._onCleanProjects.bind(this),
+        onGenerateCode  : this._onGenerateCode.bind(this),
+        onLoadHTML      : this._onLoadHTML.bind(this),
+        onExportProject : this._onExportProject.bind(this),
+        onImportProject : this._onImportProject.bind(this),
+        onExportImage   : this._onExportImage.bind(this),
+        onHelp          : this._onHelp.bind(this)
       }
     }
 
@@ -2965,7 +2962,6 @@ var bit = (function() {
       loadIndicator.hide()
 
       this._aMenu     = new AppMenuHandlers(this)
-      this._aProjects = new AppProjectHandlers(this)
       this._aDragger  = new AppDragHandlers(this)
       this._aDrawer   = new AppDrawHandlers(this)
       this._aSelector = new AppSelectHandlers(this)
@@ -2990,24 +2986,13 @@ var bit = (function() {
       this._store     = new Store({ workspace : this._workspace })
       this._clipboard = new Clipboard({ workspace :  this._workspace, copyOffset : 10 })
 
-      this._manager   = new ProjectManagerDialog({
-        model : this._model,
-        store : this._store,
-        handlers : this._aProjects.handlers
-      })
-      this._creator   = new ProjectCreatorDialog({
-        handlers : Object.assign({ checkFile : this._model.checkImgFile }, this._aProjects.handlers)
-      })
-      this._opener    = new ProjectLoaderDialog({
-        store : this._store,
-        handlers : this._aProjects.handlers
-      })
-      this._renamer    = new ProjectRenamerDialog({
-        handlers : this._aProjects.handlers
-      })
-      this._loader    = new HtmlLoaderDialog({ handlers : this._aProjects.handlers })
-      this._generator = new CodeGeneratorDialog({ handlers : this._aProjects.handlers })
-      this._helper    = new HelpDialog({ handlers : this._aProjects.handlers })
+      this._manager   = new ProjectManagerDialog({ model : this._model, store : this._store })
+      this._creator   = new ProjectCreatorDialog({ checkFile : this._model.checkImgFile })
+      this._opener    = new ProjectLoaderDialog({ store : this._store })
+      this._renamer   = new ProjectRenamerDialog()
+      this._loader    = new HtmlLoaderDialog()
+      this._generator = new CodeGeneratorDialog()
+      this._helper    = new HelpDialog()
 
     }
 
@@ -3020,7 +3005,6 @@ var bit = (function() {
     }
 
     get aMenu()     { return this._aMenu }
-    get aProjects() { return this._aProjects }
     get aDragger()  { return this._aDragger }
     get aDrawer()   { return this._aDrawer }
     get aSelector() { return this._aSelector }
@@ -3035,13 +3019,6 @@ var bit = (function() {
     get footer()    { return this._footer }
     get workspace() { return this._workspace }
     get tools()     { return this._tools }
-    get manager()   { return this._manager }
-    get creator()   { return this._creator }
-    get opener()    { return this._opener }
-    get renamer()   { return this._renamer }
-    get loader()    { return this._loader }
-    get generator() { return this._generator }
-    get helper()    { return this._helper }
 
     setModified(unsafe) {
       this._model.modified = true
@@ -3065,6 +3042,64 @@ var bit = (function() {
       this._workspace.release()
       this._tools.release()
       this._menu.release()
+    }
+
+    manage() {
+      return new Promise((resolve, reject) => {
+        this._manager.show({ onClose : () => resolve() })
+      })
+    }
+
+    create() {
+      return new Promise((resolve, reject) => {
+        this._creator.show({
+          onCancel : () => resolve(),
+          onCreate : data => resolve(data)
+        })
+      })
+    }
+
+    open() {
+      return new Promise((resolve, reject) => {
+        this._opener.show({
+          onCancel : () => resolve(),
+          onOpen : name => resolve(name)
+        })
+      })
+    }
+
+    rename() {
+      return new Promise((resolve, reject) => {
+        this._renamer.show({
+          onCancel : () => resolve(),
+          onSave : data => resolve(data)
+        })
+      })
+    }
+
+    generate() {
+      return new Promise((resolve, reject) => {
+        this._generator.show(
+          this._model.info.name,
+          bitmap.Mapper.getHtmlString(this._model.filename, this._model.info, this._model.areas),
+          { onClose : () => resolve() }
+        )
+      })
+    }
+
+    loadHTML() {
+      return new Promise((resolve, reject) => {
+        this._loader.show({
+          onCancel : () => resolve(),
+          onLoad : code => resolve(code)
+        })
+      })
+    }
+
+    help() {
+      return new Promise((resolve, reject) => {
+        this._helper.show({ onClose : () => resolve() })
+      })
     }
 
   }
