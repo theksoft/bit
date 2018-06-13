@@ -12,6 +12,7 @@ Projets are stored in local storage by the name of each map.
 - `New project` : Setup a new HTML map project [`CTRL`+`M`].
 - `Load project` : Load a stored HTML map project [`CTRL`+`L`]. In load dialog, a double click on project image allows exporting it on disk.
 - `Save project` : Save HTML map project in local storage [`CTRL`+`S`].
+- `Save project as` : Save HTML map project in local storage under a new name.
 - `Close project` : Close current map project [`CTRL`+`X`].
 - `Export project` : Export project to a local file (JSON text file).
 - `Import project` : Import project from a local file (JSON text file).
