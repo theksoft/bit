@@ -665,25 +665,30 @@ var bittls = (function(){
     constructor(c) {
       let e;
       this._form = c.form
-      this._textRecipients = c.textRecipients || []
       this._keyHandler = c.keyHandler || (() => {})
       this.onKeyAction = this._onKeyAction.bind(this)
-      this._textRecipients.forEach(e => e.addEventListener('keydown', e => { if ('Escape' !== e.key) e.stopPropagation() }, false))
-      e = c.form.querySelector('.close');
+      e = c.form.querySelector('.close')
       if (e) e.addEventListener('click', this._onCloseClick.bind(this), false)
-      e = c.form.querySelector('.cancel');
+      e = c.form.querySelector('.cancel')
       if (e) e.addEventListener('click', this._onCancelClick.bind(this), false)
+      e = c.form.querySelectorAll('.text')
+      for (let i = 0; i < e.length; i++)
+        e[i].addEventListener('keydown', e => { if ('Escape' !== e.key) e.stopPropagation() }, false)
     }
 
     show() {
+      this._reset()
       document.addEventListener('keydown', this.onKeyAction, false)
-      this._form.style.display = 'block'
+      this._form.classList.add('show')
     }
 
     close() {
       document.removeEventListener('keydown', this.onKeyAction, false)
-      this._form.style.display = 'none'
+      this._form.classList.remove('show')
+      this._reset()
     }
+
+    _reset() {}
 
     _onCancel() {
       this.close()
@@ -716,6 +721,7 @@ var bittls = (function(){
   function selectFiles(accept, multiple) {
     return new Promise((resolve, reject) => {
       let input = document.createElement('input')
+      input.defaultValue = input.value = ''
       input.type = 'file'
       input.style.display = 'none'
       input.setAttribute('accept', accept)
@@ -724,6 +730,11 @@ var bittls = (function(){
       } else {
         input.setAttribute('multiple', true)
         input.addEventListener('change', e => { if (e.target.files.length) resolve(e.target.files) }, false)
+      }
+      document.body.onfocus = () => {
+        document.body.onfocus = null
+        // Focus occurs before input change and before its value is set
+        window.setTimeout(e => { if (!e.value.length) resolve() }, 1000, input)
       }
       input.click()
     })
