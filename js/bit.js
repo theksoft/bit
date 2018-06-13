@@ -1665,6 +1665,68 @@ var bit = (function() {
   }
 
   /*
+   *  MAP PROJECT ATTRIBUTES MODIFIER
+   */
+
+  class ProjectChangerDialog extends bittls.DialogForm {
+
+    constructor(c) {
+      super({
+        form : $('project-changer'),
+        textRecipients : [$('map-attr-name')]
+      })
+      this._handlers = c.handlers
+      this._doms = {
+        btnSet        : document.querySelector('#project-changer .apply'),
+        inMapName     : $('map-attr-name')
+      }
+
+      this._doms.btnSet.addEventListener('click', this._onSetClick.bind(this), false)
+      this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
+      this._name = this._alt = '' 
+      this.reset()
+    }
+
+    _clear() {
+      this._doms.btnSet.disabled = true
+      this._name = this._alt = ''
+    }
+
+    _validate() {
+      return this._doms.inMapName.validity.valid
+    }
+
+    _onNameInput(e) {
+      this._doms.btnSet.disabled = !this._validate()
+    }
+
+    _onCancel() {
+      this._clear()
+      this._handlers.onClose()
+      super._onCancel()
+    }
+
+    _onClose() {
+      this._onCancel()
+    }
+
+    _onSetClick(e) {
+      e.preventDefault()
+      if(this._validate()) {
+        let data = { name : this._doms.inMapName.value }
+        this._handlers.onSaveMapAs(data)
+        this._onClose()
+      }
+    }
+
+    reset() {
+      this._clear()
+      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
+    }
+
+  }
+
+  /*
    * MAP CODE DISPLAY
    */
 
@@ -1843,21 +1905,22 @@ var bit = (function() {
 
     constructor(c) {
       this._btns = Object.assign({}, {
-        newProject    : new bittls.TButton({ element : $('new-project'),    action : c.handlers.onNewProject }),
-        preview       : new bittls.TButton({ element : $('preview'),        action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
-        saveProject   : new bittls.TButton({ element : $('save-project'),   action : c.handlers.onSaveProject }),
-        loadProject   : new bittls.TButton({ element : $('load-project'),   action : c.handlers.onLoadProject }),
-        closeProject  : new bittls.TButton({ element : $('close-project'),  action : c.handlers.onCloseProject }),
-        cleanProjects : new bittls.TButton({ element : $('clean-projects'), action : c.handlers.onCleanProjects }),
-        generate      : new bittls.TButton({ element : $('generate'),       action : c.handlers.onGenerateCode }),
-        loadHTML      : new bittls.TButton({ element : $('load-html'),      action : c.handlers.onLoadHTML }),
-        exportProject : new bittls.TButton({ element : $('export-project'), action : c.handlers.onExportProject }),
-        importProject : new bittls.TButton({ element : $('import-project'), action : c.handlers.onImportProject }),
-        exportImage   : new bittls.TButton({ element : $('export-image'),   action : c.handlers.onExportImage }),
-        help          : new bittls.TButton({ element : $('help'),           action : c.handlers.onHelp })
+        newProject    : new bittls.TButton({ element : $('new-project'),      action : c.handlers.onNewProject }),
+        preview       : new bittls.TButton({ element : $('preview'),          action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
+        saveProject   : new bittls.TButton({ element : $('save-project'),     action : c.handlers.onSaveProject }),
+        saveProjectAs : new bittls.TButton({ element : $('save-project-as'),  action : c.handlers.onSaveProjectAs }),
+        loadProject   : new bittls.TButton({ element : $('load-project'),     action : c.handlers.onLoadProject }),
+        closeProject  : new bittls.TButton({ element : $('close-project'),    action : c.handlers.onCloseProject }),
+        cleanProjects : new bittls.TButton({ element : $('clean-projects'),   action : c.handlers.onCleanProjects }),
+        generate      : new bittls.TButton({ element : $('generate'),         action : c.handlers.onGenerateCode }),
+        loadHTML      : new bittls.TButton({ element : $('load-html'),        action : c.handlers.onLoadHTML }),
+        exportProject : new bittls.TButton({ element : $('export-project'),   action : c.handlers.onExportProject }),
+        importProject : new bittls.TButton({ element : $('import-project'),   action : c.handlers.onImportProject }),
+        exportImage   : new bittls.TButton({ element : $('export-image'),     action : c.handlers.onExportImage }),
+        help          : new bittls.TButton({ element : $('help'),             action : c.handlers.onHelp })
       })
       this._btnsEdit = [
-        this._btns.closeProject, this._btns.preview, this._btns.generate,
+        this._btns.saveProjectAs, this._btns.closeProject, this._btns.preview, this._btns.generate,
         this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage
       ]
       this._btns.saveProject.disable()
@@ -2015,6 +2078,11 @@ var bit = (function() {
         this._app.setUnmodified()
     }
 
+    _onSaveProjectAs() {
+      this._app.changer.show()
+      this._app.freeze()
+    }
+
     _onCloseProject() {
       if (!this._app.model.modified || confirm('Discard all changes?')) {
         this._app.footer.reset()
@@ -2074,6 +2142,7 @@ var bit = (function() {
         onPreview       : this._onPreview.bind(this),
         onLoadProject   : this._onLoadProject.bind(this),
         onSaveProject   : this._onSaveProject.bind(this),
+        onSaveProjectAs : this._onSaveProjectAs.bind(this),
         onCloseProject  : this._onCloseProject.bind(this),
         onCleanProjects : this._onCleanProjects.bind(this),
         onGenerateCode  : this._onGenerateCode.bind(this),
@@ -2174,6 +2243,12 @@ var bit = (function() {
       )
     }
 
+    _onSaveMapAs(attrs) {
+      this._app.model.info = Object.assign({ alt : this._app.model.info.alt }, attrs)
+      if (this._app.store.write(attrs.name, this._app.model.toStore(this._app.store.a2s)))
+        this._app.setUnmodified()
+    }
+
     _onLoadCode(code) {
       let areas, rtn
       areas = []
@@ -2199,7 +2274,8 @@ var bit = (function() {
         onNewMap    : this._onNewMap.bind(this),
         onLoadMap   : this._onLoadMap.bind(this),
         onLoadCode  : this._onLoadCode.bind(this),
-        onImportMap : this._onImportMap.bind(this)
+        onImportMap : this._onImportMap.bind(this),
+        onSaveMapAs : this._onSaveMapAs.bind(this)
       }
     }
 
@@ -2964,6 +3040,9 @@ var bit = (function() {
         store : this._store,
         handlers : this._aProjects.handlers
       })
+      this._changer    = new ProjectChangerDialog({
+        handlers : this._aProjects.handlers
+      })
       this._loader    = new HtmlLoaderDialog({ handlers : this._aProjects.handlers })
       this._generator = new CodeGeneratorDialog({ handlers : this._aProjects.handlers })
       this._helper    = new HelpDialog({ handlers : this._aProjects.handlers })
@@ -2997,6 +3076,7 @@ var bit = (function() {
     get manager()   { return this._manager }
     get creator()   { return this._creator }
     get opener()    { return this._opener }
+    get changer()   { return this._changer }
     get loader()    { return this._loader }
     get generator() { return this._generator }
     get helper()    { return this._helper }

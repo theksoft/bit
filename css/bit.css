@@ -626,6 +626,15 @@ form.modal input:invalid {
   margin-right: 10px;
 }
 
+/* PROJECT MODIFiER FORM */
+
+#project-changer {
+  top: 10%;
+  left: 40%;
+  width: 20%;
+  min-width: 150px;
+}
+
 /* PROJECT MANAGER FORM */
 
 #project-manager {

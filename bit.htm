@@ -21,6 +21,7 @@
           <li id="new-project"><a href="#">New project</a></li>
           <li id="load-project"><a href="#">Load project</a></li>
           <li id="save-project"><a href="#">Save project</a></li>
+          <li id="save-project-as"><a href="#">Save project as</a></li>
           <li id="preview"><a href="#">Preview</a></li>
           <li id="generate"><a href="#">Generate</a></li>
           <li id="load-html"><a href="#">Add HTML areas</a></li>
@@ -203,6 +204,18 @@
     <div class="buttons">
       <button class="select" disabled>Load</button>
       <button class="cancel">Cancel</button>
+    </div>
+  </form>
+
+  <!-- Map attributes change -->
+  <form id="project-changer" class="modal">
+    <p>
+	    <label for="map-attr-name">Project / map name:</label>
+	    <input type="text" id="map-attr-name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
+    </p>
+    <div class="buttons">
+      <button class="apply">Save</button>
+      <button class="cancel" >Cancel</button>
     </div>
   </form>
 
