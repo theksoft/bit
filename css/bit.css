@@ -706,58 +706,61 @@ form.modal input:invalid {
 /* PROJECT CODE FORM */
 
 #project-code {
-	top: 20%;
-  left: 5%;
-  width: 90%;
-  max-height: 60%;
-  min-width: 300px;
-  overflow: auto;
-  text-align: right;
-}
-
-#project-code > .code {
-	width: 96%;
-	padding: 5px 0;
-	text-align: left;
-	margin: 0 auto;
-  font-family: monospace;
-}
-
-#project-code > .buttons {
-  display: flex;
-  flex-flow: column;
-  align-items: center;
+  min-width: 350px;
   height: 100%;
-  position: sticky;
-  bottom: 5px;
 }
 
-#project-code > .buttons > button {
-  margin-left: auto;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  width: 110px;
+#project-code > div {
+  margin: 10px auto;
+  min-width: 300px;
+  width: 98%;
+  height: 98%;
 }
 
-#project-code > .buttons > .save {
+#project-code .code {
+	width: 98%;
+	max-height: 85%;
+	padding: 1%;
+	text-align: left;
+  font-family: monospace;
+  color: #ccc;
+  overflow: auto;
+  background-color: black;
+  text-align: left;
+  margin: auto;
+}
+
+#project-code .buttons {
+  display: flex;
+  flex-flow: row;
+  align-items: center;
+  min-height: 50px;
+}
+
+#project-code .buttons > button {
+  margin: 0px 10px;
+}
+
+#project-code .buttons > .export {
   order: 4;
-  margin-top: auto;
 }
 
-#project-code > .buttons > .copy {
+#project-code .buttons > .copy {
   order: 3;
 }
 
-#project-code > .buttons > .select {
+#project-code .buttons > .select {
   order: 2;
 }
 
-#project-code > .buttons > .clear {
+#project-code .buttons > .clear {
   order: 1;
+  margin-left: auto;
 }
 
-#project-code > .buttons > .close {
+#project-code .buttons > .close {
   order: 5;
+  margin-right: auto;
 }
 
 /* HTML CODE FORM */
