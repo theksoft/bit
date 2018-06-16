@@ -432,25 +432,13 @@ form.modal header {
   text-decoration: none;
 }
 
-/*
-form.modal button {
-  background-color: #004;
-  margin-top: 10px;
-  margin-bottom: 4px;
-  color: #ccc;
-  vertical-align: middle;
-  border-radius: 5px;
-  padding: 5px 10px;
-  border: 1px ridge gray;
+form.modal legend {
+	font-weight: bold;
+	text-align: left;
+	padding: 5px;
 }
 
-form.modal select {
-  color: #ccc;
-  background-color: #333;
-  width: 90%;
-}
-*/
-
+form.modal .file label,
 form.modal button {
   background-color: #44a;
   margin: 10px 3px 4px 3px;
@@ -461,12 +449,14 @@ form.modal button {
   border: 1px outset white;
 }
 
+form.modal .file label:hover:enabled,
 form.modal button:hover:enabled {
 	color: #44a;
   background-color: white;
   box-shadow: 5px 5px rgba(0,0,0,0.2);
 }
 
+form.modal .file label:active,
 form.modal button:active {
   background-color: rgba(64,64,160,0.6);
   color: white;
@@ -477,10 +467,6 @@ form.modal button:disabled {
   background-color: grey;
   color: #ccc;
   border: 1px inset white;
-}
-
-form.modal label {
-  font-weight: bold;
 }
 
 form.modal select {
@@ -495,15 +481,16 @@ form.modal option {
 }
 
 form.modal option:disabled {
-  color: #b55;
+  color: #888;
   cursor: not-allowed;
-  background-color: #333;
+  background-color: #ddd;
+  font-style: italic;
 }
 
 form.modal input[type=text], form.modal input[type=url] {
-	background-color: #ccc;
-  color: #333;
-  border: 2px solid #555;
+	background-color: white;
+  color: black;
+  border: 2px inset white;
   border-radius: 3px;
   width: 120px;
   padding: 2px 5px;
@@ -511,7 +498,7 @@ form.modal input[type=text], form.modal input[type=url] {
 }
 
 form.modal input[type=text].error, form.modal input[type=url].error {
-  border: 2px solid #f44;
+  border: 2px dashed red;
   color: #f44;
 }
 
@@ -532,22 +519,24 @@ form.modal input:invalid {
 /* PROJECT CREATOR FORM */
 
 #project-creator {
-  top: 10%;
-	left: 30%;
-	width: 30%;
-	min-width: 300px;
+  min-width: 300px;
+}
+
+#project-creator > div {
+  margin: 20px auto;
+  width: 50%;
+  min-width: 300px;
 }
 
 #project-creator fieldset {
-  border: 2px #555 solid;
+  border: 2px #44a solid;
   border-radius: 5px;
   padding: 10px;
   margin: 10px;
 }
 
 #project-creator legend {
-	color: #77b;
-	font-size: 14px;
+	color: #44a;
 }
 
 #project-creator fieldset.attrs label {
@@ -560,7 +549,7 @@ form.modal input:invalid {
 }
 
 #project-creator fieldset.attrs label > span {
-  width: 120px;
+  width: 200px;
   text-align: right;
 }
 
@@ -573,6 +562,10 @@ form.modal input:invalid {
   vertical-align: middle;
 }
 
+#project-creator fieldset.image > div {
+	padding: 5px;
+}
+
 #project-creator .drop {
   width: 80%;
   height: 200px;
@@ -580,18 +573,17 @@ form.modal input:invalid {
   border-radius: 5px;
   padding: 12px 10px;
   background: url(../images/drop.png) 50% 50% no-repeat;
-  font-size: 12px;
-  color: #558;
   vertical-align: middle;
   margin: 5px auto;
   text-align: center;
+  background-color: white;
 }
 
 #project-creator .preview {
   max-width: 100%;
   max-height: 100%;
   vertical-align: middle;
-  margin: 5px auto;
+  margin: auto;
   display: none;
 }
 
@@ -599,8 +591,9 @@ form.modal input:invalid {
   border: 2px dashed #f44;
 }
 
+
 #project-creator .file {
-	margin-top: 10px
+	margin: 10px;
 }
 
 #project-creator .file input[type=file] {
@@ -609,24 +602,8 @@ form.modal input:invalid {
   opacity: 0;
 }
 
-#project-creator .file label {
-  background-color: #004;
-  margin-top: 10px;
-  margin-bottom: 4px;
-  color: #ccc;
-  font-size: 12px;
-  vertical-align: middle;
-  border-radius: 5px;
-  padding: 5px 10px;
-  border: 1px ridge gray;
-}
-
-#project-creator .file label:hover {
-  background-color: #226;
-}
-
-#project-creator .file label:active {
-  background-color: #337;
+#project-creator span.separator {
+	font-style: italic; 
 }
 
 #project-creator > .buttons {
@@ -638,13 +615,10 @@ form.modal input:invalid {
 #project-creator > .buttons > .create {
   order: 1;
   margin-left: auto;
-  margin-right: 10px;
 }
 
 #project-creator > .buttons > .cancel {
   order: 2;
-  margin-left: 10px;
-  margin-right: 10px;
 }
 
 /* PROJECT MODIFIER FORM */

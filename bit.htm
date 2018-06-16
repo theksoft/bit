@@ -159,7 +159,7 @@
 
   <!-- Project manager -->
   <form id="project-manager" class="modal">
-	  <header>Manage Project</header>
+	  <header>Manage Project ...</header>
 	  <div>
 	    <label>Project list</label><br>
 	    <select class="list" multiple></select>
@@ -173,38 +173,41 @@
 
   <!-- Project attributes and image loader -->
   <form id="project-creator" class="modal">
-    <fieldset class="attrs"><legend>Image map attributes</legend>
-	    <label><span>Project / map name: </span> 
-	      <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
-	    </label>
-	    <label><span>alt: </span> 
-	      <input type="text" class="text alt" value="" title="'alt' attribute of the image map" />
-	    </label>
-    </fieldset>
-    <fieldset class="image"><legend>Image file</legend>
-      <div class="url">
-        <label>URL:
-          <input type="url" class="text url" />
-        </label>
-        <button class="load">Preview</button>
-      </div>
-      <div>
-	      <label>(or) Drop image file here</label>
-		    <div class="drop">
-	        <img class="preview" src="" alt="Preview selected image" />
+    <header>New Project ...</header>
+    <div>
+	    <fieldset class="attrs"><legend>Image map attributes</legend>
+		    <label><span>Project / map name: </span> 
+		      <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
+		    </label><br>
+		    <label><span>alt: </span> 
+		      <input type="text" class="text alt" value="" title="'alt' attribute of the image map" />
+		    </label>
+	    </fieldset>
+	    <fieldset class="image"><legend>Image file</legend>
+	      <div class="url">
+	        <label>URL:
+	          <input type="url" class="text url" />
+	        </label>
+	        <button class="load">Preview</button>
 	      </div>
-      </div>
-      <div>(or)</div>
-	    <div class="file">
-	     <label>Load image file
-	       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
-	     </label>
+	      <div>
+		      <label><span class="separator">(or) Drop image file here</span></label>
+			    <div class="drop">
+		        <img class="preview" src="" alt="Preview selected image" />
+		      </div>
+	      </div>
+	      <div><span class="separator">(or)</span></div>
+		    <div class="file">
+		     <label>Load image file
+		       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+		     </label>
+		    </div>
+	    </fieldset>
+	    <div class="buttons">
+	      <button class="create" disabled>Create</button>
+	      <button class="cancel">Cancel</button>
 	    </div>
-    </fieldset>
-    <div class="buttons">
-      <button class="create" disabled>Create</button>
-      <button class="cancel">Cancel</button>
-    </div>
+	  </div>
   </form>
 
   <!-- Project loader -->
