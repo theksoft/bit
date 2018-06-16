@@ -31,8 +31,6 @@ body {
   min-height: 100%;
   font-family: Arial, Tahoma, sans-serif;
   color: #000;
-  height: 100%;
-  min-height: 100%;
   background-color: #ddd;
   line-height: 1;
 }
@@ -57,10 +55,6 @@ img {
   align-self: stretch;
   align-items: flex-start;
   margin-bottom: auto;
-}
-
-#wks-wrap section {
-  margin: auto;
 }
 
 #tools {
@@ -166,9 +160,6 @@ img {
 
 /* WORKAREA ELEMENTS */
 
-#wks-wrap section {
-}
-
 #workarea {
   display: none;
   overflow: scroll;
@@ -209,6 +200,9 @@ img {
   display: none;
   background-color: #000;
   color: #ccc;
+  padding: 0;
+  margin: 0;
+  border: 0;
 }
 
 #tools .mask {
@@ -224,7 +218,7 @@ img {
   background-color: #333;
   height: 2px;
   border: 0;
-  margin: 1em;
+  margin: 8px;
 }
 
 #tools label, #tools input {
@@ -247,7 +241,7 @@ img {
 
 #tools img {
   background-color: #ccc;
-  border: 2px solid #fff;
+  border: 2px outset white;
   border-radius: 3px;
   padding: 0px 3px;
   margin: 4px 4px 1px;
@@ -255,7 +249,7 @@ img {
 
 #tools img.selected {
   background-color: #e8ffdd;
-  border: 2px solid #008000;
+  border: 2px inset white;
 }
 
 #tools img.disabled,
@@ -267,18 +261,18 @@ img {
 
 #tools img.on {
   background-color: #eaeaff;
-  border: 2px solid #9999ff;
+  border: 2px outset white;
 }
 
 #tools img.off {
-  background-color: #fff1ea;
-  border: 2px solid #ffba99;
+  background-color: #ead5ff;
+  border: 2px inset white;
   display: none;
 }
 
 #tools img.button:active {
   background-color: #e8ffdd;
-  border: 2px solid #008000;
+  border: 2px inset white;
 }
 
 /* TOOLS PROPERTIES FORM */
@@ -323,7 +317,7 @@ img {
 }
 
 #area-props button {
-  background-color: #004;
+  background-color: #44a;
   margin-top: 10px;
   margin-bottom: 4px;
   color: #ccc;
@@ -331,20 +325,22 @@ img {
   vertical-align: middle;
   border-radius: 5px;
   padding: 5px 10px;
-  border: 1px ridge gray;
+  border: 1px outset white;
 }
 
 #area-props button:hover {
-  background-color: #226;
+  background-color: #66c;
 }
 
 #area-props button:active {
-  background-color: #337;
+  background-color: #66c;
+  border: 1px inset white;
 }
 
 #area-props button:disabled {
   background-color: #333;
   color: #888;
+  border: 1px solid grey;
 }
 
 area {  /* Map preview, FF does not change cursor */
@@ -358,8 +354,8 @@ area {  /* Map preview, FF does not change cursor */
   background-color: black;
   padding: 5px 0px;
   width: 100%;
-  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
   margin-top: 5px;
+  min-height: 80px;
 }
 
 #selected-file {
@@ -380,7 +376,8 @@ area {  /* Map preview, FF does not change cursor */
 
 #footer img {
   height: 64px;
-  margin: 5px 10px 3px;
+  margin: 5px 10px;
+  padding: 0;
   display: inline;
   vertical-align: middle;
 }
