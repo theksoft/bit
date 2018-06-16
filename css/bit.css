@@ -387,21 +387,7 @@ area {  /* Map preview, FF does not change cursor */
 }
 
 /* MODAL FORM */
-/*
-form.modal {
-  position: absolute;
-  z-index: 10;
-  background: rgba(0,0,0,0.9);
-  border-radius: 5px;
-  padding: 10px;
-  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
-  font-size: 12px;
-  color: #bbb;
-  margin: 0 auto;
-  text-align: center;
-  display: none;
-}
-*/
+
 form.modal {
   position: fixed;
   left: 0;
@@ -502,7 +488,7 @@ form.modal input[type=text].error, form.modal input[type=url].error {
   border: 2px dashed red;
   color: #f44;
 }
-
+/*
 form.modal textarea {
   background-color: #ccc;
   color: #333;
@@ -512,7 +498,7 @@ form.modal textarea {
   padding: 2px 5px;
   margin: 4px 12px 1px 1px;
 }
-
+*/
 form.modal input:invalid {
   border: 2px dashed red;
 }
@@ -728,6 +714,7 @@ form.modal input:invalid {
   background-color: black;
   text-align: left;
   margin: auto;
+  font-size: 14px;
 }
 
 #project-code .buttons {
@@ -783,6 +770,7 @@ form.modal input:invalid {
 
 #code-loader textarea {
   font-family: monospace;
+  font-size: 14px;
   overflow: auto;
   text-align: left;
   padding: 1%;
@@ -790,6 +778,7 @@ form.modal input:invalid {
   min-width: 98%;
   max-width: 98%;
   height: 50%;
+  min-height: 20%;
   max-height: 80%;
   background-color: black;
   color: #ccc;
@@ -824,13 +813,7 @@ form.modal input:invalid {
 /* HELP */
 
 #help-display {
-  top: 2%;
-  left: 24%;
-  width: 52%;
-  min-width: 400px;
-  max-height: 96%;
-  z-index: 20;
-  background: rgba(60,60,100,1.0);
+  min-width: 150px;
 }
 
 #help-display header {
@@ -839,58 +822,65 @@ form.modal input:invalid {
   flex-flow: row;
   align-items: center;
   font-style: italic;
+  color: #8ad;
 }
 
 #help-display .title {
   font-size: 18px;
-  color: #8ad;
+  color: #ccc;
   font-style: normal;
   font-weight: bold;
   text-align: center;
   margin: auto;
 }
 
-#help-display a:link,
-#help-display a:visited,
-#help-display a:hover,
-#help-display a:active {
-  color: #8ad;
+#help-display header a:link,
+#help-display header a:visited,
+#help-display header a:hover,
+#help-display header a:active {
+  color: #ccc;
+}
+
+#help-display > div {
+  margin: 1% 1%;
+  width: 98%;
+  height: 85%;
+  min-width: 150px;
+  max-height: 90%;
+  overflow: auto;
 }
 
 #help-display section {
 	font-size: 12px;
   text-align: left;
+  width: 100%;
 }
 
 #help-display h1 {
-	color: #bdf;
+	color: white;
+	font-weigth: bold;
 	font-size: 16px;
 	margin-bottom: 12px;
-}
-
-#help-display h2 {
-	color: #acf;
-  font-size: 12px;
-  margin-bottom: 6px;
+	padding: 6px;
+	background-color: #333;
 }
 
 #help-display p {
-	margin-bottom: 10px;
+	margin-bottom: 12px;
 }
 
 #help-display .menu {
-	background-color: #004;
-  color: #ccc;
-  font-size: 11px;
+	background-color: #44a;
+  color: white;
   vertical-align: middle;
   border-radius: 3px;
   padding: 4px 7px;
-  border: 1px ridge gray;
+  border: 1px outset gray;
 }
 
 #help-display .icon {
   background-color: #ccc;
-  border: 1px solid #fff;
+  border: 1px outset #fff;
   border-radius: 3px;
   padding: 0px 3px;
   margin: 2px 2px 1px;
@@ -900,26 +890,18 @@ form.modal input:invalid {
 
 #help-display .key {
 	background: #000;
+	color: white;
 	padding: 1px 5px;
 	display: inline-block;
 	text-align: center;
 	vertical-align: middle;
-	border: 2px ridge gray;
+	border: 2px ridge grey;
 	border-radius: 3px;
   text-shadow: 0 0 1px #eee;
-  font-size: 10px;
 }
 
 #help-display .lbl {
-	font-size: 14px;
 	font-weight: bold;
-}
-
-#help-display hr {
-  background-color: #66a;
-  height: 2px;
-  border: 0;
-  margin: 1em;
 }
 
 /* LOADING ... */

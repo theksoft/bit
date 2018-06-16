@@ -20,7 +20,7 @@
 				  <li class="dropdown">
             <a href="javascript:void(0)" id="project-btn" class="dropbtn">Project</a>
 				    <div id="project-menu" class="dropdown-content">
-	            <a href="#" id="clean-projects">Manage List</a>
+	            <a href="#" id="clean-projects">Manage</a>
 	            <a href="#" id="new-project">New</a>
 	            <a href="#" id="load-project">Load</a>
 	            <a href="#" id="save-project">Save</a>
@@ -272,86 +272,93 @@
   <!-- Help display form -->
   <form id="help-display" class="modal">
     <header>
-      <div>HTML map creator</div>
+      <div>HTML map creator<br>[MIT License]</div>
 	    <div class="title">
-	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.02</a>)
+	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.4</a>)
 	    </div>
-	    <div>
-	      &copy;2017 Herve Retaureau<br>
-	      MIT License
-	    </div>
-    </header><hr>
-    <section>
-      <h1>Menu</h1>
-      <p><span class="menu">Clean projects</span> Manage local storage</p>
-      <p><span class="menu">New project</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">M</span></p>
-      <p><span class="menu">Load project</span> Load map project from local storage - <span class="key">CTRL</span> + <span class="key">L</span></p>
-      <p><span class="menu">Save project</span> Save map project in local storage - <span class="key">CTRL</span> + <span class="key">S</span></p>
-      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
-      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
-      <p><span class="menu">Add HTML areas</span> Add areas from HTML map code</p>
-      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
-    </section><hr>
-    <section>
-      <h1>Tools</h1>
-      <p>
-        <span class="icon"><img src="icons/hex_d.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/hex_r.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/rectangle.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/square.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/rhombus.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/triangle_e.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/triangle_i.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/triangle_r.png" width="16" height="16" alt="" title= "" /></span>
-        <span class="icon"><img src="icons/ellipse.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/circle_d.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/circle_c.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/polygon.png" width="16" height="16" alt="" title="" /></span>
-        Draw areas: hex, rectangle, square, rhombus, equilateral, isoceles &amp; right-angle triangles, ellipse, circle, polygon.
-      </p>
-      <p>
-        <span class="icon"><img src="icons/hex_d_grid.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/rectangle_grid.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/circle_d_grid.png" width="16" height="16" alt="" title="" /></span>
-        Draw grid area - hex, rectangle &amp; circular - griding an existing selected area.
-      </p>
-      <p>
-        <span class="icon"><img src="icons/grid_inner.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/grid_outer.png" width="16" height="16" alt="" title="" /></span>
-        Change strict grid scope: grided areas are strictly limited to inner grid scope or not.
-      </p>
-      <p>
-        <span class="icon"><img src="icons/grid_alg.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/grid_alt.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/grid_alt2.png" width="16" height="16" alt="" title="" /></span>
-        Change grid alignment: grided areas can be aligned differently depending on alternate alignment availability.
-      </p>
-      <p><span class="lbl">Grid spacing</span> : Modify internal grid spacing</p>
-      <p><span class="lbl">href, alt, title, id</span> :  View or set selected area parameters. Display them on area hovering.</p>
-      <p>
-        <span class="icon"><img src="icons/order.png" width="16" height="16" alt="" title="" /></span> / 
-        <span class="icon"><img src="icons/ordering-1.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-2.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-3.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-4.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-5.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-6.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-7.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-8.png" width="16" height="16" alt="" title="" /></span>
-        Show internal grid ordering &amp; allow selecting different ordering methods
-      </p>
-      <p>
-        <span class="icon"><img src="icons/size.png" width="16" height="16" alt="" title="" /></span> / 
-        <span class="icon"><img src="icons/align_h.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_v.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_l.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_t.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_r.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_b.png" width="16" height="16" alt="" title="" /></span>
-        Resize &amp; align selected areas on first selected area - centered horizontally &amp; vertically or aligned on left, top, right &amp; bottom side.
-      </p>
-    </section><hr>
-    <section>Check Readme for complete description of commands and shortcuts.</section>
+	    <div>&copy;2017 Herve Retaureau</div>
+    </header>
+    <div>
+	    <section>
+	      <h1>Menu</h1>
+	      <p><span class="menu">Project.Manage</span> Manage local storage</p>
+	      <p><span class="menu">Project.New</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">M</span></p>
+	      <p><span class="menu">Project.Load</span> Load map project from local storage - <span class="key">CTRL</span> + <span class="key">L</span></p>
+        <p><span class="menu">Project.Save</span> Save map project in local storage - <span class="key">CTRL</span> + <span class="key">S</span></p>
+        <p><span class="menu">Project.Save As</span> Save map project in local storage with a new name</p>
+        <p><span class="menu">Project.Close</span> Close map project - <span class="key">CTRL</span> + <span class="key">X</span></p>
+        <p><span class="menu">Project.Export</span> Export map project to a local file</p>
+        <p><span class="menu">Project.Import</span> Import map project from a local file</p>
+        <p><span class="menu">Project.Export Image</span> Export map project image to a local file</p>
+        <p><span class="menu">Edit.Add HTML areas</span> Add areas from HTML map code</p>
+	      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
+	      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
+	      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
+	    </section>
+	    <section>
+	      <h1>Tools</h1>
+	      <p>
+	        <span class="icon"><img src="icons/hex_d.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/hex_r.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/rectangle.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/square.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/rhombus.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/triangle_e.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/triangle_i.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/triangle_r.png" width="24" height="24" alt="" title= "" /></span>
+	        <span class="icon"><img src="icons/ellipse.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/circle_d.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/circle_c.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/polygon.png" width="24" height="24" alt="" title="" /></span>
+	        Draw areas: hex, rectangle, square, rhombus, equilateral, isoceles &amp; right-angle triangles, ellipse, circle, polygon.
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/hex_d_grid.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/rectangle_grid.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/circle_d_grid.png" width="24" height="24" alt="" title="" /></span>
+	        Draw grid area - hex, rectangle &amp; circular - griding an existing selected area.
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/grid_inner.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/grid_outer.png" width="24" height="24" alt="" title="" /></span>
+	        Change strict grid scope: grided areas are strictly limited to inner grid scope or not.
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/grid_alg.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/grid_alt.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/grid_alt2.png" width="24" height="24" alt="" title="" /></span>
+	        Change grid alignment: grided areas can be aligned differently depending on alternate alignment availability.
+	      </p>
+	      <p><span class="lbl">Grid spacing</span> : Modify internal grid spacing</p>
+	      <p><span class="lbl">href, alt, title, id</span> :  View or set selected area parameters. Display them on area hovering.</p>
+	      <p>
+	        <span class="icon"><img src="icons/order.png" width="24" height="24" alt="" title="" /></span> / 
+	        <span class="icon"><img src="icons/ordering-1.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-2.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-3.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-4.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-5.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-6.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-7.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-8.png" width="24" height="24" alt="" title="" /></span>
+	        Show internal grid ordering &amp; allow selecting different ordering methods
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/size.png" width="24" height="24" alt="" title="" /></span> / 
+	        <span class="icon"><img src="icons/align_h.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_v.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_l.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_t.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_r.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_b.png" width="24" height="24" alt="" title="" /></span>
+	        Resize &amp; align selected areas on first selected area - centered horizontally &amp; vertically or aligned on left, top, right &amp; bottom side.
+	      </p>
+	    </section>
+	    <section>
+	      <h1>More information ...</h1>
+	      Check <a href="https://github.com/theksoft/bit/blob/master/README.md">Readme.md</a> for complete description of commands and shortcuts.
+	    </section>
+	  </div>
     <button class="close">Close</button>
   </form>
 
