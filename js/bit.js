@@ -1910,32 +1910,49 @@ var bit = (function() {
   class Menu {
 
     constructor(c) {
-      this._btns = Object.assign({}, {
-        newProject    : new bittls.TButton({ element : $('new-project'),      action : c.handlers.onNewProject }),
+      this._btns = {
+        newProject    : new bittls.TButton({ element : $('new-project'),      action : this._action(c.handlers.onNewProject, $('project-menu')) }),
         preview       : new bittls.TButton({ element : $('preview'),          action : (() => c.handlers.onPreview(this._btns.preview.element.classList.toggle('selected'))).bind(this) }),
-        saveProject   : new bittls.TButton({ element : $('save-project'),     action : c.handlers.onSaveProject }),
-        saveProjectAs : new bittls.TButton({ element : $('save-project-as'),  action : c.handlers.onSaveProjectAs }),
-        loadProject   : new bittls.TButton({ element : $('load-project'),     action : c.handlers.onLoadProject }),
-        closeProject  : new bittls.TButton({ element : $('close-project'),    action : c.handlers.onCloseProject }),
-        cleanProjects : new bittls.TButton({ element : $('clean-projects'),   action : c.handlers.onCleanProjects }),
+        saveProject   : new bittls.TButton({ element : $('save-project'),     action : this._action(c.handlers.onSaveProject, $('project-menu')) }),
+        saveProjectAs : new bittls.TButton({ element : $('save-project-as'),  action : this._action(c.handlers.onSaveProjectAs, $('project-menu')) }),
+        loadProject   : new bittls.TButton({ element : $('load-project'),     action : this._action(c.handlers.onLoadProject, $('project-menu')) }),
+        closeProject  : new bittls.TButton({ element : $('close-project'),    action : this._action(c.handlers.onCloseProject, $('project-menu')) }),
+        cleanProjects : new bittls.TButton({ element : $('clean-projects'),   action : this._action(c.handlers.onCleanProjects, $('project-menu')) }),
         generate      : new bittls.TButton({ element : $('generate'),         action : c.handlers.onGenerateCode }),
-        loadHTML      : new bittls.TButton({ element : $('load-html'),        action : c.handlers.onLoadHTML }),
-        exportProject : new bittls.TButton({ element : $('export-project'),   action : c.handlers.onExportProject }),
-        importProject : new bittls.TButton({ element : $('import-project'),   action : c.handlers.onImportProject }),
-        exportImage   : new bittls.TButton({ element : $('export-image'),     action : c.handlers.onExportImage }),
+        loadHTML      : new bittls.TButton({ element : $('load-html'),        action : this._action(c.handlers.onLoadHTML, $('edit-menu')) }),
+        exportProject : new bittls.TButton({ element : $('export-project'),   action : this._action(c.handlers.onExportProject, $('project-menu')) }),
+        importProject : new bittls.TButton({ element : $('import-project'),   action : this._action(c.handlers.onImportProject, $('project-menu')) }),
+        exportImage   : new bittls.TButton({ element : $('export-image'),     action : this._action(c.handlers.onExportImage, $('project-menu')) }),
         help          : new bittls.TButton({ element : $('help'),             action : c.handlers.onHelp })
-      })
+      }
+      this._menus = [$('project-menu'), $('edit-menu')]
       this._btnsEdit = [
         this._btns.saveProjectAs, this._btns.closeProject, this._btns.preview, this._btns.generate,
         this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage
       ]
+      this._enabled = false
       this._btns.saveProject.disable()
       this._btnsEdit.forEach(e => e.disable())
       this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
-      document.addEventListener('keydown', this.onKeyAction, false);
-      document.addEventListener('keydown', this.onCheckHelp.bind(this), false);
-      return this.reset();
+      document.addEventListener('keydown', this.onKeyAction, false)
+      document.addEventListener('keydown', this.onCheckHelp.bind(this), false)
+      $('project-btn').addEventListener('mouseenter', this._onMouseEnter.bind({ menu : this, dom : $('project-menu') }), false)
+      $('edit-btn').addEventListener('mouseenter', this._onMouseEnter.bind({ menu : this, dom : $('edit-menu') }), false)
+      return this.reset()
+    }
+
+    _onMouseEnter() {
+      this.menu._menus.forEach(e => e.classList.remove('active'))
+      if (this.menu._enabled)
+        this.dom.classList.add('active')
+    }
+
+    _action(action, node) {
+      return () => {
+        node.classList.remove('active')
+        action()
+      }
     }
 
     canSave() {
@@ -1948,12 +1965,14 @@ var bit = (function() {
 
     release() {
       Object.values(this._btns).forEach(e => e.release())
-      document.addEventListener('keydown', this.onKeyAction, false);
+      document.addEventListener('keydown', this.onKeyAction, false)
+      this._enabled = true
     }
 
     freeze() {
       Object.values(this._btns).forEach(e => e.freeze())
-      document.removeEventListener('keydown', this.onKeyAction, false);
+      document.removeEventListener('keydown', this.onKeyAction, false)
+      this._enabled = false
     }
 
     _onKeyAction(e) {
@@ -2016,6 +2035,7 @@ var bit = (function() {
       this._btns.preview.element.classList.remove('selected')
       document.addEventListener('keydown', this.onKeyAction, false);
       this._title.innerHTML = appName
+      this._enabled = true
       return this;
     }
 
@@ -2095,7 +2115,7 @@ var bit = (function() {
             }
           }
         ).finally(
-          this._app.release()
+          () => this._app.release()
         )
       }
     }
@@ -2170,7 +2190,7 @@ var bit = (function() {
     _onGenerateCode() {
       this._app.freeze()
       this._app.generate().finally(
-        () => { console.log('release'); this._app.release() }
+        () => this._app.release()
       )
     }
 
@@ -2217,7 +2237,7 @@ var bit = (function() {
                   this._app.footer.error = { type: 'file', file: file }
                 }
               ).finally(
-                loadIndicator.hide()
+                () => loadIndicator.hide()
               )
             }
           }

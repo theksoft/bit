@@ -8,22 +8,22 @@ Projets are stored in local storage by the name of each map.
 
 #### Project management command
 
-- `Clean projects` : Allow to clean-up any stored project.
-- `New project` : Setup a new HTML map project [`CTRL`+`M`].
-- `Load project` : Load a stored HTML map project [`CTRL`+`L`]. In load dialog, a double click on project image allows exporting it on disk.
-- `Save project` : Save HTML map project in local storage [`CTRL`+`S`].
-- `Save project as` : Save HTML map project in local storage under a new name.
-- `Close project` : Close current map project [`CTRL`+`X`].
-- `Export project` : Export project to a local file (JSON text file).
-- `Import project` : Import project from a local file (JSON text file).
+- `Project.Manage` : Allow to clean-up any stored project.
+- `Project.New` : Setup a new HTML map project [`CTRL`+`M`].
+- `Project.Load` : Load a stored HTML map project [`CTRL`+`L`]. In load dialog, a double click on project image allows exporting it on disk.
+- `Project.Save` : Save HTML map project in local storage [`CTRL`+`S`].
+- `Project.Save As` : Save HTML map project in local storage under a new name.
+- `Project.Close` : Close current map project [`CTRL`+`X`].
+- `Project.Export` : Export project to a local file (JSON text file).
+- `Project.Import` : Import project from a local file (JSON text file).
+- `Project.Export image` : Export project image to a local file.
 
 #### Project command
 
 - `Preview` : Preview HTML map result [`CTRL`+`P`]
 - `Generate` : Display HTML map code [`CTRL`+`G`]
-- `Add HTML areas` : Add areas from HTML map source code.<br>
+- `Edit.Add HTML areas` : Add areas from HTML map source code.<br>
   Full *\<map\>* source code or only *\<area\>* source code can be entered.
-- `Export image` : Export project image to a local file.
 
 #### Other
 

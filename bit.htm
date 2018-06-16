@@ -14,24 +14,37 @@
 </head>
 <body>
   <div id="main-wrap">
-    <header id="header">
-      <nav>
-        <ul>
-          <li id="clean-projects"><a href="#">Clean projects</a></li>
-          <li id="new-project"><a href="#">New project</a></li>
-          <li id="load-project"><a href="#">Load project</a></li>
-          <li id="save-project"><a href="#">Save project</a></li>
-          <li id="save-project-as"><a href="#">Save project as</a></li>
-          <li id="preview"><a href="#">Preview</a></li>
-          <li id="generate"><a href="#">Generate</a></li>
-          <li id="load-html"><a href="#">Add HTML areas</a></li>
-          <li id="close-project"><a href="#">Close project</a></li>
-          <li id="export-project"><a href="#">Export project</a></li>
-          <li id="import-project"><a href="#">Import project</a></li>
-          <li id="export-image"><a href="#">Export image</a></li>
-          <li id="help"><a href="#">?</a></li>
-        </ul>
-      </nav>
+    <header>
+      <nav id="menu">
+				<ul>
+				  <li class="dropdown">
+            <a href="javascript:void(0)" id="project-btn" class="dropbtn">Project</a>
+				    <div id="project-menu" class="dropdown-content">
+	            <a href="#" id="clean-projects">Manage</a>
+	            <hr>
+	            <a href="#" id="new-project">New</a>
+	            <a href="#" id="load-project">Load</a>
+	            <a href="#" id="save-project">Save</a>
+	            <a href="#" id="save-project-as">Save as</a>
+	            <a href="#" id="close-project">Close</a>
+	            <hr>
+	            <a href="#" id="export-project">Export</a>
+	            <a href="#" id="import-project">Import</a>
+	            <hr>
+	            <a href="#" id="export-image">Export image</a>
+				    </div>
+				  </li>
+	        <li class="dropdown">
+	          <a href="javascript:void(0)" id="edit-btn" class="dropbtn">Edit</a>
+	          <div id="edit-menu" class="dropdown-content">
+	            <a href="#" id="load-html">Add HTML areas</a>
+	          </div>
+	        </li>
+	        <li id="preview"><a href="#">Preview</a></li>
+	        <li id="generate"><a href="#">Generate</a></li>
+	        <li id="help"><a href="#">?</a></li>
+				</ul>
+			</nav>
     </header>
     <div id="wks-wrap">
       <section>
@@ -137,7 +150,6 @@
           <img id="align-right" src="icons/align_r.png" width="32" height="32" alt="" title="Align right" class="button" />
           <img id="align-bottom" src="icons/align_b.png" width="32" height="32" alt="" title="Align bottom" class="button" />
         </div>
-        <hr>
       </aside>
     </div>
     <footer id="footer">
@@ -149,186 +161,206 @@
 
   <!-- Project manager -->
   <form id="project-manager" class="modal">
-    <select class="list" multiple>
-    </select>
-    <div class="buttons">
-      <button class="close">Close</button>
-      <button class="delete" >Delete</button>
-      <button class="clear">Delete All</button>
-    </div>
+	  <header>Manage Project ...</header>
+	  <div>
+	    <label>Project list</label><br>
+	    <select class="list" multiple></select>
+	    <div class="buttons">
+	      <button class="close">Close</button>
+	      <button class="delete" >Delete</button>
+	      <button class="clear">Delete All</button>
+	    </div>
+	  </div>
   </form>
 
   <!-- Project attributes and image loader -->
   <form id="project-creator" class="modal">
-    <fieldset class="attrs"><legend>Image map attributes</legend>
-	    <label><span>Project / map name: </span> 
-	      <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
-	    </label>
-	    <label><span>alt: </span> 
-	      <input type="text" class="text alt" value="" title="'alt' attribute of the image map" />
-	    </label>
-    </fieldset>
-    <fieldset class="image"><legend>Image file</legend>
-      <div class="url">
-        <label>URL:
-          <input type="url" class="text url" />
-        </label>
-        <button class="load">Preview</button>
-      </div>
-      <div>
-	      <label>(or) Drop image file here</label>
-		    <div class="drop">
-	        <img class="preview" src="" alt="Preview selected image" />
+    <header>New Project ...</header>
+    <div>
+	    <fieldset class="attrs"><legend>Image map attributes</legend>
+		    <label><span>Project / map name: </span> 
+		      <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
+		    </label><br>
+		    <label><span>alt: </span> 
+		      <input type="text" class="text alt" value="" title="'alt' attribute of the image map" />
+		    </label>
+	    </fieldset>
+	    <fieldset class="image"><legend>Image file</legend>
+	      <div class="url">
+	        <label>Image URL:
+	          <input type="url" class="text url" />
+	        </label>
+	        <button class="load">Preview</button>
 	      </div>
-      </div>
-      <div>(or)</div>
-	    <div class="file">
-	     <label>Load image file
-	       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
-	     </label>
+	      <div>
+		      <label><span class="separator">(or) Drop image file here</span></label>
+			    <div class="drop">
+		        <img class="preview" src="" alt="Preview selected image" />
+		      </div>
+	      </div>
+	      <div><span class="separator">(or)</span></div>
+		    <div class="file">
+		     <label>Load Image File
+		       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+		     </label>
+		    </div>
+	    </fieldset>
+	    <div class="buttons">
+	      <button class="create" disabled>Create</button>
+	      <button class="cancel">Cancel</button>
 	    </div>
-    </fieldset>
-    <div class="buttons">
-      <button class="create" disabled>Create</button>
-      <button class="cancel">Cancel</button>
-    </div>
+	  </div>
   </form>
 
   <!-- Project loader -->
   <form id="project-loader" class="modal">
-    <select class="project-list">
-    </select>
-    <div class="image">
+    <header>Load Project ...</header>
+    <div>
+	    <select class="project-list"></select>
       <img class="preview" src="" alt="Preview selected image" />
-    </div>
-    <div class="buttons">
-      <button class="select" disabled>Load</button>
-      <button class="cancel">Cancel</button>
+	    <div class="buttons">
+	      <button class="select" disabled>Load</button>
+	      <button class="cancel">Cancel</button>
+	    </div>
     </div>
   </form>
 
   <!-- Project name change -->
   <form id="project-renamer" class="modal">
+    <header>Save Project As ...</header>
     <div>
-      <label>Project / map name:
-        <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
-      </label>
-    </div>
-    <div class="buttons">
-      <button class="apply">Save</button>
-      <button class="cancel" >Cancel</button>
-    </div>
+	    <div>
+	      <label>Project / map name:
+	        <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />
+	      </label>
+	    </div>
+	    <div class="buttons">
+	      <button class="apply">Save</button>
+	      <button class="cancel" >Cancel</button>
+	    </div>
+	  </div>
   </form>
 
   <!-- HTML code display -->
   <form id="project-code" class="modal">
-    <div class="code"></div>
-    <div class="buttons">
-      <button class="export">Export</button>
-      <button class="copy">Copy Selection</button>
-      <button class="select">Select All</button>
-      <button class="clear">Unselect</button>
-      <button class="close">Close</button>
-    </div>
+    <header>HTML Map Code</header>
+    <div>
+	    <div class="code"></div>
+	    <div class="buttons">
+	      <button class="export">Export</button>
+	      <button class="copy">Copy Selection</button>
+	      <button class="select">Select All</button>
+	      <button class="clear">Unselect</button>
+	      <button class="close">Close</button>
+	    </div>
+	  </div>
   </form>
 
   <!-- HTML code input -->
   <form id="code-loader" class="modal">
+    <header>Load HTML Code ...</header>
     <div>
-      <label>Enter HTML code here:
+      <label><span class="left">Enter HTML code here:</span>
         <textarea class="text code"></textarea>
       </label>
-    </div>
-    <div class="buttons">
-      <button class="select" disabled>Load</button>
-      <button class="clear">Clear</button>
-      <button class="cancel">Cancel</button>
+	    <div class="buttons">
+	      <button class="select" disabled>Load</button>
+	      <button class="clear">Clear</button>
+	      <button class="cancel">Cancel</button>
+	    </div>
     </div>
   </form>
 
   <!-- Help display form -->
   <form id="help-display" class="modal">
     <header>
-      <div>HTML map creator</div>
+      <div>HTML map creator<br>[MIT License]</div>
 	    <div class="title">
-	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.02</a>)
+	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.4</a>)
 	    </div>
-	    <div>
-	      &copy;2017 Herve Retaureau<br>
-	      MIT License
-	    </div>
-    </header><hr>
-    <section>
-      <h1>Menu</h1>
-      <p><span class="menu">Clean projects</span> Manage local storage</p>
-      <p><span class="menu">New project</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">M</span></p>
-      <p><span class="menu">Load project</span> Load map project from local storage - <span class="key">CTRL</span> + <span class="key">L</span></p>
-      <p><span class="menu">Save project</span> Save map project in local storage - <span class="key">CTRL</span> + <span class="key">S</span></p>
-      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
-      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
-      <p><span class="menu">Add HTML areas</span> Add areas from HTML map code</p>
-      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
-    </section><hr>
-    <section>
-      <h1>Tools</h1>
-      <p>
-        <span class="icon"><img src="icons/hex_d.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/hex_r.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/rectangle.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/square.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/rhombus.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/triangle_e.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/triangle_i.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/triangle_r.png" width="16" height="16" alt="" title= "" /></span>
-        <span class="icon"><img src="icons/ellipse.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/circle_d.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/circle_c.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/polygon.png" width="16" height="16" alt="" title="" /></span>
-        Draw areas: hex, rectangle, square, rhombus, equilateral, isoceles &amp; right-angle triangles, ellipse, circle, polygon.
-      </p>
-      <p>
-        <span class="icon"><img src="icons/hex_d_grid.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/rectangle_grid.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/circle_d_grid.png" width="16" height="16" alt="" title="" /></span>
-        Draw grid area - hex, rectangle &amp; circular - griding an existing selected area.
-      </p>
-      <p>
-        <span class="icon"><img src="icons/grid_inner.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/grid_outer.png" width="16" height="16" alt="" title="" /></span>
-        Change strict grid scope: grided areas are strictly limited to inner grid scope or not.
-      </p>
-      <p>
-        <span class="icon"><img src="icons/grid_alg.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/grid_alt.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/grid_alt2.png" width="16" height="16" alt="" title="" /></span>
-        Change grid alignment: grided areas can be aligned differently depending on alternate alignment availability.
-      </p>
-      <p><span class="lbl">Grid spacing</span> : Modify internal grid spacing</p>
-      <p><span class="lbl">href, alt, title, id</span> :  View or set selected area parameters. Display them on area hovering.</p>
-      <p>
-        <span class="icon"><img src="icons/order.png" width="16" height="16" alt="" title="" /></span> / 
-        <span class="icon"><img src="icons/ordering-1.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-2.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-3.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-4.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-5.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-6.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-7.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/ordering-8.png" width="16" height="16" alt="" title="" /></span>
-        Show internal grid ordering &amp; allow selecting different ordering methods
-      </p>
-      <p>
-        <span class="icon"><img src="icons/size.png" width="16" height="16" alt="" title="" /></span> / 
-        <span class="icon"><img src="icons/align_h.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_v.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_l.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_t.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_r.png" width="16" height="16" alt="" title="" /></span>
-        <span class="icon"><img src="icons/align_b.png" width="16" height="16" alt="" title="" /></span>
-        Resize &amp; align selected areas on first selected area - centered horizontally &amp; vertically or aligned on left, top, right &amp; bottom side.
-      </p>
-    </section><hr>
-    <section>Check Readme for complete description of commands and shortcuts.</section>
+	    <div>&copy;2017 Herve Retaureau</div>
+    </header>
+    <div>
+	    <section>
+	      <h1>Menu</h1>
+	      <p><span class="menu">Project.Manage</span> Manage local storage</p>
+	      <p><span class="menu">Project.New</span> Setup new map project - <span class="key">CTRL</span> + <span class="key">M</span></p>
+	      <p><span class="menu">Project.Load</span> Load map project from local storage - <span class="key">CTRL</span> + <span class="key">L</span></p>
+        <p><span class="menu">Project.Save</span> Save map project in local storage - <span class="key">CTRL</span> + <span class="key">S</span></p>
+        <p><span class="menu">Project.Save As</span> Save map project in local storage with a new name</p>
+        <p><span class="menu">Project.Close</span> Close map project - <span class="key">CTRL</span> + <span class="key">X</span></p>
+        <p><span class="menu">Project.Export</span> Export map project to a local file</p>
+        <p><span class="menu">Project.Import</span> Import map project from a local file</p>
+        <p><span class="menu">Project.Export Image</span> Export map project image to a local file</p>
+        <p><span class="menu">Edit.Add HTML areas</span> Add areas from HTML map code</p>
+	      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
+	      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
+	      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
+	    </section>
+	    <section>
+	      <h1>Tools</h1>
+	      <p>
+	        <span class="icon"><img src="icons/hex_d.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/hex_r.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/rectangle.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/square.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/rhombus.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/triangle_e.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/triangle_i.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/triangle_r.png" width="24" height="24" alt="" title= "" /></span>
+	        <span class="icon"><img src="icons/ellipse.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/circle_d.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/circle_c.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/polygon.png" width="24" height="24" alt="" title="" /></span>
+	        Draw areas: hex, rectangle, square, rhombus, equilateral, isoceles &amp; right-angle triangles, ellipse, circle, polygon.
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/hex_d_grid.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/rectangle_grid.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/circle_d_grid.png" width="24" height="24" alt="" title="" /></span>
+	        Draw grid area - hex, rectangle &amp; circular - griding an existing selected area.
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/grid_inner.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/grid_outer.png" width="24" height="24" alt="" title="" /></span>
+	        Change strict grid scope: grided areas are strictly limited to inner grid scope or not.
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/grid_alg.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/grid_alt.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/grid_alt2.png" width="24" height="24" alt="" title="" /></span>
+	        Change grid alignment: grided areas can be aligned differently depending on alternate alignment availability.
+	      </p>
+	      <p><span class="lbl">Grid spacing</span> : Modify internal grid spacing</p>
+	      <p><span class="lbl">href, alt, title, id</span> :  View or set selected area parameters. Display them on area hovering.</p>
+	      <p>
+	        <span class="icon"><img src="icons/order.png" width="24" height="24" alt="" title="" /></span> / 
+	        <span class="icon"><img src="icons/ordering-1.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-2.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-3.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-4.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-5.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-6.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-7.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/ordering-8.png" width="24" height="24" alt="" title="" /></span>
+	        Show internal grid ordering &amp; allow selecting different ordering methods
+	      </p>
+	      <p>
+	        <span class="icon"><img src="icons/size.png" width="24" height="24" alt="" title="" /></span> / 
+	        <span class="icon"><img src="icons/align_h.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_v.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_l.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_t.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_r.png" width="24" height="24" alt="" title="" /></span>
+	        <span class="icon"><img src="icons/align_b.png" width="24" height="24" alt="" title="" /></span>
+	        Resize &amp; align selected areas on first selected area - centered horizontally &amp; vertically or aligned on left, top, right &amp; bottom side.
+	      </p>
+	    </section>
+	    <section>
+	      <h1>More information ...</h1>
+	      Check <a href="https://github.com/theksoft/bit/blob/master/README.md">Readme.md</a> for complete description of commands and shortcuts.
+	    </section>
+	  </div>
     <button class="close">Close</button>
   </form>
 
