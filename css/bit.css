@@ -140,7 +140,7 @@ img {
 }
 
 .dropdown-content a:hover {
-	background-color: #f1f1f1;
+	background-color: #ddf;
 }
 
 .dropdown:hover .dropdown-content.active {
@@ -150,6 +150,10 @@ img {
 .dropdown-content a.disabled {
 	color: #888;
 	cursor: not-allowed;
+}
+
+.dropdown-content a.disabled:hover {
+  background-color: #eee;
 }
 
 /* WORKAREA ELEMENTS */
@@ -382,7 +386,7 @@ area {  /* Map preview, FF does not change cursor */
 }
 
 /* MODAL FORM */
-
+/*
 form.modal {
   position: absolute;
   z-index: 10;
@@ -396,49 +400,104 @@ form.modal {
   text-align: center;
   display: none;
 }
+*/
+form.modal {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background: #ddd;
+  color: #black;
+  text-align: center;
+  padding: 0;
+  margin: 0 auto;
+  border: 0;
+  display: none;
+}
 
 form.modal.show {
   display : block;
 }
 
+form.modal header {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #44a;
+  color: white;
+  text-align: left;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+/*
 form.modal button {
   background-color: #004;
   margin-top: 10px;
   margin-bottom: 4px;
   color: #ccc;
-  font-size: 12px;
   vertical-align: middle;
   border-radius: 5px;
   padding: 5px 10px;
   border: 1px ridge gray;
 }
 
-form.modal button:hover {
-  background-color: #226;
-}
-
-form.modal button:active {
-  background-color: #337;
-}
-
-form.modal button:disabled {
-  background-color: #333;
-  color: #888;
-}
-
 form.modal select {
-	color: #ccc;
+  color: #ccc;
   background-color: #333;
   width: 90%;
 }
+*/
+
+form.modal button {
+  background-color: #44a;
+  margin: 10px 3px 4px 3px;
+  color: white;
+  vertical-align: middle;
+  border-radius: 5px;
+  padding: 5px 10px;
+  border: 1px outset white;
+}
+
+form.modal button:hover:enabled {
+	color: #44a;
+  background-color: white;
+  box-shadow: 5px 5px rgba(0,0,0,0.2);
+}
+
+form.modal button:active {
+  background-color: rgba(64,64,160,0.6);
+  color: white;
+  box-shadow: 5px 5px rgba(255,255,255,0.6);
+}
+
+form.modal button:disabled {
+  background-color: grey;
+  color: #ccc;
+  border: 1px inset white;
+}
+
+form.modal label {
+  font-weight: bold;
+}
+
+form.modal select {
+  background-color: #f7f7f7;
+  margin: 5px 0px 10px;
+  border: 4px inset white;
+}
 
 form.modal option {
-  color: #bbb;
-  padding: 2px 5px;
+  color: black;
+  padding: 3px 5px;
 }
 
 form.modal option:disabled {
   color: #b55;
+  cursor: not-allowed;
+  background-color: #333;
 }
 
 form.modal input[type=text], form.modal input[type=url] {
@@ -588,22 +647,35 @@ form.modal input:invalid {
   margin-right: 10px;
 }
 
-/* PROJECT MODIFiER FORM */
+/* PROJECT MODIFIER FORM */
 
 #project-renamer {
   top: 10%;
   left: 40%;
   width: 20%;
   min-width: 150px;
+  background: #ddf;
 }
 
 /* PROJECT MANAGER FORM */
 
 #project-manager {
-  top: 10%;
-  left: 40%;
-  width: 20%;
   min-width: 150px;
+}
+
+#project-manager > div {
+	margin: 20px auto;
+  width: 30%;
+  min-width: 120px;
+}
+
+#project-manager label {
+	float: left;
+}
+
+#project-manager select {
+  width: 100%;
+  min-width: 120px;
 }
 
 /* PROJECT LOADER FORM */
