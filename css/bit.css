@@ -766,55 +766,59 @@ form.modal input:invalid {
 /* HTML CODE FORM */
 
 #code-loader {
-  top: 20%;
-  left: 5%;
-  width: 90%;
-  max-height: 60%;
-  min-width: 300px;
-  text-align: left;
+  min-width: 150px;
 }
 
-#code-loader label {
-	display: block;
+#code-loader > div {
+  margin: 1% auto;
+  width: 98%;
+  height: 98%;
+  min-width: 300px;
+  max-height: 98%;
+}
+
+#code-loader .left {
+	float: left;
 }
 
 #code-loader textarea {
   font-family: monospace;
   overflow: auto;
   text-align: left;
-  margin: 5px 1%;
-  width: 97%;
-  min-width: 97%;
-  max-width: 97%;
-  min-height: 150px;
-  max-height: 500px;
-  background-color: #222;
-  color: #dcf;
+  padding: 1%;
+  width: 98%;
+  min-width: 98%;
+  max-width: 98%;
+  height: 50%;
+  max-height: 80%;
+  background-color: black;
+  color: #ccc;
 }
 
-#code-loader > .buttons {
+#code-loader .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
   width: 100%;
+  min_height: 50px;
 }
 
-#code-loader > .buttons > .select {
+#code-loader .buttons > .select {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#code-loader > .buttons > .clear {
+#code-loader .buttons > .clear {
   order: 2;
   margin-left: 10px;
   margin-right: 10px;
 }
 
-#code-loader > .buttons > .cancel {
+#code-loader .buttons > .cancel {
   order: 3;
   margin-left: 10px;
-  margin-right: 10px;
+  margin-right: auto;
 }
 
 /* HELP */
