@@ -14,24 +14,34 @@
 </head>
 <body>
   <div id="main-wrap">
-    <header id="header">
-      <nav>
-        <ul>
-          <li id="clean-projects"><a href="#">Clean projects</a></li>
-          <li id="new-project"><a href="#">New project</a></li>
-          <li id="load-project"><a href="#">Load project</a></li>
-          <li id="save-project"><a href="#">Save project</a></li>
-          <li id="save-project-as"><a href="#">Save project as</a></li>
-          <li id="preview"><a href="#">Preview</a></li>
-          <li id="generate"><a href="#">Generate</a></li>
-          <li id="load-html"><a href="#">Add HTML areas</a></li>
-          <li id="close-project"><a href="#">Close project</a></li>
-          <li id="export-project"><a href="#">Export project</a></li>
-          <li id="import-project"><a href="#">Import project</a></li>
-          <li id="export-image"><a href="#">Export image</a></li>
-          <li id="help"><a href="#">?</a></li>
-        </ul>
-      </nav>
+    <header>
+      <nav id="menu">
+				<ul>
+				  <li class="dropdown">
+            <a href="javascript:void(0)" id="project-btn" class="dropbtn">Project</a>
+				    <div id="project-menu" class="dropdown-content">
+	            <a href="#" id="clean-projects">Manage List</a>
+	            <a href="#" id="new-project">New</a>
+	            <a href="#" id="load-project">Load</a>
+	            <a href="#" id="save-project">Save</a>
+	            <a href="#" id="save-project-as">Save as</a>
+	            <a href="#" id="close-project">Close</a>
+	            <a href="#" id="export-project">Export</a>
+	            <a href="#" id="import-project">Import</a>
+	            <a href="#" id="export-image">Export image</a>
+				    </div>
+				  </li>
+	        <li class="dropdown">
+	          <a href="javascript:void(0)" id="edit-btn" class="dropbtn">Edit</a>
+	          <div id="edit-menu" class="dropdown-content">
+	            <a href="#" id="load-html">Add HTML areas</a>
+	          </div>
+	        </li>
+	        <li id="preview"><a href="#">Preview</a></li>
+	        <li id="generate"><a href="#">Generate</a></li>
+	        <li id="help"><a href="#">?</a></li>
+				</ul>
+			</nav>
     </header>
     <div id="wks-wrap">
       <section>

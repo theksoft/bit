@@ -41,10 +41,6 @@ img {
   border: 0;
 }
 
-ul, ol {
-  list-style-type: none;
-}
-
 #main-wrap {
   height: 100%;
   min-height: 100%;
@@ -81,116 +77,79 @@ ul, ol {
   align-items: center;
 }
 
-#load-indicator {
-  order : 1;
-  align-self: center;
-}
-
 #coordinates {
-  order : 2;
+  order : 1;
   margin-left: auto;
 }
 
 /* HEADER ELEMENTS */
 
-#header {
-  background-color: black;
-  padding: 15px 0px 17px;
-  width: 100%;
-  box-shadow: rgba(0,0,0,0.2) 0 0 2px 2px;
-  margin-bottom: 5px;
+#menu ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
 }
 
-#header a:link,
-#header a:visited {
-  outline: none;
+#menu li {
+  float: left;
+}
+
+#menu li > a, .dropbtn {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
   text-decoration: none;
-  color: #ccc;
 }
 
-#header nav,
-#header nav ul,
-#header nav label,
-#header nav button,
-#header nav li,
-#header nav a,
-#header nav div {
-  display: inline;
+#menu li > a:hover, .dropdown:hover .dropbtn {
+  background-color: #44a;
 }
 
-#header nav ul {
-  padding: 0px;
-  margin: 0px;
+#menu li.dropdown {
+  display: inline-block;
 }
 
-#header nav label,
-#header nav button,
-#header nav li {
-  font-size: 12px;
-  color: #ccc;
-  vertical-align: middle;
+#menu li.disabled a {
+  background-color: #333;
+  color: #888;
+  cursor: not-allowed;
 }
 
-#header nav label,
-#header nav button,
-#header nav a:link,
-#header nav a:visited,
-#header nav a:hover,
-#header nav a:active {
-  border-radius: 5px;
-  padding: 5px 10px;
-  border: 1px ridge gray;
-  margin-left: 5px;
-}
-
-#header nav .selected label,
-#header nav .selected button,
-#header nav .selected a:link,
-#header nav .selected a:visited {
+#menu li.selected a {
   background-color: #800;
 }
 
-#header nav .disabled label,
-#header nav .disabled button,
-#header nav .disabled a:link,
-#header nav .disabled a:visited {
-  background-color: #222;
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 5;
 }
 
-#header nav label,
-#header nav button,
-#header nav a:link,
-#header nav a:visited {
-  background-color: #004;
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
 }
 
-#header nav label:hover,
-#header nav button:hover,
-#header nav a:hover {
-  background-color: #226;
+.dropdown-content a:hover {
+	background-color: #f1f1f1;
 }
 
-#header nav label:active,
-#header nav button:active,
-#header nav a:active {
-  background-color: #337;
+.dropdown:hover .dropdown-content.active {
+  display: block;
 }
 
-#file-drop-zone {
-  border: 2px dashed #999;
-  border-radius: 5px;
-  padding: 12px 10px;
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAiCAYAAADCp/A1AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAApjAAAKYwGDMomsAAAAB3RJTUUH3AkYCxg3B2a5QgAAAKtJREFUWMPt17sNgDAMRdE8tsj+w2UM6CiQEv9jIvm1COl0uUZbbIxxt03rvWP27WoHrJCFLGQhC1nIQr7DzohQI3fXjqaOkJFl0nxDVj9K+hKZocsNYGQXOafQ8YfTgTohcMKNA+rnHdAVkIWMhlJANjIKygGKkN5QLlCM9IJKgCqkFSoFqpFaqAZoQkqhWqAZyYVagC5ICmoFuiFnUA+gK/IL9QKGLOJlegBB2VeWydvIHgAAAABJRU5ErkJggg==) 50% 50% no-repeat;
-  font-size: 12px;
-  color: #558;
-  vertical-align: middle;
-  margin-left: 5px
-}
-
-#load-file {
-  position: fixed;
-  top: -100em;
-  opacity: 0;
+.dropdown-content a.disabled {
+	color: #888;
+	cursor: not-allowed;
 }
 
 /* WORKAREA ELEMENTS */
@@ -412,16 +371,6 @@ area {  /* Map preview, FF does not change cursor */
   margin: 5px 10px 3px;
   display: inline;
   vertical-align: middle;
-}
-
-.loading {
-  background-color: #bfb;
-  color: #000;
-  border-radius: 3px;
-}
-
-#load-indicator {
-  display : none;
 }
 
 #coordinates {
