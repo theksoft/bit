@@ -212,19 +212,20 @@
 
   <!-- Project loader -->
   <form id="project-loader" class="modal">
-    <select class="project-list">
-    </select>
-    <div class="image">
+    <header>Load Project ...</header>
+    <div>
+	    <select class="project-list"></select>
       <img class="preview" src="" alt="Preview selected image" />
-    </div>
-    <div class="buttons">
-      <button class="select" disabled>Load</button>
-      <button class="cancel">Cancel</button>
+	    <div class="buttons">
+	      <button class="select" disabled>Load</button>
+	      <button class="cancel">Cancel</button>
+	    </div>
     </div>
   </form>
 
   <!-- Project name change -->
   <form id="project-renamer" class="modal">
+    <header>Save Project As ...</header>
     <div>
       <label>Project / map name:
         <input type="text" class="text name" placeholder="map" value="" title="'name' attribute of the image map" required pattern="[A-Za-z0-9]+" />

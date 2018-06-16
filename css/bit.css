@@ -150,6 +150,7 @@ img {
 .dropdown-content a.disabled {
 	color: #888;
 	cursor: not-allowed;
+	font-style: italic;
 }
 
 .dropdown-content a.disabled:hover {
@@ -457,7 +458,7 @@ form.modal button:hover:enabled {
 }
 
 form.modal .file label:active,
-form.modal button:active {
+form.modal button:hover:active {
   background-color: rgba(64,64,160,0.6);
   color: white;
   box-shadow: 5px 5px rgba(255,255,255,0.6);
@@ -606,19 +607,22 @@ form.modal input:invalid {
 	font-style: italic; 
 }
 
-#project-creator > .buttons {
+#project-creator .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
-#project-creator > .buttons > .create {
+#project-creator .buttons > .create {
   order: 1;
   margin-left: auto;
+  margin-right: 10px;
 }
 
-#project-creator > .buttons > .cancel {
+#project-creator .buttons > .cancel {
   order: 2;
+  margin-left: 10px;
+  margin-right: auto;
 }
 
 /* PROJECT MODIFIER FORM */
@@ -655,49 +659,46 @@ form.modal input:invalid {
 /* PROJECT LOADER FORM */
 
 #project-loader {
-  top: 10%;
-  left: 40%;
-  width: 20%;
   min-width: 150px;
 }
 
-#project-loader > .buttons {
+#project-loader > div {
+  margin: 20px auto;
+  width: 50%;
+  min-width: 120px;
+}
+
+#project-loader select {
+	width: 50%;
+}
+
+#project-loader .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
-#project-loader > .buttons > .select {
+#project-loader .buttons > .select {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
-#project-loader > .buttons > .cancel {
+#project-loader .buttons > .cancel {
   order: 2;
   margin-left: 10px;
-  margin-right: 10px;
+  margin-right: auto;
 }
 
-#project-loader > div.image {
-  width: 80%;
-  height: 200px;
-  border: 2px dashed #999;
-  border-radius: 5px;
-  padding: 12px 10px;
-  font-size: 12px;
-  color: #558;
-  vertical-align: middle;
-  margin: 5px auto;
-  text-align: center;
-}
-
-#project-loader > div.image > img.preview {
+#project-loader img.preview {
   max-width: 100%;
   max-height: 100%;
-  vertical-align: middle;
+  height: 250px;
+  border: 2px dashed black;
+  padding: 10px;
   margin: 5px auto;
-  display: none;
+  background-color: white;
+  margin: auto;
 }
 
 /* PROJECT CODE FORM */
