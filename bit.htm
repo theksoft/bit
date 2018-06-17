@@ -187,24 +187,32 @@
 		    </label>
 	    </fieldset>
 	    <fieldset class="image"><legend>Image file</legend>
-	      <div class="url">
-	        <label>Image URL:
-	          <input type="url" class="text url" />
-	        </label>
-	        <button class="load">Preview</button>
-	      </div>
+	      <div>
+		      <div class="url">
+		        <label>Image URL: <input type="url" class="text url" /></label>
+		        <button class="load">Preview</button>
+		      </div>
+	        <div class="file">
+	          <span class="separator">(or)</span>
+	          <label>Load Image File
+	            <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+	          </label>
+	        </div>
+        </div>
 	      <div>
 		      <label><span class="separator">(or) Drop image file here</span></label>
 			    <div class="drop">
 		        <img class="preview" src="" alt="Preview selected image" />
 		      </div>
 	      </div>
-	      <div><span class="separator">(or)</span></div>
-		    <div class="file">
-		     <label>Load Image File
-		       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
-		     </label>
-		    </div>
+	    </fieldset>
+	    <fieldset class="template"><legend>Template background</legend>
+	      <label>Dimensions:</label>
+        <input type="text" class= "text dim width" pattern="[1-9][0-9]*" value="" placeholder="100" title="width" />
+        <span class="separator"> x </span>
+        <input type="text" class= "text dim height" pattern="[1-9][0-9]*" value="" placeholder="100" title="height" />
+        <label>Color:</label><input type="color" value="#000000">
+        <button class="template">Apply</button><!-- Issue with class? -->
 	    </fieldset>
 	    <div class="buttons">
 	      <button class="create" disabled>Create</button>
@@ -247,11 +255,17 @@
     <header>Set New Image ...</header>
     <div>
       <fieldset class="image"><legend>Image file</legend>
-        <div class="url">
-          <label>Image URL:
-            <input type="url" class="text url" />
-          </label>
-          <button class="load">Preview</button>
+        <div>
+          <div class="url">
+            <label>Image URL: <input type="url" class="text url" /></label>
+            <button class="load">Preview</button>
+          </div>
+          <div class="file">
+            <span class="separator">(or)</span>
+            <label>Load Image File
+              <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+            </label>
+          </div>
         </div>
         <div>
           <label><span class="separator">(or) Drop image file here</span></label>
@@ -259,12 +273,14 @@
             <img class="preview" src="" alt="Preview selected image" />
           </div>
         </div>
-        <div><span class="separator">(or)</span></div>
-        <div class="file">
-         <label>Load Image File
-           <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
-         </label>
-        </div>
+      </fieldset>
+      <fieldset class="template"><legend>Template background</legend>
+        <label>Dimensions:</label>
+        <input type="text" class= "text dim width" pattern="[1-9][0-9]*" value="" placeholder="100" title="width" />
+        <span class="separator"> x </span>
+        <input type="text" class= "text dim height" pattern="[1-9][0-9]*" value="" placeholder="100" title="height" />
+        <label>Color:</label><input type="color" value="#000000">
+        <button class="template">Apply</button>
       </fieldset>
       <div class="buttons">
         <button class="create" disabled>Change</button>

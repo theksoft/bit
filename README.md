@@ -30,6 +30,12 @@ Projets are stored in local storage by the name of each map.
 
 - `?` : Brief help display [`F1`]
 
+## Background image
+
+During project creation map image can be selected between a web URL, a local image file or a template background of defined dimension and color.
+Map image can be replaced at any time. In that case all areas are moved and resized depending on the previous and new image dimensions relation.
+If new image is of the same size than the previous one, areas remain unchanged. 
+
 ## Drawing
 
 Drawing is controlled by tool pallette on the right side.

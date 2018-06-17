@@ -440,6 +440,10 @@ form.modal button {
   border: 1px outset white;
 }
 
+form.modal .file label {
+	padding: 6px 10px;
+}
+
 form.modal .file label:hover:enabled,
 form.modal button:hover:enabled {
 	color: #44a;
@@ -493,11 +497,27 @@ form.modal input[type=text].error, form.modal input[type=url].error {
   color: #f44;
 }
 
+form.modal input[type=number] {
+  background-color: white;
+  color: black;
+  border: 2px inset white;
+  width: 80px;
+  padding: 2px 5px;
+  text-align: right;
+}
+
 form.modal input:invalid {
   border: 2px dashed red;
 }
 
+form.modal fieldset > legend.field-active::before {
+	content: " [+] ";
+	font-weight: bold;
+	color: red;
+}
+
 /* PROJECT CREATOR FORM */
+
 #project-changer,
 #project-creator {
   min-width: 300px;
@@ -516,6 +536,31 @@ form.modal input:invalid {
   border-radius: 5px;
   padding: 10px;
   margin: 10px;
+}
+
+#project-changer fieldset:disabled,
+#project-creator fieldset:disabled {
+  border: 2px grey solid;
+}
+
+#project-changer fieldset:disabled *,
+#project-creator fieldset:disabled * {
+  color:  grey;
+}
+
+#project-changer fieldset:disabled button,
+#project-creator fieldset:disabled button,
+#project-changer fieldset:disabled .file label,
+#project-creator fieldset:disabled .file label {
+  background-color: grey;
+  color: #ccc;
+}
+
+#project-changer fieldset:disabled .drop,
+#project-creator fieldset:disabled .drop,
+#project-changer fieldset:disabled input,
+#project-creator fieldset:disabled input {
+  background-color: #ccc;
 }
 
 #project-changer legend,
@@ -544,13 +589,27 @@ form.modal input:invalid {
 }
 
 #project-changer fieldset.image .url,
-#project-creator fieldset.image .url * {
+#project-creator fieldset.image .url,
+#project-changer fieldset.image .file,
+#project-creator fieldset.image .file {
   vertical-align: middle;
+  display: inline;
 }
 
 #project-changer fieldset.image > div,
 #project-creator fieldset.image > div {
 	padding: 5px;
+}
+
+#project-changer fieldset.template input[type=text],
+#project-creator fieldset.template input[type=text] {
+	width: 60px;
+  text-align: right;
+}
+
+#project-changer fieldset.template *,
+#project-creator fieldset.template * {
+  vertical-align: middle;
 }
 
 #project-changer .drop,
@@ -597,6 +656,7 @@ form.modal input:invalid {
 #project-changer span.separator,
 #project-creator span.separator {
 	font-style: italic; 
+  padding: 10px;
 }
 
 #project-changer .buttons,

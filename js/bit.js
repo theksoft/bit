@@ -119,14 +119,21 @@ var bit = (function() {
         this._url.url = d.url
         let tmp = d.url.split('/')
         this._url.filename = tmp[tmp.length-1]
+        this._url.size = 0
         break
       case 'dataURL':
-        if (!this._checkImgFile(d.file))
+        if (!d.template && !this._checkImgFile(d.file))
           throw new Error('ERROR[Model] ' + d.file.type + ' Invalid image file type!')
         this._url.url = d.url
         this._url.type = 'dataURL'
-        this._url.filename = d.file.name
-        this._url.size = d.file.size
+        if (d.template) {
+          this._url.filename = 'template.png'
+          this._url.size = 0
+        }
+        else {
+          this._url.filename = d.file.name
+          this._url.size = d.file.size
+        }
         break
       default:
         alert('[ERROR] Unsupported format - ' + d.type)
@@ -1304,7 +1311,7 @@ var bit = (function() {
                       d.file.lastModified ? (new Date(d.file.lastModified)).toLocaleDateString() : 'n/a')
         else
           output.push('<strong>', encodeURIComponent(d.filename), '</strong> - ',
-                      d.size, ' bytes, last modified: n/a')
+                      (d.size) ? d.size : 'n/a', ' bytes, last modified: n/a')
         url = d.url
         break
       default:
@@ -1414,6 +1421,7 @@ var bit = (function() {
       this._file = null
       this._url = ''
       this._type = 'none'
+      this._template = false
       this._doms = {}
       this._defDom()
       
@@ -1425,16 +1433,21 @@ var bit = (function() {
       this._doms.inImageFile.addEventListener('change', this._onImageFileChange.bind(this), false)
       this._doms.inImageUrl.addEventListener('input', this._onUrlInput.bind(this), false)
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
+      this._doms.btnApply.addEventListener('click', this._onApplyClick.bind(this), false)
       this._reset()
     }
 
     _defDom() {
-      this._doms.btnSet        = this._form.querySelector('.create')
-      this._doms.dropZone      = this._form.querySelector('.drop')
-      this._doms.imagePreview  = this._form.querySelector('.preview')
-      this._doms.inImageFile   = this._form.querySelector('input[type=file]')
-      this._doms.inImageUrl    = this._form.querySelector('.text.url')
-      this._doms.btnLoad       = this._form.querySelector('button.load')
+      this._doms.btnSet       = this._form.querySelector('.create')
+      this._doms.dropZone     = this._form.querySelector('.drop')
+      this._doms.imagePreview = this._form.querySelector('.preview')
+      this._doms.inImageFile  = this._form.querySelector('input[type=file]')
+      this._doms.inImageUrl   = this._form.querySelector('.text.url')
+      this._doms.btnLoad      = this._form.querySelector('button.load')
+      this._doms.inWidth      = this._form.querySelector('.dim.width')
+      this._doms.inHeight     = this._form.querySelector('.dim.height')
+      this._doms.inColor      = this._form.querySelector('input[type=color]')
+      this._doms.btnApply     = this._form.querySelector('button.template')
     }
 
     _clear(keep) {
@@ -1455,12 +1468,17 @@ var bit = (function() {
       }
       this._url = ''
       this._type = 'none'
+      this._template = false
+      this._form.querySelector('fieldset.image > legend').classList.remove('field-active')
+      this._form.querySelector('fieldset.template > legend').classList.remove('field-active')
     }
 
     _reset() {
       this._clear()
       this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
       this._doms.inImageUrl.value = this._doms.inImageUrl.defaultValue = ''
+      this._doms.inWidth.value = this._doms.inWidth.defaultValue = '' 
+      this._doms.inHeight.value = this._doms.inHeight.defaultValue = '' 
     }
 
     _error(e) {
@@ -1486,6 +1504,8 @@ var bit = (function() {
             this._type = 'dataURL'
             this._doms.imagePreview.style.display = 'block'
             this._doms.btnSet.disabled = !this._validate()
+            this._template = false
+            this._form.querySelector('fieldset.image > legend').classList.add('field-active')
           }
         ).catch(
           e => {
@@ -1537,6 +1557,8 @@ var bit = (function() {
             this._type = 'URL'
             this._doms.imagePreview.style.display = 'block'
             this._doms.btnSet.disabled = !this._validate()
+            this._template = false
+            this._form.querySelector('fieldset.image > legend').classList.add('field-active')
           } 
         ).catch(
           e => {
@@ -1548,7 +1570,22 @@ var bit = (function() {
           () => loadIndicator.hide()
         )
       }
+    }
 
+    _onApplyClick(e) {
+      if (this._doms.inWidth.checkValidity() && this._doms.inHeight.checkValidity()) {
+        let width, height
+        width = parseInt(this._doms.inWidth.value)
+        height = parseInt(this._doms.inHeight.value)
+        if (width && height && !isNaN(width) && !isNaN(height)) {
+          this._clear()
+          this._url = bittls.createRectDataUrl(width, height, this._doms.inColor.value)
+          this._type = 'dataURL'
+          this._doms.btnSet.disabled = !this._validate()
+          this._template = true
+          this._form.querySelector('fieldset.template > legend').classList.add('field-active')
+        }
+      }
     }
 
     _onCancel() {
@@ -1565,6 +1602,7 @@ var bit = (function() {
         type      : this._type,
         url       : this._url,
         file      : this._file,
+        template  : this._template
       }
     }
 
@@ -1614,7 +1652,7 @@ var bit = (function() {
       this._doms.btnSet.disabled = !this._validate()
     }
 
-    _getdata() {
+    _getData() {
       let data = super._getData()
       data.name = this._doms.inMapName.value
       data.alt = this._doms.inMapAlt.value
@@ -2110,9 +2148,9 @@ var bit = (function() {
 
     _loadProject(name, project) {
       return new Promise((resolve, reject) => {
+        this._app.footer.info = { type : project.type, url: project.url, filename : project.filename, size : project.size }
         this._app.workspace.load(project.url).then(
           () => {
-            this._app.footer.info = { type : project.type, url: project.url, filename : project.filename, size : project.size }
             if(this._app.model.fromStore(project, this._app.store.s2a)) {
               this._app.aTooler.managePropsDisplay(this._app.model.areas)
               this._app.menu.switchToEditMode(name)
@@ -2146,7 +2184,7 @@ var bit = (function() {
                 this._app.workspace.load(this._app.model.url)
                 this._app.setModified(true)
               } catch(e) {
-                alert('ERROR[<data.name>] Unable to create project - ' + e.message)
+                alert('ERROR['+data.name+'] Unable to create project - ' + e.message)
                 this._app.footer.error = data
               } finally {
                 loadIndicator.hide()
