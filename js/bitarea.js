@@ -114,6 +114,18 @@ var bitarea = (function() {
       this._bonds.forEach(e => e.draw(e.svgCoords, c));
     }
 
+    transform(ratio) {
+      if (ratio) {
+        this.project(ratio)
+        this.redraw()
+      }
+    }
+
+    
+    project(ratio) {
+      console.log('project() not defined');
+    }
+
     is(dom) {
       return (dom === this._dom) ? true : false;
     }
@@ -297,6 +309,13 @@ var bitarea = (function() {
       };
     }
 
+    project(ratio) {
+      this._coords.x = Math.round(this._coords.x * ratio.x);
+      this._coords.y = Math.round(this._coords.y * ratio.y);
+      this._coords.width = Math.round(this._coords.width * ratio.x);
+      this._coords.height = Math.round(this._coords.height * ratio.y);
+    }
+
   } // RECTANGLE
 
   /*
@@ -331,6 +350,14 @@ var bitarea = (function() {
         throw new Error('This is not a square: ' + coords.width + 'x' + coords.height);
       }
       super.draw(coords);
+    }
+
+    project(ratio) {
+      super.project(ratio);
+      if (this._coords.width < this._coords.height)
+        this._coords.height = this._coords.width;
+      else
+        this._coords.width = this._coords.height;
     }
 
   } // SQUARE
@@ -427,6 +454,15 @@ var bitarea = (function() {
         width : 2 * this._coords.r,
         height : 2 * this._coords.r
       };
+    }
+
+    project(ratio) {
+      let rx, ry;
+      this._coords.x = Math.round(this._coords.x * ratio.x);
+      this._coords.y = Math.round(this._coords.y * ratio.y);
+      rx = Math.round(this._coords.r * ratio.x);
+      ry = Math.round(this._coords.r * ratio.y);
+      this._coords.r = (rx < ry) ? rx : ry;
     }
 
   } // CIRCLE CLASS (from CENTER)
@@ -604,6 +640,14 @@ var bitarea = (function() {
       super.draw(coords);
     }
 
+    project(ratio) {
+      let r = this._coords.width / this._coords.height;
+      super.project(ratio);
+      let nw = Math.round(this._coords.height * r);
+      if (this._coords.width > nw) this._coords.width = nw;
+      else this._coords.height = Math.round(this._coords.width / r);
+    }
+
   }
 
   /*
@@ -708,6 +752,14 @@ var bitarea = (function() {
       return pts;
     }
 
+    project(ratio) {
+      let r = this._coords.width / this._coords.height;
+      super.project(ratio);
+      let nw = Math.round(this._coords.height * r);
+      if (this._coords.width > nw) this._coords.width = nw;
+      else this._coords.height = Math.round(this._coords.width / r);
+    }
+
   } // HEX (from RECTANGLE)
 
   /*
@@ -794,6 +846,13 @@ var bitarea = (function() {
 
     getPoints(c) {
       return this.copyCoords(c);
+    }
+
+    project(ratio) {
+      this._coords.forEach(p => {
+        p.x = Math.round(p.x * ratio.x);
+        p.y = Math.round(p.y * ratio.y);
+      })
     }
 
   } // POLYGON

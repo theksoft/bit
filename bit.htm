@@ -38,6 +38,7 @@
 	          <a href="javascript:void(0)" id="edit-btn" class="dropbtn">Edit</a>
 	          <div id="edit-menu" class="dropdown-content">
 	            <a href="#" id="load-html">Add HTML areas</a>
+              <a href="#" id="change-image">Set New Image</a>
 	          </div>
 	        </li>
 	        <li id="preview"><a href="#">Preview</a></li>
@@ -241,6 +242,37 @@
 	  </div>
   </form>
 
+  <!-- Project image change -->
+  <form id="project-changer" class="modal">
+    <header>Set New Image ...</header>
+    <div>
+      <fieldset class="image"><legend>Image file</legend>
+        <div class="url">
+          <label>Image URL:
+            <input type="url" class="text url" />
+          </label>
+          <button class="load">Preview</button>
+        </div>
+        <div>
+          <label><span class="separator">(or) Drop image file here</span></label>
+          <div class="drop">
+            <img class="preview" src="" alt="Preview selected image" />
+          </div>
+        </div>
+        <div><span class="separator">(or)</span></div>
+        <div class="file">
+         <label>Load Image File
+           <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+         </label>
+        </div>
+      </fieldset>
+      <div class="buttons">
+        <button class="create" disabled>Change</button>
+        <button class="cancel">Cancel</button>
+      </div>
+    </div>
+  </form>
+
   <!-- HTML code display -->
   <form id="project-code" class="modal">
     <header>HTML Map Code</header>
@@ -276,7 +308,7 @@
     <header>
       <div>HTML map creator<br>[MIT License]</div>
 	    <div class="title">
-	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.4</a>)
+	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.5</a>)
 	    </div>
 	    <div>&copy;2017 Herve Retaureau</div>
     </header>
@@ -292,7 +324,8 @@
         <p><span class="menu">Project.Export</span> Export map project to a local file</p>
         <p><span class="menu">Project.Import</span> Import map project from a local file</p>
         <p><span class="menu">Project.Export Image</span> Export map project image to a local file</p>
-        <p><span class="menu">Edit.Add HTML areas</span> Add areas from HTML map code</p>
+        <p><span class="menu">Edit.Add HTML Areas</span> Add areas from HTML map code</p>
+        <p><span class="menu">Edit.Set New Image</span> Set a new image for the project</p>
 	      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
 	      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
 	      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
