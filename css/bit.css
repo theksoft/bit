@@ -492,33 +492,25 @@ form.modal input[type=text].error, form.modal input[type=url].error {
   border: 2px dashed red;
   color: #f44;
 }
-/*
-form.modal textarea {
-  background-color: #ccc;
-  color: #333;
-  border: 2px solid #555;
-  border-radius: 3px;
-  width: 120px;
-  padding: 2px 5px;
-  margin: 4px 12px 1px 1px;
-}
-*/
+
 form.modal input:invalid {
   border: 2px dashed red;
 }
 
 /* PROJECT CREATOR FORM */
-
+#project-changer,
 #project-creator {
   min-width: 300px;
 }
 
+#project-changer > div,
 #project-creator > div {
   margin: 20px auto;
   width: 50%;
   min-width: 300px;
 }
 
+#project-changer fieldset,
 #project-creator fieldset {
   border: 2px #44a solid;
   border-radius: 5px;
@@ -526,6 +518,7 @@ form.modal input:invalid {
   margin: 10px;
 }
 
+#project-changer legend,
 #project-creator legend {
 	color: #44a;
 }
@@ -544,19 +537,23 @@ form.modal input:invalid {
   text-align: right;
 }
 
+#project-changer fieldset.image label,
 #project-creator fieldset.image label {
   margin: 5px auto;
   text-align: center;
 }
 
+#project-changer fieldset.image .url,
 #project-creator fieldset.image .url * {
   vertical-align: middle;
 }
 
+#project-changer fieldset.image > div,
 #project-creator fieldset.image > div {
 	padding: 5px;
 }
 
+#project-changer .drop,
 #project-creator .drop {
   width: 80%;
   height: 200px;
@@ -570,6 +567,7 @@ form.modal input:invalid {
   background-color: white;
 }
 
+#project-changer .preview,
 #project-creator .preview {
   max-width: 100%;
   max-height: 100%;
@@ -578,37 +576,44 @@ form.modal input:invalid {
   display: none;
 }
 
+#project-changer .error.drop,
 #project-creator .error.drop {
   border: 2px dashed #f44;
 }
 
 
+#project-changer .file,
 #project-creator .file {
 	margin: 10px;
 }
 
+#project-changer .file input[type=file],
 #project-creator .file input[type=file] {
   position: fixed;
   top: -100em;
   opacity: 0;
 }
 
+#project-changer span.separator,
 #project-creator span.separator {
 	font-style: italic; 
 }
 
+#project-changer .buttons,
 #project-creator .buttons {
   display: flex;
   flex-flow: row;
   align-items: center;
 }
 
+#project-changer .buttons > .create,
 #project-creator .buttons > .create {
   order: 1;
   margin-left: auto;
   margin-right: 10px;
 }
 
+#project-changer .buttons > .cancel,
 #project-creator .buttons > .cancel {
   order: 2;
   margin-left: 10px;

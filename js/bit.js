@@ -1402,39 +1402,39 @@ var bit = (function() {
   }
 
   /*
-   *  MAP PROJECT CREATOR
+   *  MAP PROJECT CREATOR & CHANGER
    */
 
-  class ProjectCreatorDialog extends bittls.DialogForm {
+  class ProjectImageSelector extends bittls.DialogForm {
 
     constructor(c) {
-      super({ form : $('project-creator') })
+      super({ form : c.form })
       this._handlers = {}
       this._checkFile = c.checkFile || (() => true)
       this._file = null
       this._url = ''
       this._type = 'none'
-      this._doms = {
-        btnSet        : this._form.querySelector('.create'),
-        dropZone      : this._form.querySelector('.drop'),
-        imagePreview  : this._form.querySelector('.preview'),
-        inImageFile   : this._form.querySelector('input[type=file]'),
-        inMapName     : this._form.querySelector('.text.name'),
-        inMapAlt      : this._form.querySelector('.text.alt'),
-        inImageUrl    : this._form.querySelector('.text.url'),
-        btnLoad       : this._form.querySelector('button.load')
-      }
-
+      this._doms = {}
+      this._defDom()
+      
       this._doms.btnSet.addEventListener('click', this._onSetClick.bind(this), false)
       this._doms.dropZone.draggable = true
       this._doms.dropZone.addEventListener('dragover', this._onDragEvent, false)
       this._doms.dropZone.addEventListener('dragleave', this._onDragEvent, false)
       this._doms.dropZone.addEventListener('drop', this._onDrop.bind(this), false)
       this._doms.inImageFile.addEventListener('change', this._onImageFileChange.bind(this), false)
-      this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
       this._doms.inImageUrl.addEventListener('input', this._onUrlInput.bind(this), false)
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
       this._reset()
+    }
+
+    _defDom() {
+      this._doms.btnSet        = this._form.querySelector('.create')
+      this._doms.dropZone      = this._form.querySelector('.drop')
+      this._doms.imagePreview  = this._form.querySelector('.preview')
+      this._doms.inImageFile   = this._form.querySelector('input[type=file]')
+      this._doms.inImageUrl    = this._form.querySelector('.text.url')
+      this._doms.btnLoad       = this._form.querySelector('button.load')
     }
 
     _clear(keep) {
@@ -1460,8 +1460,6 @@ var bit = (function() {
     _reset() {
       this._clear()
       this._doms.inImageFile.value = this._doms.inImageFile.defaultValue = ''
-      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
-      this._doms.inMapAlt.value = this._doms.inMapAlt.defaultValue = ''
       this._doms.inImageUrl.value = this._doms.inImageUrl.defaultValue = ''
     }
 
@@ -1470,7 +1468,7 @@ var bit = (function() {
     }
 
     _validate() {
-      return (this._doms.inMapName.validity.valid && this._url !== '')
+      return (this._url !== '')
     }
 
     _processFiles(file) {
@@ -1521,10 +1519,6 @@ var bit = (function() {
         this._processFiles(e.target.files[0])
     }
 
-    _onNameInput(e) {
-      this._doms.btnSet.disabled = !this._validate()
-    }
-
     _onUrlInput(e) {
       const v = this._doms.inImageUrl.value
       if (v !== '' && 'none' !== this._doms.imagePreview.style.display)
@@ -1566,21 +1560,22 @@ var bit = (function() {
       this._onCancel()
     }
 
+    _getData() {
+      return {
+        type      : this._type,
+        url       : this._url,
+        file      : this._file,
+      }
+    }
+
     _onSetClick(e) {
       e.preventDefault()
       if(this._validate()) {
-        let data = {
-            type      : this._type,
-            url       : this._url,
-            file      : this._file,
-            name      : this._doms.inMapName.value,
-            alt       : this._doms.inMapAlt.value
-        }
+        let data = this._getData();
         this.close()
         this._handlers.onCreate(data)
       } else {
-        if (this._doms.inMapName.value !== '')
-          this._error(this._doms.dropZone)
+        this._error(this._doms.dropZone)
       }
     }
 
@@ -1588,6 +1583,49 @@ var bit = (function() {
       this._handlers.onCancel = h.onCancel || (() => {})
       this._handlers.onCreate = h.onCreate || (() => {})
       super.show()
+    }
+
+  }
+
+  class ProjectCreatorDialog extends ProjectImageSelector {
+
+    constructor(c) {
+      super(Object.assign({ form : $('project-creator') }, c))
+      this._doms.inMapName.addEventListener('input', this._onNameInput.bind(this), false)
+    }
+
+    _defDom() {
+      super._defDom()
+      this._doms.inMapName = this._form.querySelector('.text.name')
+      this._doms.inMapAlt = this._form.querySelector('.text.alt')
+    }
+
+    _reset() {
+      super._reset()
+      this._doms.inMapName.value = this._doms.inMapName.defaultValue = ''
+      this._doms.inMapAlt.value = this._doms.inMapAlt.defaultValue = ''
+    }
+
+    _validate() {
+      return (this._doms.inMapName.validity.valid && super._validate())
+    }
+
+    _onNameInput(e) {
+      this._doms.btnSet.disabled = !this._validate()
+    }
+
+    _getdata() {
+      let data = super._getData()
+      data.name = this._doms.inMapName.value
+      data.alt = this._doms.inMapAlt.value
+      return data;
+    }
+
+  }
+
+  class ProjectChangerDialog extends ProjectImageSelector {
+    constructor(c) {
+      super(Object.assign({ form : $('project-changer') }, c))
     }
   }
 
@@ -2254,49 +2292,35 @@ var bit = (function() {
 
     _onChangeImage() {
       this._app.freeze()
-      bittls.selectFiles('image/jpeg,image/png,image/gif').then(
-        file => {
-          if (file) {
+      this._app.change().then(
+        data => {
+          if (data) {
             loadIndicator.show()
-            bittls.readFileDataUrl(file).then(
-              url => {
-                let olddims, data
-                olddims = this._app.workspace.getDims()
-                data = {
-                  type      : 'dataURL',
-                  url       : url,
-                  file      : file,
-                  name      : this._app.model.info.name,
-                  alt       : this._app.model.info.alt
+            try {
+              let olddims = this._app.workspace.getDims()
+              data.name = this._app.model.info.name
+              data.alt = this._app.model.info.alt
+              this._app.model.url = data
+              data.filename = this._app.model.filename
+              this._app.model.info = data
+              this._app.footer.info = data
+              this._app.workspace.load(this._app.model.url).then(
+                () => {
+                  let newdims, r
+                  newdims = this._app.workspace.getDims()
+                  r = { x : newdims.width / olddims.width, y : newdims.height / olddims.height }
+                  this._app.model.forEachArea(e => e.transform(r))
+                  this._app.aSelector.list.forEach(e => e.repositionGrips())
+                  this._app.setModified()
                 }
-                try {
-                  this._app.model.url = data
-                  data.filename = this._app.model.filename
-                  this._app.model.info = data
-                  this._app.footer.info = data
-                  this._app.workspace.load(this._app.model.url).then(
-                    () => {
-                      let newdims, r
-                      newdims = this._app.workspace.getDims()
-                      r = { x : newdims.width / olddims.width, y : newdims.height / olddims.height }
-                      this._app.model.forEachArea(e => e.transform(r))
-                      this._app.setModified()
-                    }
-                  )
-                  this._app.setModified(true)
-                } catch(e) {
-                  alert('ERROR[<data.name>] Unable to switch image - ' + e.message)
-                  this._app.footer.error = data
-                }
-              }
-            ).catch(
-                e => {
-                  alert('ERROR['+file.name+'] Invalid image file - ' + e.message)
-                  this._app.footer.error = { type: 'file', file: file }
-                }
-            ).finally(
-              () => loadIndicator.hide()
-            )
+              )
+              this._app.setModified(true)
+            } catch(e) {
+              alert('ERROR[<data.name>] Unable to create project - ' + e.message)
+              this._app.footer.error = data
+            } finally {
+              loadIndicator.hide()
+            }
           }
         }
       ).finally(
@@ -3094,6 +3118,7 @@ var bit = (function() {
       this._creator   = new ProjectCreatorDialog({ checkFile : this._model.checkImgFile })
       this._opener    = new ProjectLoaderDialog({ store : this._store })
       this._renamer   = new ProjectRenamerDialog()
+      this._changer   = new ProjectChangerDialog({ checkFile : this._model.checkImgFile })
       this._loader    = new HtmlLoaderDialog()
       this._generator = new CodeGeneratorDialog()
       this._helper    = new HelpDialog()
@@ -3177,6 +3202,15 @@ var bit = (function() {
         this._renamer.show({
           onCancel : () => resolve(),
           onSave : data => resolve(data)
+        })
+      })
+    }
+
+    change() {
+      return new Promise((resolve, reject) => {
+        this._changer.show({
+          onCancel : () => resolve(),
+          onCreate : data => resolve(data)
         })
       })
     }

@@ -242,6 +242,37 @@
 	  </div>
   </form>
 
+  <!-- Project image change -->
+  <form id="project-changer" class="modal">
+    <header>Set New Image ...</header>
+    <div>
+      <fieldset class="image"><legend>Image file</legend>
+        <div class="url">
+          <label>Image URL:
+            <input type="url" class="text url" />
+          </label>
+          <button class="load">Preview</button>
+        </div>
+        <div>
+          <label><span class="separator">(or) Drop image file here</span></label>
+          <div class="drop">
+            <img class="preview" src="" alt="Preview selected image" />
+          </div>
+        </div>
+        <div><span class="separator">(or)</span></div>
+        <div class="file">
+         <label>Load Image File
+           <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+         </label>
+        </div>
+      </fieldset>
+      <div class="buttons">
+        <button class="create" disabled>Change</button>
+        <button class="cancel">Cancel</button>
+      </div>
+    </div>
+  </form>
+
   <!-- HTML code display -->
   <form id="project-code" class="modal">
     <header>HTML Map Code</header>
