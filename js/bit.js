@@ -1923,12 +1923,13 @@ var bit = (function() {
         exportProject : new bittls.TButton({ element : $('export-project'),   action : this._action(c.handlers.onExportProject, $('project-menu')) }),
         importProject : new bittls.TButton({ element : $('import-project'),   action : this._action(c.handlers.onImportProject, $('project-menu')) }),
         exportImage   : new bittls.TButton({ element : $('export-image'),     action : this._action(c.handlers.onExportImage, $('project-menu')) }),
+        changeImage   : new bittls.TButton({ element : $('change-image'),     action : this._action(c.handlers.onChangeImage, $('edit-menu')) }),
         help          : new bittls.TButton({ element : $('help'),             action : c.handlers.onHelp })
       }
       this._menus = [$('project-menu'), $('edit-menu')]
       this._btnsEdit = [
         this._btns.saveProjectAs, this._btns.closeProject, this._btns.preview, this._btns.generate,
-        this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage
+        this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage, this._btns.changeImage
       ]
       this._enabled = false
       this._btns.saveProject.disable()
@@ -2250,7 +2251,59 @@ var bit = (function() {
     _onExportImage() {
       bittls.saveUrlAs(this._app.model.url, this._app.model.filename)
     }
-    
+
+    _onChangeImage() {
+      this._app.freeze()
+      bittls.selectFiles('image/jpeg,image/png,image/gif').then(
+        file => {
+          if (file) {
+            loadIndicator.show()
+            bittls.readFileDataUrl(file).then(
+              url => {
+                let olddims, data
+                olddims = this._app.workspace.getDims()
+                data = {
+                  type      : 'dataURL',
+                  url       : url,
+                  file      : file,
+                  name      : this._app.model.info.name,
+                  alt       : this._app.model.info.alt
+                }
+                try {
+                  this._app.model.url = data
+                  data.filename = this._app.model.filename
+                  this._app.model.info = data
+                  this._app.footer.info = data
+                  this._app.workspace.load(this._app.model.url).then(
+                    () => {
+                      let newdims, r
+                      newdims = this._app.workspace.getDims()
+                      r = { x : newdims.width / olddims.width, y : newdims.height / olddims.height }
+                      this._app.model.forEachArea(e => e.transform(r))
+                      this._app.setModified()
+                    }
+                  )
+                  this._app.setModified(true)
+                } catch(e) {
+                  alert('ERROR[<data.name>] Unable to switch image - ' + e.message)
+                  this._app.footer.error = data
+                }
+              }
+            ).catch(
+                e => {
+                  alert('ERROR['+file.name+'] Invalid image file - ' + e.message)
+                  this._app.footer.error = { type: 'file', file: file }
+                }
+            ).finally(
+              () => loadIndicator.hide()
+            )
+          }
+        }
+      ).finally(
+        () => this._app.release()
+      )
+    }
+
     _onHelp() {
       this._app.freeze()
       this._app.help().finally(
@@ -2272,6 +2325,7 @@ var bit = (function() {
         onExportProject : this._onExportProject.bind(this),
         onImportProject : this._onImportProject.bind(this),
         onExportImage   : this._onExportImage.bind(this),
+        onChangeImage   : this._onChangeImage.bind(this),
         onHelp          : this._onHelp.bind(this)
       }
     }
