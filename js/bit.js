@@ -400,19 +400,36 @@ var bit = (function() {
       this._drawarea = c.drawarea
       this._gridarea = c.gridarea
       this._image = c.image
+      this._scale = 1.0
       this._offset = new bitgeo.Point()
+      this._scaledWidth = this._scaledHeight = 0
       this.translateCoords = this.computeCoords.bind(this)
       c.workarea.addEventListener('scroll', this.computeOffset.bind(this), false)
       window.addEventListener('resize', this.resize.bind(this), false)
     }
 
-    setWorkingDims(w,h) {
-      this._drawarea.setAttribute('width', w)
-      this._drawarea.setAttribute('height', h)
-      this._gridarea.setAttribute('width', w)
-      this._gridarea.setAttribute('height', h)
-      this._container.style.width = w + 'px'
-      this._container.style.height = h + 'px'
+    _updateView() {
+      let width, height, vb
+      width = Math.round(this._drawarea.getAttribute('width') / this._scale)
+      height = Math.round(this._drawarea.getAttribute('height') / this._scale)
+      vb = '0 0 ' + width + ' ' + height;
+      this._drawarea.setAttribute('viewBox', vb)
+      this._gridarea.setAttribute('viewBox', vb)
+    }
+
+    setWorkingDims(width, height) {
+      let scaledWidth, scaledHeight
+      scaledWidth = width * this._scale
+      scaledHeight = height * this._scale
+      this._image.width =  scaledWidth
+      this._image.height =  scaledHeight
+      this._drawarea.setAttribute('width', scaledWidth)
+      this._drawarea.setAttribute('height', scaledHeight)
+      this._gridarea.setAttribute('width', scaledWidth)
+      this._gridarea.setAttribute('height', scaledHeight)
+      this._updateView()
+      this._container.style.width = scaledWidth + 'px'
+      this._container.style.height = scaledHeight + 'px'
       return this
     }
 
@@ -436,19 +453,23 @@ var bit = (function() {
 
     computeOffset() {
       const coords = this._container.getBoundingClientRect()
-      this._offset.x = Math.round(coords.left + window.pageXOffset)
-      this._offset.y = Math.round(coords.top + window.pageYOffset)
+      this._offset.x = Math.round((coords.left + window.pageXOffset) / this._scale)
+      this._offset.y = Math.round((coords.top + window.pageYOffset) / this._scale)
       return this
     }
 
     computeCoords(x,y) {
-      const p = new bitgeo.Point(x - this._offset.x, y - this._offset.y)
+      const p = new bitgeo.Point(Math.round(x/this._scale) - this._offset.x, Math.round(y/this._scale) - this._offset.y)
       return p.coords
     }
 
     isPointerInImage(x, y) {
       const coords = this.computeCoords(x, y)
-      return (0 > coords.x || 0 > coords.y || this._image.width < coords.x || this._image.height < coords.y) ? false : true
+      return (0 > coords.x || 0 > coords.y || this._image.naturalWidth < coords.x || this._image.naturalHeight < coords.y) ? false : true
+    }
+
+    get scale() {
+      return this._scale
     }
 
   }
@@ -466,7 +487,7 @@ var bit = (function() {
         element : c.workarea,
         translate : c.viewport.translateCoords,
         trigger : e => {
-          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.ctrlKey(e) && this._viewport.isPointerInImage(e))
+          return (this._g.group.ready() && !this._handlers.prevent(e) && utils.ctrlKey(e) && this._viewport.isPointerInImage(e.pageX, e.pageY))
         },
         onStart : (p,e,w) => {
           w.classList.add(utils.clsActions.DRAGGING)
@@ -500,7 +521,7 @@ var bit = (function() {
         element : c.workarea,
         translate : c.viewport.translateCoords,
         trigger : e => {
-          return (this._g.group.ready() && !this._handlers.prevent(e) && this._viewport.isPointerInImage(e))
+          return (this._g.group.ready() && !this._handlers.prevent(e) && this._viewport.isPointerInImage(e.pageX, e.pageY))
         },
         onStart : (p,e) => {
           if (this._handlers.onStart(this._drawarea, p, e.altKey, this._gridarea)) {
@@ -847,7 +868,7 @@ var bit = (function() {
           this._ftr.infoUpdate(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
           this._show(this._doms.aside)
           this._show(this._doms.workarea)
-          this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+          this._viewport.setWorkingDims(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
                         .resize()
           this._coordTracker.enable()
           this._group.enable()
@@ -860,16 +881,16 @@ var bit = (function() {
       this._hide(this._doms.gridarea)
       this._group.disable()
       this._group.state = states.PREVIEW
-      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+      this._viewport.setWorkingDims(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
                     .resize()
-      return { container : this._doms.container, image : this._doms.image }
+      return { container : this._doms.container, image : this._doms.image, scale : this._viewport.scale }
     }
 
     switchToEdit() {
       this._show(this._doms.drawarea)
       this._show(this._doms.gridarea)
       this._group.enable()
-      this._viewport.setWorkingDims(this._doms.image.width, this._doms.image.height)
+      this._viewport.setWorkingDims(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
                     .resize()
     }
     
@@ -891,8 +912,12 @@ var bit = (function() {
       return this._doms.gridarea
     }
     
-    getDims() {
-      return { width : this._doms.image.width, height : this._doms.image.height }
+    get dims() {
+      return { width : this._doms.image.naturalWidth, height : this._doms.image.naturalHeight }
+    }
+
+    get viewport() {
+      return this._viewport
     }
 
   }
@@ -1825,8 +1850,14 @@ var bit = (function() {
     constructor(c) {
       super({ form : $('project-code'), keyHandler : e => this._keyAction(e) })
       this._handlers = {}
-      this._name = 'untitled'
+      this._workspace = c.workspace
+      this._model = c.model
       this._doms = {
+        title       : this._form.querySelector('fieldset.dims legend'),
+        inWidth     : this._form.querySelector('fieldset.dims .text.width'),
+        inHeight    : this._form.querySelector('fieldset.dims .text.height'),
+        forceRatio  : this._form.querySelector('fieldset.dims input[type=checkbox]'),
+        btnApply    : this._form.querySelector('fieldset.dims button'),
         code        : this._form.querySelector('.code'),
         btnSelect   : this._form.querySelector('.select'),
         btnClear    : this._form.querySelector('.clear'),
@@ -1837,11 +1868,20 @@ var bit = (function() {
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
       this._doms.btnCopy.addEventListener('click', this._onCopyClick.bind(this), false)
       this._doms.btnExport.addEventListener('click', this._onExportClick.bind(this), false)
+      this._doms.forceRatio.addEventListener('click', this._onForceRatioClick.bind(this), false)
+      this._doms.inWidth.addEventListener('input', this._onWidthInput.bind(this), false)
+      this._doms.inHeight.addEventListener('input', this._onHeightInput.bind(this), false)
+      this._doms.btnApply.addEventListener('click', this._onApplyClick.bind(this), false)
     }
 
     _reset() {
+      let dims = this._workspace.dims
+      this._doms.title.innerHTML = '['+this._model.info.name+'] '+this._model.filename+' : '+dims.width+' x '+dims.height
+      this._doms.inWidth.value = dims.width
+      this._doms.inHeight.value = dims.height
+      this._doms.forceRatio.checked = true
       this._doms.code.innerHTML = ''
-      this._name = 'untitled'
+      this._doms.btnApply.disabled = false
     }
 
     _onClose() {
@@ -1871,7 +1911,52 @@ var bit = (function() {
 
     _onExportClick(e) {
       e.preventDefault()
-      bittls.saveDataAs(this._doms.code.innerText, this._name, 'text/html')
+      bittls.saveDataAs(this._doms.code.innerText, this._model.info.name, 'text/html')
+    }
+
+    _forceHeight() {
+      let dim, dims = this._workspace.dims
+      if (this._doms.inWidth.checkValidity()) {
+        dim = parseInt(this._doms.inWidth.value)
+        this._doms.inHeight.value = Math.round(dim / dims.width * dims.height)
+        return true
+      }
+      return false
+    }
+ 
+    _forceWidth() {
+      let dim, dims = this._workspace.dims
+      if (this._doms.inHeight.checkValidity()) {
+        dim = parseInt(this._doms.inHeight.value)
+        this._doms.inWidth.value = Math.round(dim / dims.height * dims.width)
+        return true
+      }
+      return false
+    }
+
+    _onForceRatioClick() {
+      if (this._doms.forceRatio.checked) this._doms.btnApply.disabled = !this._forceHeight() && !this._forceWidth()
+      else this._doms.btnApply.disabled = !this._doms.inWidth.checkValidity() || !this._doms.inHeight.checkValidity()
+    }
+
+    _onWidthInput() {
+      if (this._doms.forceRatio.checked) this._doms.btnApply.disabled = !this._forceHeight()
+      else this._doms.btnApply.disabled = !this._doms.inWidth.checkValidity() || !this._doms.inHeight.checkValidity()
+    }
+
+    _onHeightInput() {
+      if (this._doms.forceRatio.checked) this._doms.btnApply.disabled = !this._forceWidth()
+      this._doms.btnApply.disabled = !this._doms.inWidth.checkValidity() || !this._doms.inHeight.checkValidity()
+    }
+
+    _onApplyClick() {
+      if (this._doms.inWidth.checkValidity() && this._doms.inHeight.checkValidity()) {
+        let xScale, yScale, dims
+        dims = this._workspace.dims
+        xScale = parseInt(this._doms.inWidth.value) / dims.width
+        yScale = parseInt(this._doms.inHeight.value) / dims.height
+        this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, this._model.info, this._model.areas, xScale, yScale)
+      }
     }
 
     _keyAction(e) {
@@ -1885,10 +1970,9 @@ var bit = (function() {
       }
     }
 
-    show(n, s, h) {
+    show(h) {
       super.show()
-      this._name = n
-      this._doms.code.innerHTML = s
+      this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, this._model.info, this._model.areas)
       this._handlers.onClose = h.onClose || (() => {})
     }
 
@@ -2202,7 +2286,7 @@ var bit = (function() {
         let t
         this._app.tools.freeze()
         t = this._app.workspace.switchToPreview()
-        this._mapper.displayPreview(t.container, t.image, this._app.model.areas, this._app.model.info)
+        this._mapper.displayPreview(t.container, t.image, t.scale, this._app.model.areas, this._app.model.info)
       } else {
         this._app.workspace.switchToEdit()
         this._mapper.cancelPreview()
@@ -2335,7 +2419,7 @@ var bit = (function() {
           if (data) {
             loadIndicator.show()
             try {
-              let olddims = this._app.workspace.getDims()
+              let olddims = this._app.workspace.dims
               data.name = this._app.model.info.name
               data.alt = this._app.model.info.alt
               this._app.model.url = data
@@ -2344,10 +2428,11 @@ var bit = (function() {
               this._app.footer.info = data
               this._app.workspace.load(this._app.model.url).then(
                 () => {
-                  let newdims, r
-                  newdims = this._app.workspace.getDims()
-                  r = { x : newdims.width / olddims.width, y : newdims.height / olddims.height }
-                  this._app.model.forEachArea(e => e.transform(r))
+                  let newdims, xScale, yScale
+                  newdims = this._app.workspace.dims
+                  xScale =  newdims.width / olddims.width
+                  yScale = newdims.height / olddims.height
+                  this._app.model.forEachArea(e => e.forceScale(xScale, yScale))
                   this._app.aSelector.list.forEach(e => e.repositionGrips())
                   this._app.setModified()
                 }
@@ -2999,7 +3084,7 @@ var bit = (function() {
     
     _onResize() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         if (!this._sizer.checkBoundaries(this._app.aSelector.list, r.width, r.height, d.width, d.height))
           alert('Resizing selected elements makes at least one of them outside of image boudaries!')
@@ -3010,7 +3095,7 @@ var bit = (function() {
     
     _onAlignCenterHorizontally() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         let cy = Math.round(r.y + r.height/2)
         if (!this._aligner.checkVerticalBoundaries(this._app.aSelector.list, cy, d.height))
@@ -3022,7 +3107,7 @@ var bit = (function() {
     
     _onAlignCenterVertically() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         let cx = Math.round(r.x + r.width/2)
         if (!this._aligner.checkHorizontalBoundaries(this._app.aSelector.list, cx, d.width))
@@ -3034,7 +3119,7 @@ var bit = (function() {
     
     _onAlignLeft() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         if (!this._aligner.checkRightBoundaries(this._app.aSelector.list, r.x, d.width))
           alert('Aligning on left side selected elements makes at least one of them outside of image boudaries!')
@@ -3045,7 +3130,7 @@ var bit = (function() {
     
     _onAlignTop() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         if (!this._aligner.checkBottomBoundaries(this._app.aSelector.list, r.y, d.height))
           alert('Aligning on top side selected elements makes at least one of them outside of image boudaries!')
@@ -3056,7 +3141,7 @@ var bit = (function() {
     
     _onAlignRight() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         if (!this._aligner.checkLeftBoundaries(this._app.aSelector.list, r.x + r.width))
           alert('Aligning on right side selected elements makes at least one of them outside of image boudaries!')
@@ -3067,7 +3152,7 @@ var bit = (function() {
     
     _onAlignBottom() {
       if (1 < this._app.aSelector.count) {
-        let d = this._app.workspace.getDims()
+        let d = this._app.workspace.dims
         let r = this._app.aSelector.first.figure.rect
         if (!this._aligner.checkTopBoundaries(this._app.aSelector.list, r.y + r.height))
           alert('Aligning on bottom side selected elements makes at least one of them outside of image boudaries!')
@@ -3150,7 +3235,7 @@ var bit = (function() {
       })
       this._tools     = new Tools({ handlers : this._aTooler.handlers })
       this._store     = new Store({ workspace : this._workspace })
-      this._clipboard = new Clipboard({ workspace :  this._workspace, copyOffset : 10 })
+      this._clipboard = new Clipboard({ workspace : this._workspace, copyOffset : 10 })
 
       this._manager   = new ProjectManagerDialog({ model : this._model, store : this._store })
       this._creator   = new ProjectCreatorDialog({ checkFile : this._model.checkImgFile })
@@ -3158,7 +3243,7 @@ var bit = (function() {
       this._renamer   = new ProjectRenamerDialog()
       this._changer   = new ProjectChangerDialog({ checkFile : this._model.checkImgFile })
       this._loader    = new HtmlLoaderDialog()
-      this._generator = new CodeGeneratorDialog()
+      this._generator = new CodeGeneratorDialog({ workspace : this._workspace, model : this._model })
       this._helper    = new HelpDialog()
 
     }
@@ -3256,8 +3341,6 @@ var bit = (function() {
     generate() {
       return new Promise((resolve, reject) => {
         this._generator.show(
-          this._model.info.name,
-          bitmap.Mapper.getHtmlString(this._model.filename, this._model.info, this._model.areas),
           { onClose : () => resolve() }
         )
       })
@@ -3282,4 +3365,4 @@ var bit = (function() {
 
   const theApp = new Application()
 
-})(); /* BIT */
+})()  /* BIT */

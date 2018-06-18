@@ -27,7 +27,7 @@ var bitmap = (function() {
     rect    : 'rectangle',
     circle  : 'circleCtr',
     poly    : 'polygon'
-  };
+  }
 
   /*
    * FIGURE MAPPER
@@ -35,19 +35,21 @@ var bitmap = (function() {
 
   class Figure {
 
-    constructor(figure, shape, props) {
-      this._figure = figure;
-      this._htmlString = '';
+    constructor(figure, shape, props, xScale, yScale) {
+      this._figure = figure
+      this._xScale = xScale
+      this._yScale = yScale
+      this._htmlString = ''
       if (!figure.hasBonds() || figure.copyBonds().reduce((a,l) => a && !l.isPatternInGrid(), true)) {
-        props = props || figure.areaProperties;
+        props = props || figure.areaProperties
         this._htmlString = '<area shape="' + shape + '" coords="' + this.coords + '"'
           + Object.values(properties).reduce((a,e) => a + (props[e] ? ' ' + e + '="' + props[e] + '"' : ''), '')
-          + ' />';
+          + ' />'
       }
     }
 
     get htmlString() {
-      return this._htmlString;
+      return this._htmlString
     }
 
   }
@@ -58,14 +60,14 @@ var bitmap = (function() {
 
   class Rectangle extends Figure {
 
-    constructor(figure, props) {
-      super(figure, shapes.RECTANGLE, props);
+    constructor(figure, props, xScale, yScale) {
+      super(figure, shapes.RECTANGLE, props, xScale, yScale)
     }
 
     get coords() {
-      let c = this._figure.coords;
+      let c = this._figure.scaledCoords(this._xScale, this._yScale)
       return c.x + ', ' + c.y + ', '
-        + (c.x + c.width) + ', ' + (c.y + c.height); 
+        + (c.x + c.width) + ', ' + (c.y + c.height)
     }
 
   }
@@ -76,13 +78,13 @@ var bitmap = (function() {
 
   class Circle extends Figure {
 
-    constructor(figure, props) {
-      super(figure, shapes.CIRCLE, props);
+    constructor(figure, props, xScale, yScale) {
+      super(figure, shapes.CIRCLE, props, xScale, yScale)
     }
 
     get coords() {
-      let c = this._figure.coords;
-      return c.x + ', ' + c.y + ', ' + c.r;
+      let c = this._figure.scaledCoords(this._xScale, this._yScale)
+      return c.x + ', ' + c.y + ', ' + c.r
     }
 
   }
@@ -93,12 +95,12 @@ var bitmap = (function() {
 
   class Polygon extends Figure {
 
-    constructor(figure, props) {
-      super(figure, shapes.POLYGON, props);
+    constructor(figure, props, xScale, yScale) {
+      super(figure, shapes.POLYGON, props, xScale, yScale)
     }
 
     get coords() {
-      return this._figure.getPoints(this._figure.coords).map(e => e.x + ', ' + e.y).join(', ');
+      return this._figure.getPoints(this._figure.scaledCoords(this._xScale, this._yScale)).map(e => e.x + ', ' + e.y).join(', ')
     }
 
   }
@@ -109,14 +111,14 @@ var bitmap = (function() {
 
   class Grid {
 
-    constructor(figure, p, fCreate) {
-      let n, props;
-      this._figure = figure;
+    constructor(figure, p, xScale, yScale, fCreate) {
+      let n, props
+      this._figure = figure
       this._htmlString = figure.areas.reduce((a,e,i) => {
-        props = figure.areaProperties;
-        n = (i+1).toString();
-        Grid.specializeProperties(props, n);
-        return a + fCreate(e, props).htmlString
+        props = figure.areaProperties
+        n = (i+1).toString()
+        Grid.specializeProperties(props, n)
+        return a + fCreate(e, props, xScale, yScale).htmlString
       }, '');
     }
 
@@ -125,8 +127,8 @@ var bitmap = (function() {
     }
 
     static specializeProperties(props, n) {
-      let ptn = /\[#\]/gm;
-      Object.values(properties).forEach(e => { if (props[e]) props[e] = props[e].replace(ptn, n); });
+      let ptn = /\[#\]/gm
+      Object.values(properties).forEach(e => { if (props[e]) props[e] = props[e].replace(ptn, n); })
     }
 
   }
@@ -135,7 +137,7 @@ var bitmap = (function() {
    * MAPPER
    */
 
-  var factory = {
+  const factory = {
     'rectangle'     : Rectangle,
     'square'        : Rectangle,
     'rhombus'       : Polygon,
@@ -151,109 +153,111 @@ var bitmap = (function() {
     'gridRectangle' : Grid,
     'gridCircle'    : Grid,
     'gridHex'       : Grid
-  };
+  }
 
-  function create(figure, props) {
-    if (!figure || null == figure) return null;
-    let figMap = factory[figure.type];
+  function create(figure, props, xScale, yScale) {
+    if (!figure || null == figure) return null
+    let figMap = factory[figure.type]
     if (!figMap) {
-      console.log('ERROR - Mapper mode not handled');
+      console.log('ERROR - Mapper mode not handled')
       return null;
     }
-    return new figMap(figure, props, create);
+    return new figMap(figure, props, xScale, yScale, create)
   }
 
   class Mapper {
 
     constructor() {
-      this._map = this._container = this._image = this._svg = null;
-      this._area = null;
+      this._scale = undefined
+      this._map = this._container = this._image = this._svg = null
+      this._area = null
     }
 
     _getInnerString(areas) {
-      return areas.reduceRight((a,e) => a + create(e).htmlString, '');
+      return areas.reduceRight((a,e) => a + create(e, undefined, this._scale).htmlString, '')
     }
 
     _getMapAreaString(area) {
-      let attrs, sa;
-      sa = '';
+      let attrs, sa
+      sa = ''
       if (area.hasAttributes()) {
-        attrs = area.attributes;
+        attrs = area.attributes
         for(let i = 0; i < attrs.length; i++)
-          sa += ' ' + attrs[i].name + '="' + attrs[i].value + '"';
+          sa += ' ' + attrs[i].name + '="' + attrs[i].value + '"'
       }
-      return '<area' + sa + ' />';
+      return '<area' + sa + ' />'
     }
 
     _createDynamicMap(string, name) {
-      this._image.setAttribute('usemap', '#'+name);
-      this._map = document.createElement('map');
-      this._map.setAttribute('name', name);
-      this._container.appendChild(this._map);
-      this._map.innerHTML = string;
+      this._image.setAttribute('usemap', '#'+name)
+      this._map = document.createElement('map')
+      this._map.setAttribute('name', name)
+      this._container.appendChild(this._map)
+      this._map.innerHTML = string
     }
 
     _createDynamicOverlay() {
-      const svg = document.createElementNS(bitarea.NSSVG, 'svg');
-      this._svg = svg;
+      let w, h
+      const svg = document.createElementNS(bitarea.NSSVG, 'svg')
+      this._svg = svg
       this._container.appendChild(this._svg);
-      svg.setAttributeNS(null, 'width', this._image.width+'px');
-      svg.setAttributeNS(null, 'height', this._image.height+'px');
-      svg.setAttributeNS(null, 'id', 'map-overlay');
+      svg.setAttributeNS(null, 'width', this._image.width+'px')
+      svg.setAttributeNS(null, 'height', this._image.height+'px')
+      svg.setAttributeNS(null, 'id', 'map-overlay')
+      // HTML map area already scaled: no need to modify viewBox as SVG area computed from HTML area
     }
 
     _defineAreaOverlay() {
-      let i, list;
-      list = this._map.querySelectorAll('area');
+      let i, list
+      list = this._map.querySelectorAll('area')
       for (i = 0; i < list.length; i++) {
-        let a = list[i], s = this._getMapAreaString(a);
-        a.addEventListener('click', () => alert(s), false);
-        a.addEventListener('mouseenter', () => this._area = bitarea.createFromRecord(Mapper.loadHtmlString(s)[0], this._svg), false);
-        a.addEventListener('mouseleave', () => { this._area.remove(); this._area = null; }, false);
+        let a = list[i], s = this._getMapAreaString(a)
+        a.addEventListener('click', () => alert(s), false)
+        a.addEventListener('mouseenter', () => this._area = bitarea.createFromRecord(Mapper.loadHtmlString(s)[0], this._svg), false)
+        a.addEventListener('mouseleave', () => { this._area.remove(); this._area = null; }, false)
       }
       return list;
     }
 
-    displayPreview(container, image, areas, info) {
-      this._container = container;
-      this._image = image;
+    displayPreview(container, image, scale, areas, info) {
+      this._container = container
+      this._image = image
+      this._scale = scale
       this._createDynamicMap(this._getInnerString(areas), info.name)
-      this._createDynamicOverlay();
-      this._defineAreaOverlay();
+      this._createDynamicOverlay()
+      this._defineAreaOverlay()
     }
 
     cancelPreview() {
       if (null !== this._container)
-        this._container.removeChild(this._map);
+        this._container.removeChild(this._map)
       if (null != this._svg)
-        this._container.removeChild(this._svg);
+        this._container.removeChild(this._svg)
       if (null !== this._image)
-        this._image.removeAttribute('usemap');
-      this._map = this._container = this._image = this._svg = null;
-      this._area = null;
+        this._image.removeAttribute('usemap')
+      this._map = this._container = this._image = this._svg = null
+      this._area = null
     }
 
     static specializeProperties(props, n) {
-      Grid.specializeProperties(props, n);
+      Grid.specializeProperties(props, n)
     }
 
-    static getHtmlString(filename, info, areas) {
-      let convert = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&gt;&lt;/g, '&gt;<br>&nbsp;&nbsp;&lt;');
-      let result = '';
+    static getHtmlString(filename, info, areas, xScale, yScale) {
+      let convert = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&gt;&lt;/g, '&gt;<br>&nbsp;&nbsp;&lt;')
+      let result = ''
       if (filename && info && areas) {
         if (areas && areas.length > 0) {
           result += convert('<img src="' + filename + '" alt="' + info.alt + '" usemap="#' + info.name + '" />') + '<br>'
-                  + convert('<map name="' + info.name + '">') + '<br>';
+                  + convert('<map name="' + info.name + '">') + '<br>'
           result += areas.reduceRight((a,e) => {
-            let r = create(e).htmlString;
-            return a + (('' == r) ? '' : '&nbsp;&nbsp;' + convert(r) + '<br>');
-          }, '');
-          result += convert('</map>');
-        } else {
-          result = '0 areas';
-        }
+            let r = create(e, undefined, xScale, yScale).htmlString
+            return a + (('' == r) ? '' : '&nbsp;&nbsp;' + convert(r) + '<br>')
+          }, '')
+          result += convert('</map>')
+        } else result = '0 areas'
       }
-      return result;
+      return result
     }
 
     static loadHtmlString(code) {
@@ -266,82 +270,82 @@ var bitmap = (function() {
         TITLE   : / title="([\S\s]+?)"/,
         ID      : / id="([\S\s]+?)"/
       },
-      COORDLIM = / ?, ?/;
+      COORDLIM = / ?, ?/
 
       let COORDMAP = {
         rect    : function(a) {
-          let c, cs;
-          cs = a.coords.split(COORDLIM);
-          if (4 != cs.length) return false;
-          c = {};
-          c.x = parseInt(cs[0], 10);
-          c.y = parseInt(cs[1], 10);
-          c.width = parseInt(cs[2], 10) - c.x;
-          c.height = parseInt(cs[3], 10) - c.y;
-          a.coords = c;
-          return (c.width >= 0 && c.height >= 0);
+          let c, cs
+          cs = a.coords.split(COORDLIM)
+          if (4 != cs.length) return false
+          c = {}
+          c.x = parseInt(cs[0], 10)
+          c.y = parseInt(cs[1], 10)
+          c.width = parseInt(cs[2], 10) - c.x
+          c.height = parseInt(cs[3], 10) - c.y
+          a.coords = c
+          return (c.width >= 0 && c.height >= 0)
         },
         circle  : function(a) {
-          let c, cs;
-          cs = a.coords.split(COORDLIM);
-          if (3 != cs.length) return false;
-          c = {};
-          c.x = parseInt(cs[0], 10);
-          c.y = parseInt(cs[1], 10);
-          c.r = parseInt(cs[2], 10);
-          a.coords = c;
-          return (c.r >= 0);
+          let c, cs
+          cs = a.coords.split(COORDLIM)
+          if (3 != cs.length) return false
+          c = {}
+          c.x = parseInt(cs[0], 10)
+          c.y = parseInt(cs[1], 10)
+          c.r = parseInt(cs[2], 10)
+          a.coords = c
+          return (c.r >= 0)
         },
         poly    : function(a) {
-          let c, cs, i;
-          cs = a.coords.split(COORDLIM);
-          if (0 != cs.length % 2) return false;
-          c = [];
+          let c, cs, i
+          cs = a.coords.split(COORDLIM)
+          if (0 != cs.length % 2) return false
+          c = []
           for (i=0; i<cs.length / 2; i++)
-            c.push({ x : parseInt(cs[2*i], 10), y : parseInt(cs[2*i+1], 10) });
-          a.coords = c;
-          return true;
+            c.push({ x : parseInt(cs[2*i], 10), y : parseInt(cs[2*i+1], 10) })
+          a.coords = c
+          return true
         }
       }
   
-      let records;
-      records = [];
+      let records
+      records = []
       if (code) {
         while(true) {
-          let attrs, result, r;
-          attrs = {};
-          attrs.properties = {};
-          result = MAPEXP.exec(code);
-          if (!result) break;
+          let attrs, result, r
+          attrs = {}
+          attrs.properties = {}
+          result = MAPEXP.exec(code)
+          if (!result) break
           Object.keys(AREAEXP).forEach(e => {
-            r = AREAEXP[e].exec(result[1]);
+            r = AREAEXP[e].exec(result[1])
             if (r) {
               if (properties[e]) {
-                attrs.properties[properties[e]] = r[1];
+                attrs.properties[properties[e]] = r[1]
               } else {
-                attrs[e] = r[1];
+                attrs[e] = r[1]
               }
             }
           });
           if (!attrs.shape || !attrs.coords || !Object.values(shapes).includes(attrs.shape)) {
-            console.log('ERROR: Missing attributes - "' + result[1] + '"');
-            break;
+            console.log('ERROR: Missing attributes - "' + result[1] + '"')
+            break
           }
           if (!COORDMAP[attrs.shape](attrs)) {
-            console.log('ERROR: Bad coordinates - "' + attrs.coords + '"');
-            break;
+            console.log('ERROR: Bad coordinates - "' + attrs.coords + '"')
+            break
           }
-          attrs.type = shapes2areas[attrs.shape];
-          records.push(attrs);
+          attrs.type = shapes2areas[attrs.shape]
+          records.push(attrs)
         }
       }
-      return records;
+      return records
     }
 
   }
 
   return {
     properties, Mapper
-  };
+  }
 
-})(); /* BIT Map Area Definitions */
+})() /* BIT Map Area Definitions */
