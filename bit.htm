@@ -41,6 +41,14 @@
               <a href="#" id="change-image">Set New Image</a>
 	          </div>
 	        </li>
+          <li class="dropdown">
+            <a href="javascript:void(0)" id="view-btn" class="dropbtn">View</a>
+            <div id="view-menu" class="dropdown-content">
+              <a href="#" id="zoom-in">Zoom in</a>
+              <a href="#" id="zoom-100">Zoom 1:1</a>
+              <a href="#" id="zoom-out">Zoom out</a>
+            </div>
+          </li>
 	        <li id="preview"><a href="#">Preview</a></li>
 	        <li id="generate"><a href="#">Generate</a></li>
 	        <li id="help"><a href="#">?</a></li>
@@ -157,6 +165,7 @@
       <div id="selected-file"><p>No image file selected</p></div>
       <div id="load-indicator"><div id="spinner"></div></div>
       <div id="coordinates"></div>
+      <div id="zoom"></div>
     </footer>
   </div>
 
@@ -187,24 +196,32 @@
 		    </label>
 	    </fieldset>
 	    <fieldset class="image"><legend>Image file</legend>
-	      <div class="url">
-	        <label>Image URL:
-	          <input type="url" class="text url" />
-	        </label>
-	        <button class="load">Preview</button>
-	      </div>
+	      <div>
+		      <div class="url">
+		        <label>Image URL: <input type="url" class="text url" /></label>
+		        <button class="load">Preview</button>
+		      </div>
+	        <div class="file">
+	          <span class="separator">(or)</span>
+	          <label>Load Image File
+	            <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+	          </label>
+	        </div>
+        </div>
 	      <div>
 		      <label><span class="separator">(or) Drop image file here</span></label>
 			    <div class="drop">
 		        <img class="preview" src="" alt="Preview selected image" />
 		      </div>
 	      </div>
-	      <div><span class="separator">(or)</span></div>
-		    <div class="file">
-		     <label>Load Image File
-		       <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
-		     </label>
-		    </div>
+	    </fieldset>
+	    <fieldset class="template"><legend>Template background</legend>
+	      <label>Dimensions:</label>
+        <input type="text" class= "text dim width" pattern="[1-9][0-9]*" value="" placeholder="100" title="width" />
+        <span class="separator"> x </span>
+        <input type="text" class= "text dim height" pattern="[1-9][0-9]*" value="" placeholder="100" title="height" />
+        <label>Color:</label><input type="color" value="#000000">
+        <button class="template">Apply</button><!-- Issue with class? -->
 	    </fieldset>
 	    <div class="buttons">
 	      <button class="create" disabled>Create</button>
@@ -247,11 +264,17 @@
     <header>Set New Image ...</header>
     <div>
       <fieldset class="image"><legend>Image file</legend>
-        <div class="url">
-          <label>Image URL:
-            <input type="url" class="text url" />
-          </label>
-          <button class="load">Preview</button>
+        <div>
+          <div class="url">
+            <label>Image URL: <input type="url" class="text url" /></label>
+            <button class="load">Preview</button>
+          </div>
+          <div class="file">
+            <span class="separator">(or)</span>
+            <label>Load Image File
+              <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
+            </label>
+          </div>
         </div>
         <div>
           <label><span class="separator">(or) Drop image file here</span></label>
@@ -259,12 +282,14 @@
             <img class="preview" src="" alt="Preview selected image" />
           </div>
         </div>
-        <div><span class="separator">(or)</span></div>
-        <div class="file">
-         <label>Load Image File
-           <input type="file" class="load" accept="image/jpeg,image/png,image/gif" />
-         </label>
-        </div>
+      </fieldset>
+      <fieldset class="template"><legend>Template background</legend>
+        <label>Dimensions:</label>
+        <input type="text" class= "text dim width" pattern="[1-9][0-9]*" value="" placeholder="100" title="width" />
+        <span class="separator"> x </span>
+        <input type="text" class= "text dim height" pattern="[1-9][0-9]*" value="" placeholder="100" title="height" />
+        <label>Color:</label><input type="color" value="#000000">
+        <button class="template">Apply</button>
       </fieldset>
       <div class="buttons">
         <button class="create" disabled>Change</button>
@@ -277,6 +302,16 @@
   <form id="project-code" class="modal">
     <header>HTML Map Code</header>
     <div>
+      <fieldset class="dims"><legend class="title">...</legend>
+        <label><span>Dimensions:</span></label>
+        <input type="text" class= "text dim width" pattern="[1-9][0-9]*" value="" placeholder="" title="width" />
+        <span class="separator"> x </span>
+        <input type="text" class= "text dim height" pattern="[1-9][0-9]*" value="" placeholder="" title="height" />
+        <label><input type="checkbox" checked/><span>Preserve ratio</span></label>
+        <div>
+          <button>Apply</button>
+        </div>
+      </fieldset>
 	    <div class="code"></div>
 	    <div class="buttons">
 	      <button class="export">Export</button>
@@ -308,7 +343,7 @@
     <header>
       <div>HTML map creator<br>[MIT License]</div>
 	    <div class="title">
-	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.5</a>)
+	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.6</a>)
 	    </div>
 	    <div>&copy;2017 Herve Retaureau</div>
     </header>

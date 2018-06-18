@@ -7,9 +7,9 @@
  */
 
 var bitarea = (function() {
-  'use strict';
+  'use strict'
 
-  const NSSVG = 'http://www.w3.org/2000/svg';
+  const NSSVG = 'http://www.w3.org/2000/svg'
 
   const types = {
     CIRCLECTR     : 'circleCtr',
@@ -25,7 +25,7 @@ var bitarea = (function() {
     HEXDTR        : 'hexDtr',
     POLYLINE      : 'polyline',
     POLYGON       : 'polygon'
-  };
+  }
 
   const clsQualifiers = {
     SQUARE        : 'square',
@@ -36,7 +36,7 @@ var bitarea = (function() {
     HEX           : 'hex',
     EXTENDED      : 'extended',
     BOND          : 'bond'
-  };
+  }
 
   const tilts = {
     DEFAULT : 0,
@@ -44,7 +44,7 @@ var bitarea = (function() {
     LEFT    : Math.PI / 2,
     TOP     : Math.PI,
     RIGHT   : -Math.PI / 2
-  };
+  }
 
   /*
    * FIGURE CLASS
@@ -53,191 +53,183 @@ var bitarea = (function() {
   class Figure {
 
     constructor(type, parent, noGroup) {
-      if (this.constructor == Figure.constructor) {
-        throw new Error('Invalid Figure constructor call: abstract class');
-      }
-      this._type = type;
-      this._parent = this._domParent = parent;
-      this._dom = null;
-      this._coords = {};
-      this._svgCoords = {};
-      this._bonds = [];
+      if (this.constructor == Figure.constructor)
+        throw new Error('Invalid Figure constructor call: abstract class')
+      this._type = type
+      this._parent = this._domParent = parent
+      this._dom = null
+      this._coords = {}
+      this._svgCoords = {}
+      this._bonds = []
       if (!noGroup) {
-        this._domParent = document.createElementNS(NSSVG, 'g');
-        this._parent.appendChild(this._domParent);
+        this._domParent = document.createElementNS(NSSVG, 'g')
+        this._parent.appendChild(this._domParent)
       }
-      this.createSVGElt();
-      this._properties = {};
+      this.createSVGElt()
+      this._properties = {}
     }
 
     createSVGElt() {
-      console.log('createSVGElt() not defined');
+      console.log('createSVGElt() not defined')
     }
 
     get type() {
-      return this._type;
+      return this._type
     }
 
     equalCoords(coords) {
-      console.log('equalCoords() not defined');
-      return false;
+      console.log('equalCoords() not defined')
+      return false
     }
 
     get coords() {
-      return Object.assign({}, this._coords);
+      return Object.assign({}, this._coords)
     }
 
     set coords(coords) {
-      Object.assign(this._coords, coords);
+      Object.assign(this._coords, coords)
     }
 
     copyCoords(coords) {
-      return Object.assign({}, coords || this._coords);
+      return Object.assign({}, coords || this._coords)
     }
 
     get rect() {
-      console.log('rect() not defined');
-      return { x : 0, y : 0, width : 0, height : 0 };
+      console.log('rect() not defined')
+      return { x : 0, y : 0, width : 0, height : 0 }
     }
 
     set svgCoords(coords) {
-      Object.assign(this._svgCoords, coords);
+      Object.assign(this._svgCoords, coords)
     }
 
     get svgCoords() {
-      return Object.assign({}, this._svgCoords);
+      return Object.assign({}, this._svgCoords)
     }
 
     redraw(coords) {
-      let c = coords || this.coords;
-      this.draw(c);
-      this._bonds.forEach(e => e.draw(e.svgCoords, c));
+      let c = coords || this.coords
+      this.draw(c)
+      this._bonds.forEach(e => e.draw(e.svgCoords, c))
     }
 
-    transform(ratio) {
-      if (ratio) {
-        this.project(ratio)
-        this.redraw()
-      }
+    forceScale(xScale, yScale) {
+      this._coords = this.scaledCoords(xScale, yScale)
+      this.redraw()
     }
 
-    
-    project(ratio) {
-      console.log('project() not defined');
+    scaledCoords(xScale, yScale) {
+      console.log('scaledCoords() not defined')
     }
 
     is(dom) {
-      return (dom === this._dom) ? true : false;
+      return (dom === this._dom) ? true : false
     }
 
     remove() {
-      this.unbindAll();
-      this._parent.removeChild((this._parent === this._domParent) ? this._dom : this._domParent);
-      this._parent = this._domParent = this._dom = null;
+      this.unbindAll()
+      this._parent.removeChild((this._parent === this._domParent) ? this._dom : this._domParent)
+      this._parent = this._domParent = this._dom = null
     }
 
     within(coords) {
-      console.log('within() not defined');
-      return false;
+      console.log('within() not defined')
+      return false
     }
 
     get dom() {
-      return this._dom;
+      return this._dom
     }
 
     get parent() {
-      return this._parent;
+      return this._parent
     }
 
     get domParent() {
-      return this._domParent;
+      return this._domParent
     }
 
     addClass(clsName) {
-      if(this._dom) {
-        this._dom.classList.add(clsName);
-      }
+      if(this._dom)
+        this._dom.classList.add(clsName)
     }
 
     removeClass(clsName) {
-      if(this._dom) {
-        this._dom.classList.remove(clsName);
-      }
+      if(this._dom)
+        this._dom.classList.remove(clsName)
     }
 
     hasClass(clsName) {
-      if(this._dom) {
-        return this._dom.classList.contains(clsName);
-      }
-      return false;
+      if(this._dom)
+        return this._dom.classList.contains(clsName)
+      return false
     }
 
     bindTo(bond, clsQualifier) {
-      this._bonds.push(bond);
-      this._dom.classList.add(clsQualifier);
+      this._bonds.push(bond)
+      this._dom.classList.add(clsQualifier)
     }
 
     unbindFrom(bond, clsQualifier) {
-      this._bonds.splice(this._bonds.indexOf(bond), 1);
-      if (0 === this._bonds.length) {
-        this._dom.classList.remove(clsQualifier);
-      }
+      this._bonds.splice(this._bonds.indexOf(bond), 1)
+      if (0 === this._bonds.length)
+        this._dom.classList.remove(clsQualifier)
     }
 
     unbindAll() {
-      this._bonds.forEach(e => { e.unbindFrom(this); });
+      this._bonds.forEach(e => { e.unbindFrom(this); })
     }
 
     hasBonds() {
-      return (this._bonds.length > 0) ? true : false;
+      return (this._bonds.length > 0) ? true : false
     }
 
     get bonds() {
-      return this._bonds;
+      return this._bonds
     }
 
     copyBonds() {
-      return this._bonds.slice();
+      return this._bonds.slice()
     }
 
     clone(parent, pt) {
-      console.log('clone() not defined');
-      return null;
+      console.log('clone() not defined')
+      return null
     }
 
     getPoints() {
-      console.log('getPoints() not defined');
-      return [];
+      console.log('getPoints() not defined')
+      return []
     }
 
     get center() {
-      console.log('get center() not defined');
-      return [100, 100];
+      console.log('get center() not defined')
+      return [100, 100]
     }
 
     get areaProperties() {
-      return Object.assign({}, this._properties);
+      return Object.assign({}, this._properties)
     }
 
     set areaProperties(p) {
-      Object.assign(this._properties, p);
+      Object.assign(this._properties, p)
     }
 
     toRecord(index, areas) {
-      let rtn = {};
-      rtn.index = index;
-      rtn.type = this._type;
-      rtn.coords = this.copyCoords();
-      rtn.bonds = [];
-      this._bonds.forEach(e => rtn.bonds.push(areas.indexOf(e)));
-      rtn.properties = Object.assign({}, this._properties);
-      return rtn;
+      let rtn = {}
+      rtn.index = index
+      rtn.type = this._type
+      rtn.coords = this.copyCoords()
+      rtn.bonds = []
+      this._bonds.forEach(e => rtn.bonds.push(areas.indexOf(e)))
+      rtn.properties = Object.assign({}, this._properties)
+      return rtn
     }
 
     fromRecord(record) {
-      this.areaProperties = record.properties;
-      this.coords = record.coords;
-      this.redraw();
+      this.areaProperties = record.properties
+      this.coords = record.coords
+      this.redraw()
     }
 
   } // FIGURE
@@ -249,14 +241,14 @@ var bitarea = (function() {
   class Rectangle extends Figure {
 
     constructor(parent, noGroup) {
-      super(types.RECTANGLE, parent, noGroup);
-      Object.assign(this._coords, { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT });
-      Object.assign(this._svgCoords, { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT });
+      super(types.RECTANGLE, parent, noGroup)
+      Object.assign(this._coords, { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT })
+      Object.assign(this._svgCoords, { x : 0, y : 0, width : 0, height : 0, tilt : tilts.DEFAULT })
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'rect');
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'rect')
+      this._domParent.appendChild(this._dom)
     }
 
     equalCoords(coords) {
@@ -264,25 +256,25 @@ var bitarea = (function() {
               this._coords.y === coords.y &&
               this._coords.width === coords.width &&
               this._coords.height === coords.height &&
-              this._coords.tilt === coords.tilt) ? true : false;
+              this._coords.tilt === coords.tilt) ? true : false
     }
 
     draw(coords) {
-      let c = coords || this._coords;
+      let c = coords || this._coords
       if (this._dom) {
-        this.svgCoords = c;
-        this._dom.setAttribute('x', c.x);
-        this._dom.setAttribute('y', c.y);
-        this._dom.setAttribute('width', c.width);
-        this._dom.setAttribute('height', c.height);
+        this.svgCoords = c
+        this._dom.setAttribute('x', c.x)
+        this._dom.setAttribute('y', c.y)
+        this._dom.setAttribute('width', c.width)
+        this._dom.setAttribute('height', c.height)
       }
     }
 
     within(coords) {
-      if (this._coords.x < coords.x) return false;
-      if (this._coords.x + this._coords.width > coords.x + coords.width) return false;
-      if (this._coords.y < coords.y) return false;
-      if (this._coords.y + this._coords.height > coords.y + coords.height) return false;
+      if (this._coords.x < coords.x) return false
+      if (this._coords.x + this._coords.width > coords.x + coords.width) return false
+      if (this._coords.y < coords.y) return false
+      if (this._coords.y + this._coords.height > coords.y + coords.height) return false
       return true;
     }
 
@@ -292,28 +284,32 @@ var bitarea = (function() {
         { x : c.x, y : c.y + c.height },
         { x : c.x + c.width, y : c.y + c.height },
         { x : c.x + c.width, y : c.y }
-      ];
+      ]
     }
 
     get center() {
       return [
         this._coords.x + Math.round(this._coords.width/2),
         this._coords.y + Math.round(this._coords.height/2)
-      ];
+      ]
     }
 
     get rect() {
       return {
         x : this._coords.x, y : this._coords.y,
         width : this._coords.width, height : this._coords.height
-      };
+      }
     }
 
-    project(ratio) {
-      this._coords.x = Math.round(this._coords.x * ratio.x);
-      this._coords.y = Math.round(this._coords.y * ratio.y);
-      this._coords.width = Math.round(this._coords.width * ratio.x);
-      this._coords.height = Math.round(this._coords.height * ratio.y);
+    scaledCoords(xScale, yScale) {
+      let c = this.coords
+      yScale = yScale || xScale || 1.0
+      xScale = xScale || 1.0
+      c.x = Math.round(c.x * xScale)
+      c.y = Math.round(c.y * yScale)
+      c.width = Math.round(c.width * xScale)
+      c.height = Math.round(c.height * yScale)
+      return c
     }
 
   } // RECTANGLE
@@ -325,39 +321,36 @@ var bitarea = (function() {
   class Square extends Rectangle {
     
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.SQUARE;
+      super(parent, noGroup)
+      this._type = types.SQUARE
     }
 
     createSVGElt() {
-      super.createSVGElt();
-      this._dom.classList.add(clsQualifiers.SQUARE);
+      super.createSVGElt()
+      this._dom.classList.add(clsQualifiers.SQUARE)
     }
 
     get coords() {
-      return super.coords;
+      return super.coords
     }
 
     set coords(coords) {
-      if(coords.width !== coords.height) {
-        throw new Error('This is not a square: ' + coords.width + 'x' + coords.height);
-      }
+      if(coords.width !== coords.height)
+        throw new Error('This is not a square: ' + coords.width + 'x' + coords.height)
       super.coords = coords;
     }
 
     draw(coords) {
-      if(coords && coords.width !== coords.height) {
-        throw new Error('This is not a square: ' + coords.width + 'x' + coords.height);
-      }
+      if(coords && coords.width !== coords.height)
+        throw new Error('This is not a square: ' + coords.width + 'x' + coords.height)
       super.draw(coords);
     }
 
-    project(ratio) {
-      super.project(ratio);
-      if (this._coords.width < this._coords.height)
-        this._coords.height = this._coords.width;
-      else
-        this._coords.width = this._coords.height;
+    scaledCoords(xScale, yScale) {
+      let c = super.scaledCoords(xScale, yScale)
+      c.width = Math.min(c.width, c.height)
+      c.height = c.width
+      return c
     }
 
   } // SQUARE
@@ -369,29 +362,29 @@ var bitarea = (function() {
   class Rhombus extends Rectangle {
 
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.RHOMBUS;
+      super(parent, noGroup)
+      this._type = types.RHOMBUS
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'polygon');
-      this._dom.classList.add(clsQualifiers.RHOMBUS);
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon')
+      this._dom.classList.add(clsQualifiers.RHOMBUS)
+      this._domParent.appendChild(this._dom)
     }
 
     draw(coords) {
-      let c = coords || this._coords;
+      let c = coords || this._coords
       if (this._dom) {
-        let points = this.getPoints(c);
-        let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-        this.svgCoords = c;
-        this._dom.setAttribute('points', attrVal);
+        let points = this.getPoints(c)
+        let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '')
+        this.svgCoords = c
+        this._dom.setAttribute('points', attrVal)
       }
     }
 
     getPoints(c) {
       let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
-          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2)
       return [
         { x : lx, y : cy },
         { x : cx, y : ty },
@@ -409,42 +402,42 @@ var bitarea = (function() {
   class Circle extends Figure {
 
     constructor(parent, noGroup) {
-      super(types.CIRCLECTR, parent, noGroup);
-      Object.assign(this._coords, { x : 0, y : 0, r : 0 });
-      Object.assign(this._svgCoords, { x : 0, y : 0, r : 0 });
+      super(types.CIRCLECTR, parent, noGroup)
+      Object.assign(this._coords, { x : 0, y : 0, r : 0 })
+      Object.assign(this._svgCoords, { x : 0, y : 0, r : 0 })
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'circle');
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'circle')
+      this._domParent.appendChild(this._dom)
     }
 
     equalCoords(coords) {
       return (this._coords.x === coords.x &&
               this._coords.y === coords.y &&
-              this._coords.r === coords.r) ? true : false;
+              this._coords.r === coords.r) ? true : false
     }
 
     draw(coords) {
-      let c = coords || this._coords;
+      let c = coords || this._coords
       if (this._dom) {
-        this._svgCoords = c;
-        this._dom.setAttribute('cx', c.x);
-        this._dom.setAttribute('cy', c.y);
-        this._dom.setAttribute('r', c.r);
+        this._svgCoords = c
+        this._dom.setAttribute('cx', c.x)
+        this._dom.setAttribute('cy', c.y)
+        this._dom.setAttribute('r', c.r)
       }
     }
 
     within(coords) {
-      if (this._coords.x - this._coords.r < coords.x) return false;
-      if (this._coords.x + this._coords.r > coords.x + coords.width) return false;
-      if (this._coords.y - this._coords.r < coords.y) return false;
-      if (this._coords.y + this._coords.r > coords.y + coords.height) return false;
-      return true;
+      if (this._coords.x - this._coords.r < coords.x) return false
+      if (this._coords.x + this._coords.r > coords.x + coords.width) return false
+      if (this._coords.y - this._coords.r < coords.y) return false
+      if (this._coords.y + this._coords.r > coords.y + coords.height) return false
+      return true
     }
 
     get center() {
-      return [this._coords.x, this._coords.y];
+      return [this._coords.x, this._coords.y]
     }
 
     get rect() {
@@ -453,16 +446,17 @@ var bitarea = (function() {
         y : this._coords.y - this._coords.r,
         width : 2 * this._coords.r,
         height : 2 * this._coords.r
-      };
+      }
     }
 
-    project(ratio) {
-      let rx, ry;
-      this._coords.x = Math.round(this._coords.x * ratio.x);
-      this._coords.y = Math.round(this._coords.y * ratio.y);
-      rx = Math.round(this._coords.r * ratio.x);
-      ry = Math.round(this._coords.r * ratio.y);
-      this._coords.r = (rx < ry) ? rx : ry;
+    scaledCoords(xScale, yScale) {
+      let c = this.coords
+      yScale = yScale || xScale || 1.0
+      xScale = xScale || 1.0
+      c.x = Math.round(c.x * xScale)
+      c.y = Math.round(c.y * yScale)
+      c.r = Math.min(Math.round(c.r * xScale), Math.round(c.r * yScale))
+      return c
     }
 
   } // CIRCLE CLASS (from CENTER)
@@ -474,13 +468,13 @@ var bitarea = (function() {
   class CircleEx extends Circle {
 
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.CIRCLEDTR;
+      super(parent, noGroup)
+      this._type = types.CIRCLEDTR
     }
 
     createSVGElt() {
-      super.createSVGElt();
-      this._dom.classList.add(clsQualifiers.EXTENDED);
+      super.createSVGElt()
+      this._dom.classList.add(clsQualifiers.EXTENDED)
     }
 
   } // CIRCLE CLASS (from DIAMETER)
@@ -492,37 +486,37 @@ var bitarea = (function() {
   class Ellipse extends Rectangle {
 
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.ELLIPSE;
+      super(parent, noGroup)
+      this._type = types.ELLIPSE
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'ellipse');
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'ellipse')
+      this._domParent.appendChild(this._dom)
     }
 
     draw(coords) {
-      let c = coords || this._coords;
+      let c = coords || this._coords
       let rx = Math.round(c.width/2),
-          ry = Math.round(c.height/2);
+          ry = Math.round(c.height/2)
       if (this._dom) {
         this.svgCoords = c;
-        this._dom.setAttribute('cx', c.x + rx);
-        this._dom.setAttribute('cy', c.y + ry);
-        this._dom.setAttribute('rx', rx);
-        this._dom.setAttribute('ry', ry);
+        this._dom.setAttribute('cx', c.x + rx)
+        this._dom.setAttribute('cy', c.y + ry)
+        this._dom.setAttribute('rx', rx)
+        this._dom.setAttribute('ry', ry)
       }
     }
 
     getPoints(c) {
       let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
-          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2)
       return [
         { x : lx, y : cy },
         { x : cx, y : ty },
         { x : rx, y : cy },
         { x : cx, y : by }
-      ];
+      ]
     }
 
   } // ELLIPSE
@@ -534,52 +528,52 @@ var bitarea = (function() {
   class IsoscelesTriangle extends Rectangle {
     
     constructor(parent, noGroup, tilt) {
-      super(parent, noGroup);
-      this._type = types.TRIANGLEISC;
-      this._coords.tilt = tilt;
+      super(parent, noGroup)
+      this._type = types.TRIANGLEISC
+      this._coords.tilt = tilt
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'polygon');
-      this._dom.classList.add(clsQualifiers.ISOSCELES);
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon')
+      this._dom.classList.add(clsQualifiers.ISOSCELES)
+      this._domParent.appendChild(this._dom)
     }
 
     draw(coords) {
-      let c = coords || this._coords;
+      let c = coords || this._coords
       if (this._dom) {
-        this.svgCoords = c;
-        let points = this.getPoints(c);
-        let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-        this._dom.setAttribute('points', attrVal);
+        this.svgCoords = c
+        let points = this.getPoints(c)
+        let attrVal = points.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '')
+        this._dom.setAttribute('points', attrVal)
       }
     }
 
     getPoints(c) {
       let lx = c.x, rx = c.x + c.width, cx = c.x + Math.round(c.width/2),  
-          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2);
-      let points = [];
+          ty = c.y, by = c.y + c.height, cy = c.y + Math.round(c.height/2)
+      let points = []
       switch(c.tilt) {
       case tilts.BOTTOM:
-        points.push({ x : lx, y : by });
-        points.push({ x : rx, y : by });
-        points.push({ x : cx, y : ty });
-        break;
+        points.push({ x : lx, y : by })
+        points.push({ x : rx, y : by })
+        points.push({ x : cx, y : ty })
+        break
       case tilts.TOP:
-        points.push({ x : lx, y : ty });
-        points.push({ x : rx, y : ty });
-        points.push({ x : cx, y : by });
-        break;
+        points.push({ x : lx, y : ty })
+        points.push({ x : rx, y : ty })
+        points.push({ x : cx, y : by })
+        break
       case tilts.LEFT:
-        points.push({ x : lx, y : ty });
-        points.push({ x : lx, y : by });
-        points.push({ x : rx, y : cy });
-        break;
+        points.push({ x : lx, y : ty })
+        points.push({ x : lx, y : by })
+        points.push({ x : rx, y : cy })
+        break
       case tilts.RIGHT:
-        points.push({ x : lx, y : cy });
-        points.push({ x : rx, y : ty });
-        points.push({ x : rx, y : by });
-        break;
+        points.push({ x : lx, y : cy })
+        points.push({ x : rx, y : ty })
+        points.push({ x : rx, y : by })
+        break
       default:
       }
       return points;
@@ -594,58 +588,58 @@ var bitarea = (function() {
   class EquilateralTriangle extends IsoscelesTriangle {
     
     constructor(parent, noGroup, tilt) {
-      super(parent, noGroup, tilt);
-      this._type = types.TRIANGLEEQL;
+      super(parent, noGroup, tilt)
+      this._type = types.TRIANGLEEQL
     }
 
     createSVGElt() {
       super.createSVGElt();
-      this._dom.classList.remove(clsQualifiers.ISOSCELES);
-      this._dom.classList.add(clsQualifiers.EQUILATERAL);
+      this._dom.classList.remove(clsQualifiers.ISOSCELES)
+      this._dom.classList.add(clsQualifiers.EQUILATERAL)
     }
 
     checkDims(coords) {
-      let r = Math.sqrt(3) / 2;
-      let dmax = coords.width, dmin = coords.height;
+      let r = Math.sqrt(3) / 2
+      let dmax = coords.width, dmin = coords.height
       switch(coords.tilt) {
       case tilts.LEFT:
       case tilts.RIGHT:
-        break;
+        break
       case tilts.TOP:
       case tilts.BOTTOM:
-        dmax = coords.height;
-        dmin = coords.width;
-        break;
+        dmax = coords.height
+        dmin = coords.width
+        break
       default:
-        r = 0;
+        r = 0
       }
-      return (Math.abs(Math.round(dmax - r * dmin)) <= 3) ? true : false;
+      return (Math.abs(Math.round(dmax - r * dmin)) <= 3) ? true : false
      }
 
     get coords() {
-      return super.coords;
+      return super.coords
     }
 
     set coords(coords) {
-      if(!this.checkDims(coords)) {
-        throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height);
-      }
-      super.coords = coords;
+      if(!this.checkDims(coords))
+        throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height)
+      super.coords = coords
     }
 
     draw(coords) {
-      if(coords && !this.checkDims(coords)) {
-        throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height);
-      }
-      super.draw(coords);
+      if(coords && !this.checkDims(coords))
+        throw new Error('This is not a equilateral triangle: ' + coords.width + 'x' + coords.height)
+      super.draw(coords)
     }
 
-    project(ratio) {
-      let r = this._coords.width / this._coords.height;
-      super.project(ratio);
-      let nw = Math.round(this._coords.height * r);
-      if (this._coords.width > nw) this._coords.width = nw;
-      else this._coords.height = Math.round(this._coords.width / r);
+    scaledCoords(xScale, yScale) {
+      let r, c, nw
+      r = this._coords.width / this._coords.height
+      c = super.scaledCoords(xScale, yScale)
+      nw = Math.round(c.height*r)
+      if (c.width > nw) c.width = nw
+      else c.height = Math.round(c.width/r)
+      return c
     }
 
   }
@@ -657,44 +651,44 @@ var bitarea = (function() {
   class RectangleTriangle extends IsoscelesTriangle {
 
     constructor(parent, noGroup, tilt) {
-      super(parent, noGroup, tilt);
-      this._type = types.TRIANGLERCT;
+      super(parent, noGroup, tilt)
+      this._type = types.TRIANGLERCT
     }
 
     createSVGElt() {
-      super.createSVGElt();
-      this._dom.classList.remove(clsQualifiers.ISOSCELES);
-      this._dom.classList.add(clsQualifiers.RIGHTANGLE);
+      super.createSVGElt()
+      this._dom.classList.remove(clsQualifiers.ISOSCELES)
+      this._dom.classList.add(clsQualifiers.RIGHTANGLE)
     }
 
     getPoints(c) {
       let lx = c.x, rx = c.x + c.width,  
-          ty = c.y, by = c.y + c.height;
-      let points = [];
+          ty = c.y, by = c.y + c.height
+      let points = []
       switch(c.tilt) {
       case tilts.BOTTOM:
-        points.push({ x : lx, y : by });
-        points.push({ x : rx, y : by });
-        points.push({ x : rx, y : ty });
-        break;
+        points.push({ x : lx, y : by })
+        points.push({ x : rx, y : by })
+        points.push({ x : rx, y : ty })
+        break
       case tilts.TOP:
-        points.push({ x : rx, y : ty });
-        points.push({ x : lx, y : ty });
-        points.push({ x : lx, y : by });
-        break;
+        points.push({ x : rx, y : ty })
+        points.push({ x : lx, y : ty })
+        points.push({ x : lx, y : by })
+        break
       case tilts.LEFT:
-        points.push({ x : lx, y : ty });
-        points.push({ x : lx, y : by });
-        points.push({ x : rx, y : by });
-        break;
+        points.push({ x : lx, y : ty })
+        points.push({ x : lx, y : by })
+        points.push({ x : rx, y : by })
+        break
       case tilts.RIGHT:
-        points.push({ x : rx, y : by });
-        points.push({ x : rx, y : ty });
-        points.push({ x : lx, y : ty });
-        break;
+        points.push({ x : rx, y : by })
+        points.push({ x : rx, y : ty })
+        points.push({ x : lx, y : ty })
+        break
       default:
       }
-      return points;
+      return points
     }
 
   } // RIGHT-ANGLE TRIANGLE
@@ -706,58 +700,60 @@ var bitarea = (function() {
   class Hex extends Rectangle {
     
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.HEXRCT;
+      super(parent, noGroup)
+      this._type = types.HEXRCT
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'polygon');
-      this._dom.classList.add(clsQualifiers.HEX);
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon')
+      this._dom.classList.add(clsQualifiers.HEX)
+      this._domParent.appendChild(this._dom)
     }
 
     getSBPt(s, b, ls, lb) {
-      let s1 = s + Math.round(ls/4), s2 = s + Math.round(3*ls/4), s3 = s + ls;
-      let b1 = b + Math.round(lb/2), b2 = b + lb;
-      return [ s1, b, s2, b, s3, b1, s2, b2, s1, b2, s, b1 ];
+      let s1 = s + Math.round(ls/4), s2 = s + Math.round(3*ls/4), s3 = s + ls
+      let b1 = b + Math.round(lb/2), b2 = b + lb
+      return [ s1, b, s2, b, s3, b1, s2, b2, s1, b2, s, b1 ]
     }
 
     draw(coords) {
-      let c = coords || this._coords;
+      let c = coords || this._coords
       if (this._dom) {
-        this.svgCoords = c;
-        let pts = this.getPoints(c);
-        let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '');
-        this._dom.setAttribute('points', attrVal);
+        this.svgCoords = c
+        let pts = this.getPoints(c)
+        let attrVal = pts.reduce((r, e)  => r + e.x + ' ' + e.y + ' ', '')
+        this._dom.setAttribute('points', attrVal)
       }
     }
 
     getPoints(c) {
-      let pts = [{x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}];
+      let pts = [{x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}, {x:0 , y:0}]
       if (c.width > c.height) {
         [ pts[0].x, pts[0].y,
           pts[1].x, pts[1].y,
           pts[2].x, pts[2].y,
           pts[3].x, pts[3].y,
           pts[4].x, pts[4].y,
-          pts[5].x, pts[5].y ] = this.getSBPt(c.x, c.y, c.width, c.height);
+          pts[5].x, pts[5].y ] = this.getSBPt(c.x, c.y, c.width, c.height)
       } else {
         [ pts[0].y, pts[0].x,
           pts[1].y, pts[1].x,
           pts[2].y, pts[2].x,
           pts[3].y, pts[3].x,
           pts[4].y, pts[4].x,
-          pts[5].y, pts[5].x ] = this.getSBPt(c.y, c.x, c.height, c.width);
+          pts[5].y, pts[5].x ] = this.getSBPt(c.y, c.x, c.height, c.width)
       }
-      return pts;
+      return pts
     }
 
-    project(ratio) {
-      let r = this._coords.width / this._coords.height;
-      super.project(ratio);
-      let nw = Math.round(this._coords.height * r);
-      if (this._coords.width > nw) this._coords.width = nw;
-      else this._coords.height = Math.round(this._coords.width / r);
+    scaledCoords(xScale, yScale) {
+      let r, c, nw
+      r = this._coords.width / this._coords.height
+      c = super.scaledCoords(xScale, yScale)
+      nw = Math.round(c.height*r)
+      if (c.width > nw) c.width = nw
+      else c.height = Math.round(c.width/r)
+      return c
     }
 
   } // HEX (from RECTANGLE)
@@ -769,13 +765,13 @@ var bitarea = (function() {
   class HexEx extends Hex {
     
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.HEXDTR;
+      super(parent, noGroup)
+      this._type = types.HEXDTR
     }
 
     createSVGElt() {
-      super.createSVGElt();
-      this._dom.classList.add(clsQualifiers.EXTENDED);
+      super.createSVGElt()
+      this._dom.classList.add(clsQualifiers.EXTENDED)
     }
 
   } // HEX (from DIAMETER)
@@ -787,72 +783,76 @@ var bitarea = (function() {
   class Polygon extends Figure {
     
     constructor(parent, noGroup) {
-      super(types.POLYGON, parent, noGroup);
-      this._coords = [{ x : 0, y : 0}];
-      this._type = types.POLYGON;
+      super(types.POLYGON, parent, noGroup)
+      this._coords = [{ x : 0, y : 0}]
+      this._type = types.POLYGON
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'polygon');
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'polygon')
+      this._domParent.appendChild(this._dom)
     }
 
     get coords() {
-      return this.copyCoords();
+      return this.copyCoords()
     }
 
     set coords(coords) {
-      this._coords.splice(0, this._coords.length);
-      this._coords = this.copyCoords(coords);
+      this._coords.splice(0, this._coords.length)
+      this._coords = this.copyCoords(coords)
     }
 
     copyCoords(coords) {
-      let rtn = [];
-      coords = coords || this._coords;
-      coords.forEach(e => rtn.push({ x : e.x, y : e.y }));
+      let rtn = []
+      coords = coords || this._coords
+      coords.forEach(e => rtn.push({ x : e.x, y : e.y }))
       return rtn;
     }
 
     draw(coords) {
       if (this._dom) {
-        let c = coords || this._coords;
-        let attrVal = c.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '');
-        this._dom.setAttribute('points', attrVal);
+        let c = coords || this._coords
+        let attrVal = c.reduce((r, e) => r + e.x + ' ' + e.y + ' ', '')
+        this._dom.setAttribute('points', attrVal)
       }
     }
 
     within(coords) {
-      return this._coords.reduce((r, e) => r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height), true);
+      return this._coords.reduce((r, e) => r && (e.x >= coords.x && e.x <= coords.x + coords.width && e.y >= coords.y && e.y <= coords.y + coords.height), true)
     }
 
     get center() {
-      let r = this.rect;
+      let r = this.rect
       return [
         r.x + Math.round(r.width/2),
         r.y + Math.round(r.height/2)
-      ];
+      ]
     }
 
     get rect() {
       let d = this._coords.reduce((r,e) => {
-        if (e.x < r.xm) r.xm = e.x;
-        if (e.x > r.xM) r.xM = e.x;
-        if (e.y < r.ym) r.ym = e.y;
-        if (e.y > r.yM) r.yM = e.y;
-        return r;
-      }, { xm: 100000, xM: -100000, ym: 100000, yM: -100000 });
-      return { x : d.xm, y : d.ym, width : d.xM - d.xm, height : d.yM - d.ym };
+        if (e.x < r.xm) r.xm = e.x
+        if (e.x > r.xM) r.xM = e.x
+        if (e.y < r.ym) r.ym = e.y
+        if (e.y > r.yM) r.yM = e.y
+        return r
+      }, { xm: 100000, xM: -100000, ym: 100000, yM: -100000 })
+      return { x : d.xm, y : d.ym, width : d.xM - d.xm, height : d.yM - d.ym }
     }
 
     getPoints(c) {
-      return this.copyCoords(c);
+      return this.copyCoords(c)
     }
 
-    project(ratio) {
-      this._coords.forEach(p => {
-        p.x = Math.round(p.x * ratio.x);
-        p.y = Math.round(p.y * ratio.y);
+    scaledCoords(xScale, yScale) {
+      let c = this.coords
+      yScale = yScale || xScale || 1.0
+      xScale = xScale || 1.0
+      c.forEach(p => {
+        p.x = Math.round(p.x * xScale)
+        p.y = Math.round(p.y * yScale)
       })
+      return c
     }
 
   } // POLYGON
@@ -864,17 +864,17 @@ var bitarea = (function() {
   class Polyline extends Polygon  {
     
     constructor(parent, noGroup) {
-      super(parent, noGroup);
-      this._type = types.POLYLINE;
+      super(parent, noGroup)
+      this._type = types.POLYLINE
     }
 
     createSVGElt() {
-      this._dom = document.createElementNS(NSSVG, 'polyline');
-      this._domParent.appendChild(this._dom);
+      this._dom = document.createElementNS(NSSVG, 'polyline')
+      this._domParent.appendChild(this._dom)
     }
 
     add(point)  {
-      this._coords.push({ x : point.x, y : point.y });
+      this._coords.push({ x : point.x, y : point.y })
     }
 
   }
@@ -897,18 +897,16 @@ var bitarea = (function() {
       'hexRct'      : Hex,
       'hexDtr'      : HexEx,
       'polygon'     : Polygon
-    };
-    let figure, generator;
-    generator = factory[record.type];
-    if (!generator) {
-      throw new Error('ERROR - Invalid figure type in record: ' + record.type);
     }
-    figure = new generator(parent, false, false);
-    if (!figure) {
-      throw new Error('ERROR - Cannot create area from record : ' + record.type);
-    }
-    figure.fromRecord(record);
-    return figure;
+    let figure, generator
+    generator = factory[record.type]
+    if (!generator)
+      throw new Error('ERROR - Invalid figure type in record: ' + record.type)
+    figure = new generator(parent, false, false)
+    if (!figure)
+      throw new Error('ERROR - Cannot create area from record : ' + record.type)
+    figure.fromRecord(record)
+    return figure
   }
 
   /*
@@ -925,4 +923,4 @@ var bitarea = (function() {
     createFromRecord
   }
 
-})(); /* BIT Area Definitions */
+})()  /* BIT Area Definitions */

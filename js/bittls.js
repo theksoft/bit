@@ -829,6 +829,22 @@ var bittls = (function(){
     })
   }
 
+  function createRectDataUrl(width, height, color, mime) {
+    let url, canvas, context
+    color = color || 'black'
+    mime = mime || 'image/png'
+    if (width && height) {
+      canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      context = canvas.getContext('2d')
+      context.fillStyle = color
+      context.fillRect(0, 0, width, height)
+      url = canvas.toDataURL(mime)
+    }
+    return url
+  }
+
   /*
    * EXPORTS
    */
@@ -843,7 +859,7 @@ var bittls = (function(){
     // Functions
     selectFiles, readFileDataUrl, readFileText, saveUrlAs, saveDataAs, saveObjectAs,
     selectText, unselect, copyText, copySelectedText,
-    loadImage
+    loadImage, createRectDataUrl
   }
 
 }());

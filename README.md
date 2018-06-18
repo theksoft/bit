@@ -6,7 +6,7 @@ HTML map creator in plain javascript featuring project with grid management.
 
 Projets are stored in local storage by the name of each map.
 
-#### Project management command
+#### Project management commands
 
 - `Project.Manage` : Allow to clean-up any stored project.
 - `Project.New` : Setup a new HTML map project [`CTRL`+`M`].
@@ -18,17 +18,32 @@ Projets are stored in local storage by the name of each map.
 - `Project.Import` : Import project from a local file (JSON text file).
 - `Project.Export image` : Export project image to a local file.
 
-#### Project command
+#### Project commands
 
 - `Preview` : Preview HTML map result [`CTRL`+`P`]
 - `Generate` : Display HTML map code [`CTRL`+`G`]
+
+#### Edit commands
+
 - `Edit.Add HTML Areas` : Add areas from HTML map source code.<br>
   Full *\<map\>* source code or only *\<area\>* source code can be entered.
 - `Edit.Set New Image` : Define a new image for the project.<br>
 
-#### Other
+#### View commands
+
+- `Edit.Zoom In` : Increase image and drawn areas scale [`CTRL`+`+`].
+- `Edit.Zoom 1:1` : Restore default zoom i.e. the natural size of the image.
+- `Edit.Zoom Out` : Decrease image and drawn areas scale [`CTRL`+`-`].
+
+#### Other commands
 
 - `?` : Brief help display [`F1`]
+
+## Background image
+
+During project creation map image can be selected between a web URL, a local image file or a template background of defined dimension and color.
+Map image can be replaced at any time. In that case all areas are moved and resized depending on the previous and new image dimensions relation.
+If new image is of the same size than the previous one, areas remain unchanged. 
 
 ## Drawing
 

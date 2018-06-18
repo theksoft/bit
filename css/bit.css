@@ -76,6 +76,10 @@ img {
   margin-left: auto;
 }
 
+#zoom {
+	order: 2;
+}
+
 /* HEADER ELEMENTS */
 
 #menu ul {
@@ -171,6 +175,7 @@ img {
 
 #container {
   position: relative;
+  overflow: none;
 }
 
 #img-display {
@@ -382,6 +387,7 @@ area {  /* Map preview, FF does not change cursor */
   vertical-align: middle;
 }
 
+#zoom,
 #coordinates {
   background-color: black;
   color: #fff;
@@ -440,6 +446,10 @@ form.modal button {
   border: 1px outset white;
 }
 
+form.modal .file label {
+	padding: 6px 10px;
+}
+
 form.modal .file label:hover:enabled,
 form.modal button:hover:enabled {
 	color: #44a;
@@ -493,11 +503,62 @@ form.modal input[type=text].error, form.modal input[type=url].error {
   color: #f44;
 }
 
+form.modal input[type=number] {
+  background-color: white;
+  color: black;
+  border: 2px inset white;
+  width: 80px;
+  padding: 2px 5px;
+  text-align: right;
+}
+
 form.modal input:invalid {
   border: 2px dashed red;
 }
 
+form.modal fieldset {
+  border: 2px #44a solid;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px;
+}
+
+form.modal fieldset:disabled {
+  border: 2px grey solid;
+}
+
+form.modal fieldset:disabled * {
+  color:  grey;
+}
+
+form.modal fieldset:disabled button,
+form.modal fieldset:disabled .file label {
+  background-color: grey;
+  color: #ccc;
+}
+
+form.modal fieldset:disabled .drop,
+form.modal fieldset:disabled input {
+  background-color: #ccc;
+}
+
+form.modal legend {
+  color: #44a;
+}
+
+form.modal fieldset > legend.field-active::before {
+  content: " [+] ";
+  font-weight: bold;
+  color: red;
+}
+
+form.modal input[type=checkbox] {
+  transform: scale(2);
+  margin: 0 10px;
+}
+
 /* PROJECT CREATOR FORM */
+
 #project-changer,
 #project-creator {
   min-width: 300px;
@@ -508,19 +569,6 @@ form.modal input:invalid {
   margin: 20px auto;
   width: 50%;
   min-width: 300px;
-}
-
-#project-changer fieldset,
-#project-creator fieldset {
-  border: 2px #44a solid;
-  border-radius: 5px;
-  padding: 10px;
-  margin: 10px;
-}
-
-#project-changer legend,
-#project-creator legend {
-	color: #44a;
 }
 
 #project-creator fieldset.attrs label {
@@ -544,13 +592,27 @@ form.modal input:invalid {
 }
 
 #project-changer fieldset.image .url,
-#project-creator fieldset.image .url * {
+#project-creator fieldset.image .url,
+#project-changer fieldset.image .file,
+#project-creator fieldset.image .file {
   vertical-align: middle;
+  display: inline;
 }
 
 #project-changer fieldset.image > div,
 #project-creator fieldset.image > div {
 	padding: 5px;
+}
+
+#project-changer fieldset.template input[type=text],
+#project-creator fieldset.template input[type=text] {
+	width: 60px;
+  text-align: right;
+}
+
+#project-changer fieldset.template *,
+#project-creator fieldset.template * {
+  vertical-align: middle;
 }
 
 #project-changer .drop,
@@ -597,6 +659,7 @@ form.modal input:invalid {
 #project-changer span.separator,
 #project-creator span.separator {
 	font-style: italic; 
+  padding: 10px;
 }
 
 #project-changer .buttons,
@@ -712,9 +775,19 @@ form.modal input:invalid {
   height: 98%;
 }
 
+#project-code fieldset.dims input,
+#project-code fieldset.dims span {
+	vertical-align: middle;
+}
+
+#project-code fieldset.dims input[type=text] {
+  width: 60px;
+  text-align: right;
+}
+
 #project-code .code {
 	width: 98%;
-	max-height: 85%;
+	max-height: 75%;
 	padding: 1%;
 	text-align: left;
   font-family: monospace;
