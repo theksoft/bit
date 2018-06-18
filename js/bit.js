@@ -389,6 +389,24 @@ var bit = (function() {
   // VIEWPORT COMPUTATION 
   // Workarea elements size and coordinate offsets.
 
+  const upScale = {
+    0.25  : 0.33, 0.33  : 0.5,  0.5   : 0.67,
+    0.67  : 0.75, 0.75  : 0.8,  0.8   : 0.9,
+    0.9   : 1.0,  1.0   : 1.1,  1.1   : 1.25,
+    1.25  : 1.5,  1.5   : 1.75, 1.75  : 2.0,
+    2.0   : 2.5,  2.5   : 3.0,  3.0   : 4.0,
+    4.0   : 5.0,  5.0   : 5.0
+  }
+
+  const downScale = {
+    0.25  : 0.25, 0.33  : 0.25, 0.5   : 0.33,
+    0.67  : 0.5,  0.75  : 0.67, 0.8   : 0.75,
+    0.9   : 0.8,  1.0   : 0.9,  1.1   : 1.0,
+    1.25  : 1.1,  1.5   : 1.25, 1.75  : 1.5,
+    2.0   : 1.75, 2.5   : 2.0,  3.0   : 2.5,
+    4.0   : 3.0,  5.0   : 4.0
+  }
+
   class Viewport {
 
     constructor(c) {
@@ -401,6 +419,7 @@ var bit = (function() {
       this._gridarea = c.gridarea
       this._image = c.image
       this._scale = 1.0
+      this._scaleEnabled = false
       this._offset = new bitgeo.Point()
       this._scaledWidth = this._scaledHeight = 0
       this.translateCoords = this.computeCoords.bind(this)
@@ -418,6 +437,8 @@ var bit = (function() {
     }
 
     setWorkingDims(width, height) {
+      width = width || this._image.naturalWidth
+      height = height || this._image.naturalHeight
       let scaledWidth, scaledHeight
       scaledWidth = width * this._scale
       scaledHeight = height * this._scale
@@ -468,10 +489,31 @@ var bit = (function() {
       return (0 > coords.x || 0 > coords.y || this._image.naturalWidth < coords.x || this._image.naturalHeight < coords.y) ? false : true
     }
 
+    resetScale(resize) {
+      if(this._scaleEnabled) {
+        this._scale = 1.0
+        $('zoom').innerHTML = 'zoom: ' + Math.round(this._scale*100) + '%'
+        if (resize)
+          this.setWorkingDims().computeOffset()
+      }
+      return this
+    }
+
     get scale() {
       return this._scale
     }
 
+    set scale(v) {
+      if(this._scaleEnabled) {
+        this._scale = (v) ? upScale[this._scale] : downScale[this._scale]
+        this.setWorkingDims().computeOffset()
+        $('zoom').innerHTML = 'zoom: ' + Math.round(this._scale*100) + '%'
+      }
+    }
+
+    set scaleEnabled(v) {
+      this._scaleEnabled = (v)
+    }
   }
 
   // BACKGROUND IMAGE DRAGGER
@@ -812,6 +854,7 @@ var bit = (function() {
       this._ftr = c.ftr
       this._group = new bittls.MouseStateMachineRadioGroup([], states.READY)
       this._group.state = states.OPEN
+      this._enabled = false
       this._viewport = new Viewport ({
         wks : doms.wks, footer : doms.footer, aside : doms.aside, container : doms.container,
         workarea : doms.workarea, drawarea : doms.drawarea, gridarea : doms.gridarea,
@@ -842,6 +885,7 @@ var bit = (function() {
         workarea : doms.workarea, drawarea : doms.drawarea,
         viewport : this._viewport, handlers : c.handlers.editor, group : this._group
       })
+      this.onKeyAction = this._onKeyAction.bind(this) 
     }
 
     _hide(obj) { obj.style.display = 'none' }
@@ -860,6 +904,10 @@ var bit = (function() {
       this._hide(this._doms.aside)
       this._show(this._doms.drawarea)
       this._show(this._doms.gridarea)
+      if (this._enabled) {
+        document.removeEventListener('keydown', this.onKeyAction, false)
+        this._enabled = this._viewport.scaleEnabled = false
+      }
     }
 
     load(url) {
@@ -868,7 +916,12 @@ var bit = (function() {
           this._ftr.infoUpdate(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
           this._show(this._doms.aside)
           this._show(this._doms.workarea)
-          this._viewport.setWorkingDims(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
+          if (!this._enabled) {
+            document.addEventListener('keydown', this.onKeyAction, false)
+            this._enabled = this._viewport.scaleEnabled = true
+          }
+          this._viewport.resetScale()
+                        .setWorkingDims()
                         .resize()
           this._coordTracker.enable()
           this._group.enable()
@@ -881,7 +934,11 @@ var bit = (function() {
       this._hide(this._doms.gridarea)
       this._group.disable()
       this._group.state = states.PREVIEW
-      this._viewport.setWorkingDims(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
+      if (this._enabled) {
+        document.removeEventListener('keydown', this.onKeyAction, false)
+        this._enabled = this._viewport.scaleEnabled = false
+      }
+      this._viewport.setWorkingDims()
                     .resize()
       return { container : this._doms.container, image : this._doms.image, scale : this._viewport.scale }
     }
@@ -890,18 +947,30 @@ var bit = (function() {
       this._show(this._doms.drawarea)
       this._show(this._doms.gridarea)
       this._group.enable()
-      this._viewport.setWorkingDims(this._doms.image.naturalWidth, this._doms.image.naturalHeight)
+      if (!this._enabled) {
+        document.addEventListener('keydown', this.onKeyAction, false)
+        this._enabled = this._viewport.scaleEnabled = true
+      }
+      this._viewport.setWorkingDims()
                     .resize()
     }
     
     release() {
       this._coordTracker.enable()
       this._group.enable()
+      if (!this._enabled) {
+        document.addEventListener('keydown', this.onKeyAction, false)
+        this._enabled = this._viewport.scaleEnabled = true
+      }
     }
 
     freeze() {
       this._coordTracker.disable()
       this._group.disable()
+      if (this._enabled) {
+        document.removeEventListener('keydown', this.onKeyAction, false)
+        this._enabled = this._viewport.scaleEnabled = false
+      }
     }
 
     getParent() {
@@ -918,6 +987,14 @@ var bit = (function() {
 
     get viewport() {
       return this._viewport
+    }
+
+    _onKeyAction(e) {
+      if (utils.ctrlMetaKey(e) && ('+' === e.key || '-' === e.key) && this._enabled) {
+        e.preventDefault()
+        e.stopImmediatePropagation()
+        this._viewport.scale = ('+' === e.key) 
+      }
     }
 
   }
@@ -2084,22 +2161,28 @@ var bit = (function() {
         importProject : new bittls.TButton({ element : $('import-project'),   action : this._action(c.handlers.onImportProject, $('project-menu')) }),
         exportImage   : new bittls.TButton({ element : $('export-image'),     action : this._action(c.handlers.onExportImage, $('project-menu')) }),
         changeImage   : new bittls.TButton({ element : $('change-image'),     action : this._action(c.handlers.onChangeImage, $('edit-menu')) }),
+        zoomIn        : new bittls.TButton({ element : $('zoom-in'),          action : this._action(c.handlers.onZoomIn, $('view-menu')) }),
+        zoom100       : new bittls.TButton({ element : $('zoom-100'),         action : this._action(c.handlers.onZoom100, $('view-menu')) }),
+        zoomOut       : new bittls.TButton({ element : $('zoom-out'),         action : this._action(c.handlers.onZoomOut, $('view-menu')) }),
         help          : new bittls.TButton({ element : $('help'),             action : c.handlers.onHelp })
       }
-      this._menus = [$('project-menu'), $('edit-menu')]
+      this._menus = [$('project-menu'), $('edit-menu'), $('view-menu')]
       this._btnsEdit = [
         this._btns.saveProjectAs, this._btns.closeProject, this._btns.preview, this._btns.generate,
         this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage, this._btns.changeImage
       ]
+      this._btnsPreview = [this._btns.zoomIn, this._btns.zoomOut, this._btns.zoom100]
       this._enabled = false
       this._btns.saveProject.disable()
       this._btnsEdit.forEach(e => e.disable())
+      this._btnsPreview.forEach(e => e.disable())
       this._title = document.querySelector('head > title')
       this.onKeyAction = this._onKeyAction.bind(this)
       document.addEventListener('keydown', this.onKeyAction, false)
       document.addEventListener('keydown', this.onCheckHelp.bind(this), false)
       $('project-btn').addEventListener('mouseenter', this._onMouseEnter.bind({ menu : this, dom : $('project-menu') }), false)
       $('edit-btn').addEventListener('mouseenter', this._onMouseEnter.bind({ menu : this, dom : $('edit-menu') }), false)
+      $('view-btn').addEventListener('mouseenter', this._onMouseEnter.bind({ menu : this, dom : $('view-menu') }), false)
       return this.reset()
     }
 
@@ -2193,6 +2276,7 @@ var bit = (function() {
     reset() {
       this._btns.saveProject.disable()
       this._btnsEdit.forEach(e => e.disable())
+      this._btnsPreview.forEach(e => e.disable())
       this._btns.preview.element.classList.remove('selected')
       document.addEventListener('keydown', this.onKeyAction, false);
       this._title.innerHTML = appName
@@ -2202,9 +2286,18 @@ var bit = (function() {
 
     switchToEditMode(name) {
       this._btnsEdit.forEach(e => e.enable())
+      this._btnsPreview.forEach(e => e.enable())
       this._btns.preview.element.classList.remove('selected')
       this._title.innerHTML += ' ['+name+']'
       return this;
+    }
+
+    switchToPreview() {
+      this._btnsPreview.forEach(e => e.disable())
+    }
+
+    returnToEdit() {
+      this._btnsPreview.forEach(e => e.enable())
     }
 
   }
@@ -2285,9 +2378,11 @@ var bit = (function() {
       if (activated) {
         let t
         this._app.tools.freeze()
+        this._app.menu.switchToPreview()
         t = this._app.workspace.switchToPreview()
         this._mapper.displayPreview(t.container, t.image, t.scale, this._app.model.areas, this._app.model.info)
       } else {
+        this._app.menu.returnToEdit()
         this._app.workspace.switchToEdit()
         this._mapper.cancelPreview()
         this._app.tools.release()
@@ -2451,6 +2546,18 @@ var bit = (function() {
       )
     }
 
+    _onZoomIn() {
+      this._app.workspace.viewport.scale = true
+    }
+
+    _onZoom100() {
+      this._app.workspace.viewport.resetScale(true)
+    }
+
+    _onZoomOut() {
+      this._app.workspace.viewport.scale = false
+    }
+
     _onHelp() {
       this._app.freeze()
       this._app.help().finally(
@@ -2473,6 +2580,9 @@ var bit = (function() {
         onImportProject : this._onImportProject.bind(this),
         onExportImage   : this._onExportImage.bind(this),
         onChangeImage   : this._onChangeImage.bind(this),
+        onZoomIn        : this._onZoomIn.bind(this),
+        onZoom100       : this._onZoom100.bind(this),
+        onZoomOut       : this._onZoomOut.bind(this),
         onHelp          : this._onHelp.bind(this)
       }
     }

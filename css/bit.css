@@ -76,6 +76,10 @@ img {
   margin-left: auto;
 }
 
+#zoom {
+	order: 2;
+}
+
 /* HEADER ELEMENTS */
 
 #menu ul {
@@ -383,6 +387,7 @@ area {  /* Map preview, FF does not change cursor */
   vertical-align: middle;
 }
 
+#zoom,
 #coordinates {
   background-color: black;
   color: #fff;
