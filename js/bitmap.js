@@ -243,12 +243,12 @@ var bitmap = (function() {
       Grid.specializeProperties(props, n)
     }
 
-    static getHtmlString(filename, info, areas, xScale, yScale) {
+    static getHtmlString(filename, width, height, info, areas, xScale, yScale) {
       let convert = (s) => s.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&gt;&lt;/g, '&gt;<br>&nbsp;&nbsp;&lt;')
       let result = ''
       if (filename && info && areas) {
         if (areas && areas.length > 0) {
-          result += convert('<img src="' + filename + '" alt="' + info.alt + '" usemap="#' + info.name + '" />') + '<br>'
+          result += convert('<img src="' + filename + '" width="' + width + '" height="' + height + '" alt="' + info.alt + '" usemap="#' + info.name + '" />') + '<br>'
                   + convert('<map name="' + info.name + '">') + '<br>'
           result += areas.reduceRight((a,e) => {
             let r = create(e, undefined, xScale, yScale).htmlString
@@ -344,8 +344,50 @@ var bitmap = (function() {
 
   }
 
+  const testHTMLMap =
+  '<!DOCTYPE html>\n'+
+  '<html>\n'+
+  '<head>\n'+
+  '  <meta charset="UTF-8">\n'+
+  '  <title>BiT HTML Map Test</title>\n'+
+  '  <!-- https://github.com/theksoft/bit -->\n'+
+  '</head>\n'+
+  '<body>\n\n'+
+  '  <style>\n'+
+  '    .which {\n'+
+  '      font-size: 12px; font-weight: bold;\n'+
+  '      position: fixed; bottom: 20px; left: 20px;\n'+
+  '      background-color: rgba(255,255,255,0.3);\n'+
+  '      border: 1px dashed; padding: 2px;\n'+
+  '      pointer-events: none;\n'+
+  '    }\n'+
+  '  </style>\n\n'+
+  '  <div class="which">- none -</div>\n\n'+
+  '<####>\n\n'+
+  '  <script>\n'+
+  '    function getAreaString(area) {\n'+
+  '      let j, s = ""\n'+
+  '      if (area.hasAttributes()) {\n'+
+  '        s = "<area"\n'+
+  '        for(let j = 0; j < area.attributes.length; j++)\n'+
+  '          s += " " + area.attributes[j].name + "=\'" + area.attributes[j].value + "\'"\n'+
+  '        s += " />"\n'+
+  '      }\n'+
+  '      return s\n'+
+  '    }\n\n'+
+  '    const areas = document.querySelectorAll("area"),\n'+
+  '          which = document.querySelector(".which")\n'+
+  '    for (let i = 0; i < areas.length; i++) {\n'+
+  '      areas[i].onclick = e => alert(getAreaString(e.target))\n'+
+  '      areas[i].onmouseenter = e => which.innerText = getAreaString(e.target)\n'+
+  '      areas[i].onmouseleave = e => which.innerText = "- none -"\n'+
+  '    }\n'+
+  '  </script>\n\n'+
+  '</body>\n'+
+  '</html>\n'
+  
   return {
-    properties, Mapper
+    properties, Mapper, testHTMLMap
   }
 
 })() /* BIT Map Area Definitions */
