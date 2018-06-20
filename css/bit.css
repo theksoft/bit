@@ -787,7 +787,7 @@ form.modal input[type=checkbox] {
 
 #project-code .code {
 	width: 98%;
-	max-height: 75%;
+	max-height: 70%;
 	padding: 1%;
 	text-align: left;
   font-family: monospace;
@@ -830,6 +830,26 @@ form.modal input[type=checkbox] {
 #project-code .buttons > .close {
   order: 5;
   margin-right: auto;
+}
+
+#project-code .buttons > .example {
+  order: 6;
+  margin-left: auto;
+}
+
+#project-code div.warning {
+  font-style: italic;
+  float: right;
+  font-size: 12px;
+  text-align: right;
+}
+
+#project-code span.warning {
+	color: white;
+	background-color: red;
+  font-weight: bold;
+	padding: 1px 5px;
+	font-size: 14px;
 }
 
 /* HTML CODE FORM */

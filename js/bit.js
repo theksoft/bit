@@ -1939,7 +1939,8 @@ var bit = (function() {
         btnSelect   : this._form.querySelector('.select'),
         btnClear    : this._form.querySelector('.clear'),
         btnCopy     : this._form.querySelector('.copy'),
-        btnExport   : this._form.querySelector('.export')
+        btnExport   : this._form.querySelector('.export'),
+        btnExample  : this._form.querySelector('.example')
       }
       this._doms.btnSelect.addEventListener('click', this._onSelectClick.bind(this), false)
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
@@ -1949,6 +1950,7 @@ var bit = (function() {
       this._doms.inWidth.addEventListener('input', this._onWidthInput.bind(this), false)
       this._doms.inHeight.addEventListener('input', this._onHeightInput.bind(this), false)
       this._doms.btnApply.addEventListener('click', this._onApplyClick.bind(this), false)
+      this._doms.btnExample.addEventListener('click', this._onExampleClick.bind(this), false)
     }
 
     _reset() {
@@ -1991,6 +1993,12 @@ var bit = (function() {
       bittls.saveDataAs(this._doms.code.innerText, this._model.info.name, 'text/html')
     }
 
+    _onExampleClick(e) {
+      e.preventDefault()
+      const s = bitmap.testHTMLMap.replace(/<####>/gi, this._doms.code.innerText)
+      bittls.saveDataAs(s, 'test'+this._model.info.name, 'text/html')
+    }
+
     _forceHeight() {
       let dim, dims = this._workspace.dims
       if (this._doms.inWidth.checkValidity()) {
@@ -2026,13 +2034,16 @@ var bit = (function() {
       this._doms.btnApply.disabled = !this._doms.inWidth.checkValidity() || !this._doms.inHeight.checkValidity()
     }
 
-    _onApplyClick() {
+    _onApplyClick(e) {
+      e.preventDefault()
       if (this._doms.inWidth.checkValidity() && this._doms.inHeight.checkValidity()) {
-        let xScale, yScale, dims
+        let xScale, yScale, dims, width, height
         dims = this._workspace.dims
-        xScale = parseInt(this._doms.inWidth.value) / dims.width
-        yScale = parseInt(this._doms.inHeight.value) / dims.height
-        this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, this._model.info, this._model.areas, xScale, yScale)
+        width = parseInt(this._doms.inWidth.value)
+        height = parseInt(this._doms.inHeight.value)
+        xScale = width / dims.width
+        yScale = height / dims.height
+        this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
       }
     }
 
@@ -2049,7 +2060,7 @@ var bit = (function() {
 
     show(h) {
       super.show()
-      this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, this._model.info, this._model.areas)
+      this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, this._workspace.dims.width, this._workspace.dims.height, this._model.info, this._model.areas)
       this._handlers.onClose = h.onClose || (() => {})
     }
 
