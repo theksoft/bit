@@ -1933,7 +1933,8 @@ var bit = (function() {
         title       : this._form.querySelector('fieldset.dims legend'),
         inWidth     : this._form.querySelector('fieldset.dims .text.width'),
         inHeight    : this._form.querySelector('fieldset.dims .text.height'),
-        forceRatio  : this._form.querySelector('fieldset.dims input[type=checkbox]'),
+        forceRatio  : this._form.querySelector('fieldset.dims input[type=checkbox].dims'),
+        svgOverlay  : this._form.querySelector('fieldset.dims input[type=checkbox].type'),
         btnApply    : this._form.querySelector('fieldset.dims button'),
         code        : this._form.querySelector('.code'),
         btnSelect   : this._form.querySelector('.select'),
@@ -1959,6 +1960,7 @@ var bit = (function() {
       this._doms.inWidth.value = dims.width
       this._doms.inHeight.value = dims.height
       this._doms.forceRatio.checked = true
+      this._doms.svgOverlay.checked = false
       this._doms.code.innerHTML = ''
       this._doms.btnApply.disabled = false
     }
@@ -1995,7 +1997,9 @@ var bit = (function() {
 
     _onExampleClick(e) {
       e.preventDefault()
-      const s = bitmap.testHTMLMap.replace(/<####>/gi, this._doms.code.innerText)
+      const s = (!this._doms.svgOverlay.checked) ?
+                  bitmap.testHTMLMap.replace(/<####>/gi, this._doms.code.innerText) :
+                  bitmap.testSVGMap.replace(/<####>/gi, this._doms.code.innerText)
       bittls.saveDataAs(s, 'test'+this._model.info.name, 'text/html')
     }
 
@@ -2043,7 +2047,10 @@ var bit = (function() {
         height = parseInt(this._doms.inHeight.value)
         xScale = width / dims.width
         yScale = height / dims.height
-        this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
+        if (!this._doms.svgOverlay.checked)
+          this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
+        else
+          this._doms.code.innerHTML = bitmap.Mapper.getSvgString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
       }
     }
 
