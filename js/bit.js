@@ -1650,6 +1650,7 @@ var bit = (function() {
     }
 
     _onLoadClick(e) {
+      e.preventDefault()
       if (!this._doms.inImageUrl.validity.typeMismatch) {
         let url = this._doms.inImageUrl.value.trim()
         loadIndicator.show()
@@ -1675,6 +1676,7 @@ var bit = (function() {
     }
 
     _onApplyClick(e) {
+      e.preventDefault()
       if (this._doms.inWidth.checkValidity() && this._doms.inHeight.checkValidity()) {
         let width, height
         width = parseInt(this._doms.inWidth.value)
