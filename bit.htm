@@ -37,7 +37,7 @@
 	        <li class="dropdown">
 	          <a href="javascript:void(0)" id="edit-btn" class="dropbtn">Edit</a>
 	          <div id="edit-menu" class="dropdown-content">
-	            <a href="#" id="load-html">Add HTML areas</a>
+	            <a href="#" id="load-code">Add HTML/SVG areas</a>
               <a href="#" id="change-image">Set New Image</a>
 	          </div>
 	        </li>
@@ -298,7 +298,7 @@
     </div>
   </form>
 
-  <!-- HTML code display -->
+  <!-- Code display -->
   <form id="project-code" class="modal">
     <header>HTML Map Code</header>
     <div>
@@ -320,7 +320,7 @@
 	      <button class="select">Select All</button>
 	      <button class="clear">Unselect</button>
 	      <button class="close">Close</button>
-	      <button class="example">Generate Test</button>
+	      <button class="example">Generate Test Page</button>
 	    </div>
 	    <div class="warning">
 	      <span class="warning">WARNING!</span><br>
@@ -330,17 +330,18 @@
 	  </div>
   </form>
 
-  <!-- HTML code input -->
+  <!-- Code input -->
   <form id="code-loader" class="modal">
-    <header>Load HTML Code ...</header>
+    <header>Load HTML/SVG Code ...</header>
     <div>
-      <label><span class="left">Enter HTML code here:</span>
+      <label><span class="left">Enter source code here:</span>
         <textarea class="text code"></textarea>
       </label>
 	    <div class="buttons">
 	      <button class="select" disabled>Load</button>
 	      <button class="clear">Clear</button>
 	      <button class="cancel">Cancel</button>
+        <label><input type="checkbox" class="type"/><span>SVG code</span></label>
 	    </div>
     </div>
   </form>

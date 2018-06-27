@@ -29,6 +29,13 @@ var bitmap = (function() {
     poly    : 'polygon'
   }
 
+  const svg2areas = {
+    rect    : 'rectangle',
+    circle  : 'circleCtr',
+    ellipse : 'ellipse',
+    polygon : 'polygon'
+  }
+
   /*
    * FIGURE MAPPER
    */
@@ -318,15 +325,15 @@ var bitmap = (function() {
 
     static loadHtmlString(code) {
       const MAPEXP = /<area([\s\S]*?)(\/>|>)/gmi,
-      AREAEXP = {
-        shape   : / shape="(rect|circle|poly)"/,
-        coords  : / coords="([\d ,]+?)"/,
-        HREF    : / href="([\S\s]+?)"/,
-        ALT     : / alt="([\S\s]+?)"/,
-        TITLE   : / title="([\S\s]+?)"/,
-        ID      : / id="([\S\s]+?)"/
-      },
-      COORDLIM = / ?, ?/
+            AREAEXP = {
+              shape   : / shape="(rect|circle|poly)"/,
+              coords  : / coords="([\d ,]+?)"/,
+              HREF    : / href="([\S\s]+?)"/,
+              ALT     : / alt="([\S\s]+?)"/,
+              TITLE   : / title="([\S\s]+?)"/,
+              ID      : / id="([\S\s]+?)"/
+            },
+            COORDLIM = / ?, ?/
 
       let COORDMAP = {
         rect    : function(a) {
@@ -415,6 +422,102 @@ var bitmap = (function() {
       }
       return result
     }
+
+    static loadSvgString(code) {
+      const SVGEXP = /<(rect|circle|polygon|ellipse)([\s\S]*?)(\/>|>)/gmi,
+            RECTEXP = {
+              x       : / x="([\d]+?)"/,
+              y       : / y="([\d]+?)"/,
+              width   : / width="([\d]+?)"/,
+              height  : / height="([\d]+?)"/
+            },
+            CIRCLEEXP = {
+              cx      : / cx="([\d]+?)"/,
+              cy      : / cy="([\d]+?)"/,
+              r       : / r="([\d]+?)"/,
+            },
+            ELLIPSEEXP = {
+              cx      : / cx="([\d]+?)"/,
+              cy      : / cy="([\d]+?)"/,
+              rx      : / rx="([\d]+?)"/,
+              ry      : / ry="([\d]+?)"/
+            },
+            POLYGONEXP = / points="([\d, ]+?)"/,
+            IDEXP = / id="([\S\s]+?)"/
+
+      let COORDSVG = {
+        rect : function(s,a) {
+          a.coords = {}
+          Object.keys(RECTEXP).forEach(e => {
+            let r = RECTEXP[e].exec(s)
+            if (r) a.coords[e] = parseInt(r[1], 10)
+          });
+          if (!a.coords.width || !a.coords.height)
+            return false
+          a.coords.x = a.coords.x || 0
+          a.coords.y = a.coords.y || 0
+          return true
+        },
+        circle : function(s,a) {
+          a.coords = {}
+          Object.keys(CIRCLEEXP).forEach(e => {
+            let r = CIRCLEEXP[e].exec(s)
+            if (r) a.coords[e] = parseInt(r[1], 10)
+          });
+          if (!a.coords.r)
+            return false
+          a.coords.x = a.coords.cx || 0
+          a.coords.y = a.coords.cy || 0
+          a.coords.r = a.coords.r
+          return true
+        },
+        ellipse : function(s,a) {
+          a.coords = {}
+          Object.keys(ELLIPSEEXP).forEach(e => {
+            let r = ELLIPSEEXP[e].exec(s)
+            if (r) a.coords[e] = parseInt(r[1], 10)
+          });
+          if (!a.coords.rx || !a.coords.ry)
+            return false
+          a.coords.cx = a.coords.cx || 0
+          a.coords.cy = a.coords.cy || 0
+          a.coords.x = a.coords.cx - a.coords.rx
+          a.coords.y = a.coords.cy - a.coords.ry
+          a.coords.width = a.coords.rx * 2
+          a.coords.height = a.coords.ry * 2
+          return true
+        },
+        polygon : function(s,a) {
+          let pts
+          a.coords = POLYGONEXP.exec(s)[1].split(' ').map(s => {
+            let r = s.split(',')
+            return { x : parseInt(r[0], 10), y : parseInt(r[1], 10) }
+          })
+          return (a.coords.length > 2)
+        }
+      }
+
+      let records = []
+      while(true) {
+        let attrs, result, r
+        attrs = {}
+        result = SVGEXP.exec(code)
+        if (!result) break
+        attrs.type = svg2areas[result[1]]
+        if (!COORDSVG[result[1]](result[2], attrs)) {
+          console.log('ERROR: Bad coordinates - "' + attrs.coords + '"')
+          break
+        }
+        r = IDEXP.exec(result[2])
+        if (r) {
+          attrs.properties = {}
+          attrs.properties[properties.ID] = r[1]
+        }
+        records.push(attrs)
+      }
+      return records
+    }
+
   }
 
   const testHTMLMap =

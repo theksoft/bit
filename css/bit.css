@@ -894,6 +894,12 @@ form.modal input[type=checkbox] {
   min_height: 50px;
 }
 
+#code-loader .buttons > .type {
+  order: 0;
+  margin-left: right;
+  margin-right: 10px;
+}
+
 #code-loader .buttons > .select {
   order: 1;
   margin-left: auto;
