@@ -21,11 +21,11 @@ Projets are stored in local storage by the name of each map.
 #### Project commands
 
 - `Preview` : Preview HTML map result [`CTRL`+`P`]
-- `Generate` : Display HTML map code [`CTRL`+`G`]
+- `Generate` : Display HTML/SVG map code [`CTRL`+`G`]
 
 #### Edit commands
 
-- `Edit.Add HTML Areas` : Add areas from HTML map source code.<br>
+- `Edit.Add HTML/SVG Areas` : Add areas from HTML/SVG map source code.<br>
   Full *\<map\>* source code or only *\<area\>* source code can be entered.
 - `Edit.Set New Image` : Define a new image for the project.<br>
 

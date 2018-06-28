@@ -1650,6 +1650,7 @@ var bit = (function() {
     }
 
     _onLoadClick(e) {
+      e.preventDefault()
       if (!this._doms.inImageUrl.validity.typeMismatch) {
         let url = this._doms.inImageUrl.value.trim()
         loadIndicator.show()
@@ -1675,6 +1676,7 @@ var bit = (function() {
     }
 
     _onApplyClick(e) {
+      e.preventDefault()
       if (this._doms.inWidth.checkValidity() && this._doms.inHeight.checkValidity()) {
         let width, height
         width = parseInt(this._doms.inWidth.value)
@@ -1933,7 +1935,8 @@ var bit = (function() {
         title       : this._form.querySelector('fieldset.dims legend'),
         inWidth     : this._form.querySelector('fieldset.dims .text.width'),
         inHeight    : this._form.querySelector('fieldset.dims .text.height'),
-        forceRatio  : this._form.querySelector('fieldset.dims input[type=checkbox]'),
+        forceRatio  : this._form.querySelector('fieldset.dims input[type=checkbox].dims'),
+        svgOverlay  : this._form.querySelector('fieldset.dims input[type=checkbox].type'),
         btnApply    : this._form.querySelector('fieldset.dims button'),
         code        : this._form.querySelector('.code'),
         btnSelect   : this._form.querySelector('.select'),
@@ -1959,6 +1962,7 @@ var bit = (function() {
       this._doms.inWidth.value = dims.width
       this._doms.inHeight.value = dims.height
       this._doms.forceRatio.checked = true
+      this._doms.svgOverlay.checked = false
       this._doms.code.innerHTML = ''
       this._doms.btnApply.disabled = false
     }
@@ -1995,7 +1999,9 @@ var bit = (function() {
 
     _onExampleClick(e) {
       e.preventDefault()
-      const s = bitmap.testHTMLMap.replace(/<####>/gi, this._doms.code.innerText)
+      const s = (!this._doms.svgOverlay.checked) ?
+                  bitmap.testHTMLMap.replace(/<####>/gi, this._doms.code.innerText) :
+                  bitmap.testSVGMap.replace(/<####>/gi, this._doms.code.innerText)
       bittls.saveDataAs(s, 'test'+this._model.info.name, 'text/html')
     }
 
@@ -2043,7 +2049,10 @@ var bit = (function() {
         height = parseInt(this._doms.inHeight.value)
         xScale = width / dims.width
         yScale = height / dims.height
-        this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
+        if (!this._doms.svgOverlay.checked)
+          this._doms.code.innerHTML = bitmap.Mapper.getHtmlString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
+        else
+          this._doms.code.innerHTML = bitmap.Mapper.getSvgString(this._model.filename, width, height, this._model.info, this._model.areas, xScale, yScale)
       }
     }
 
@@ -2070,15 +2079,16 @@ var bit = (function() {
    * HTML CODE LOADER
    */
 
-  class HtmlLoaderDialog extends bittls.DialogForm {
+  class CodeLoaderDialog extends bittls.DialogForm {
 
     constructor() {
       super({ form : $('code-loader') })
       this._handlers = {}
       this._doms = {
-        btnLoad    : this._form.querySelector('.select'),
-        btnClear   : this._form.querySelector('.clear'),
-        code       : this._form.querySelector('.code')
+        btnLoad     : this._form.querySelector('.select'),
+        btnClear    : this._form.querySelector('.clear'),
+        code        : this._form.querySelector('.code'),
+        checkType   : this._form.querySelector('.type')
       }
       this._doms.btnLoad.addEventListener('click', this._onLoadClick.bind(this), false)
       this._doms.btnClear.addEventListener('click', this._onClearClick.bind(this), false)
@@ -2087,6 +2097,7 @@ var bit = (function() {
 
     _reset() {
       this._doms.btnLoad.disabled = true
+      this._doms.checkType.checked = false
       if (this._doms.code.value != '')
         this._doms.btnLoad.disabled = false
     }
@@ -2105,15 +2116,17 @@ var bit = (function() {
     }
 
     _onLoadClick(e) {
-      const code = this._doms.code.value
+      const code = this._doms.code.value,
+            type = this._doms.checkType.checked ? 'svg' : 'html' 
       e.preventDefault()
       super.close()
-      this._handlers.onLoad(code);
+      this._handlers.onLoad({type: type, code : code})
     }
 
     _onClearClick(e) {
       e.preventDefault()
       this._doms.code.value = ''
+      this._doms.checkType.checked = false
       this._doms.btnLoad.disabled = true
     }
 
@@ -2167,7 +2180,7 @@ var bit = (function() {
         closeProject  : new bittls.TButton({ element : $('close-project'),    action : this._action(c.handlers.onCloseProject, $('project-menu')) }),
         cleanProjects : new bittls.TButton({ element : $('clean-projects'),   action : this._action(c.handlers.onCleanProjects, $('project-menu')) }),
         generate      : new bittls.TButton({ element : $('generate'),         action : c.handlers.onGenerateCode }),
-        loadHTML      : new bittls.TButton({ element : $('load-html'),        action : this._action(c.handlers.onLoadHTML, $('edit-menu')) }),
+        loadCode      : new bittls.TButton({ element : $('load-code'),        action : this._action(c.handlers.onLoadCode, $('edit-menu')) }),
         exportProject : new bittls.TButton({ element : $('export-project'),   action : this._action(c.handlers.onExportProject, $('project-menu')) }),
         importProject : new bittls.TButton({ element : $('import-project'),   action : this._action(c.handlers.onImportProject, $('project-menu')) }),
         exportImage   : new bittls.TButton({ element : $('export-image'),     action : this._action(c.handlers.onExportImage, $('project-menu')) }),
@@ -2180,7 +2193,7 @@ var bit = (function() {
       this._menus = [$('project-menu'), $('edit-menu'), $('view-menu')]
       this._btnsEdit = [
         this._btns.saveProjectAs, this._btns.closeProject, this._btns.preview, this._btns.generate,
-        this._btns.loadHTML, this._btns.exportProject, this._btns.exportImage, this._btns.changeImage
+        this._btns.loadCode, this._btns.exportProject, this._btns.exportImage, this._btns.changeImage
       ]
       this._btnsPreview = [this._btns.zoomIn, this._btns.zoomOut, this._btns.zoom100]
       this._enabled = false
@@ -2461,13 +2474,16 @@ var bit = (function() {
       )
     }
 
-    _onLoadHTML() {
+    _onLoadCode() {
       this._app.freeze()
-      this._app.loadHTML().then(
-        code => {
-          if (code) {
+      this._app.loadCode().then(
+        data => {
+          if (data && '' !== data.code) {
             let areas = []
-            bitmap.Mapper.loadHtmlString(code).forEach(r => areas.push(bitarea.createFromRecord(r, this._app.workspace.getParent())))
+            if ('html' === data.type)
+              bitmap.Mapper.loadHtmlString(data.code).forEach(r => areas.push(bitarea.createFromRecord(r, this._app.workspace.getParent())))
+            else if ('svg' === data.type)
+              bitmap.Mapper.loadSvgString(data.code).forEach(r => areas.push(bitarea.createFromRecord(r, this._app.workspace.getParent())))
             if (areas.length > 0) {
               this._app.model.addAreas(areas)
               this._app.aTooler.managePropsDisplay(this._app.model.areas)
@@ -2586,7 +2602,7 @@ var bit = (function() {
         onCloseProject  : this._onCloseProject.bind(this),
         onCleanProjects : this._onCleanProjects.bind(this),
         onGenerateCode  : this._onGenerateCode.bind(this),
-        onLoadHTML      : this._onLoadHTML.bind(this),
+        onLoadCode      : this._onLoadCode.bind(this),
         onExportProject : this._onExportProject.bind(this),
         onImportProject : this._onImportProject.bind(this),
         onExportImage   : this._onExportImage.bind(this),
@@ -3363,7 +3379,7 @@ var bit = (function() {
       this._opener    = new ProjectLoaderDialog({ store : this._store })
       this._renamer   = new ProjectRenamerDialog()
       this._changer   = new ProjectChangerDialog({ checkFile : this._model.checkImgFile })
-      this._loader    = new HtmlLoaderDialog()
+      this._loader    = new CodeLoaderDialog()
       this._generator = new CodeGeneratorDialog({ workspace : this._workspace, model : this._model })
       this._helper    = new HelpDialog()
 
@@ -3467,11 +3483,11 @@ var bit = (function() {
       })
     }
 
-    loadHTML() {
+    loadCode() {
       return new Promise((resolve, reject) => {
         this._loader.show({
           onCancel : () => resolve(),
-          onLoad : code => resolve(code)
+          onLoad : data => resolve(data)
         })
       })
     }

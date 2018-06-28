@@ -37,7 +37,7 @@
 	        <li class="dropdown">
 	          <a href="javascript:void(0)" id="edit-btn" class="dropbtn">Edit</a>
 	          <div id="edit-menu" class="dropdown-content">
-	            <a href="#" id="load-html">Add HTML areas</a>
+	            <a href="#" id="load-code">Add HTML/SVG areas</a>
               <a href="#" id="change-image">Set New Image</a>
 	          </div>
 	        </li>
@@ -298,7 +298,7 @@
     </div>
   </form>
 
-  <!-- HTML code display -->
+  <!-- Code display -->
   <form id="project-code" class="modal">
     <header>HTML Map Code</header>
     <div>
@@ -307,7 +307,8 @@
         <input type="text" class= "text dim width" pattern="[1-9][0-9]*" value="" placeholder="" title="width" />
         <span class="separator"> x </span>
         <input type="text" class= "text dim height" pattern="[1-9][0-9]*" value="" placeholder="" title="height" />
-        <label><input type="checkbox" checked/><span>Preserve ratio</span></label>
+        <label><input type="checkbox" class="dims" checked/><span>Preserve ratio</span></label>
+        <label><input type="checkbox" class="type"/><span>Replace with SVG overlay</span></label>
         <div>
           <button>Apply</button>
         </div>
@@ -319,7 +320,7 @@
 	      <button class="select">Select All</button>
 	      <button class="clear">Unselect</button>
 	      <button class="close">Close</button>
-	      <button class="example">Generate Test</button>
+	      <button class="example">Generate Test Page</button>
 	    </div>
 	    <div class="warning">
 	      <span class="warning">WARNING!</span><br>
@@ -329,17 +330,18 @@
 	  </div>
   </form>
 
-  <!-- HTML code input -->
+  <!-- Code input -->
   <form id="code-loader" class="modal">
-    <header>Load HTML Code ...</header>
+    <header>Load HTML/SVG Code ...</header>
     <div>
-      <label><span class="left">Enter HTML code here:</span>
+      <label><span class="left">Enter source code here:</span>
         <textarea class="text code"></textarea>
       </label>
 	    <div class="buttons">
 	      <button class="select" disabled>Load</button>
 	      <button class="clear">Clear</button>
 	      <button class="cancel">Cancel</button>
+        <label><input type="checkbox" class="type"/><span>SVG code</span></label>
 	    </div>
     </div>
   </form>
@@ -349,7 +351,7 @@
     <header>
       <div>HTML map creator<br>[MIT License]</div>
 	    <div class="title">
-	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.7</a>)
+	      Boardgame image Tool (<a href="https://github.com/theksoft/bit">BiT v1.8</a>)
 	    </div>
 	    <div>&copy;2017 Herve Retaureau</div>
     </header>
@@ -365,10 +367,11 @@
         <p><span class="menu">Project.Export</span> Export map project to a local file</p>
         <p><span class="menu">Project.Import</span> Import map project from a local file</p>
         <p><span class="menu">Project.Export Image</span> Export map project image to a local file</p>
-        <p><span class="menu">Edit.Add HTML Areas</span> Add areas from HTML map code</p>
+        <p><span class="menu">Edit.Add HTML/SVG Areas</span> Add areas from HTML/SVG map code</p>
         <p><span class="menu">Edit.Set New Image</span> Set a new image for the project</p>
+        <p><span class="menu">Edit.Zoom In</span>, <span class="menu">Edit.Zoom 1:1</span>, <span class="menu">Edit.Zoom Out</span> Modify image display scale</p>
 	      <p><span class="menu">Preview</span> Preview map areas - <span class="key">CTRL</span> + <span class="key">P</span></p>
-	      <p><span class="menu">Generate</span> Generate the HTML map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
+	      <p><span class="menu">Generate</span> Generate the HTML/SVG map code - <span class="key">CTRL</span> + <span class="key">G</span></p>
 	      <p><span class="menu">?</span> Display this help - <span class="key">F1</span></p>
 	    </section>
 	    <section>
